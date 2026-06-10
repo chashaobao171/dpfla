@@ -28,16 +28,16 @@ def apply_default_yolo_model_size() -> str:
 
 
 # 4090 默认：学习率不过激，先保证稳定收敛；需要更猛再通过 FL_LOCAL_LR 调大
-LOCAL_LR = float(os.environ.get("FL_LOCAL_LR", "2e-4"))
+LOCAL_LR = float(os.environ.get("FL_LOCAL_LR", "0.01"))      # 2e-4 → 0.01（配合 FedAvgM）
 LR_MIN = float(os.environ.get("FL_LR_MIN", "5e-6"))
-LR_SCHEDULE = "constant"  # 需要 cosine 时改此处或由各 run 脚本在 import 前 export 并由脚本赋值
+LR_SCHEDULE = "constant"  # cosine 在 Batch 2 加
 
 NUM_WORKERS = int(os.environ.get("FL_NUM_WORKERS", "10"))
 # 攻击脚本默认 10%（N=10 → 1 人）；若改为 N=5，记得配套把 FL_MALICIOUS_RATE 调到 0.2
 MALICIOUS_RATE = float(os.environ.get("FL_MALICIOUS_RATE", "0.1"))
 
-GLOBAL_ROUNDS = int(os.environ.get("FL_GLOBAL_ROUNDS", "20"))
-LOCAL_EPOCHS = int(os.environ.get("FL_LOCAL_EPOCHS", "10"))
+GLOBAL_ROUNDS = int(os.environ.get("FL_GLOBAL_ROUNDS", "50"))   # 20 → 50
+LOCAL_EPOCHS = int(os.environ.get("FL_LOCAL_EPOCHS", "1"))     # 10 → 1（高频低深）
 TRAIN_BATCH_SIZE = int(os.environ.get("FL_TRAIN_BATCH_SIZE", "64"))
 TEST_BATCH_SIZE = int(os.environ.get("FL_TEST_BATCH_SIZE", "256"))
 CPU_THREADS = int(os.environ.get("FL_CPU_THREADS", "16"))

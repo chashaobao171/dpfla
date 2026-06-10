@@ -466,24 +466,14 @@ class Client():
                 epoch_loss.append(loss.item())
                 # get gradients - 使用字典而不是列表，避免索引问题
                 cur_time = time.time()
-                if epoch == 0 and batch_idx == 0:
-                    # 第一次：初始化梯度字典
-                    client_grad = {}
-                    for name, params in model.named_parameters():
-                        if params.requires_grad and params.grad is not None:
-                            client_grad[name] = params.grad.clone()
-                else:
-                    # 后续：累加梯度
-                    for name, params in model.named_parameters():
-                        if params.requires_grad and params.grad is not None:
-                            if name in client_grad:
-                                client_grad[name] += params.grad.clone()
-                            else:
-                                client_grad[name] = params.grad.clone()
+                for name, params in model.named_parameters():
+                    if params.requires_grad and params.grad is not None:
+                        client_grad[name] = client_grad.get(name, 0) + params.grad.clone()
                 t += time.time() - cur_time
                 if isinstance(optimizer, PerturbedGradientDescent):
                     optimizer.step(server_model.parameters(), self.device)
                 else:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
                     optimizer.step()
                 model.zero_grad()
                 optimizer.zero_grad()

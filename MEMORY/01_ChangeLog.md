@@ -16,7 +16,10 @@
 2026-06-09  FedAvg 差配置   BS=16 EPOCH=3  LR=5e-4 cosine       → ~14.68% mAP (R30)
 2026-06-10  配置回退        BS=64 EPOCH=10 LR_SCHEDULE=constant   ← 已恢复
 2026-06-10  YOLOv8s→YOLOv8l 尝试  → FAILED（fl_core.py val bug，Pretrained mAP=0%）
-2026-06-10  Bug 1+2+3 修复   BS=64 EPOCH=3  LR=2e-4 constant    → R1=3.36% R26-33=~23.7% (100轮基线)
+2026-06-10  Bug 1+2+3 修复   BS=64 EPOCH=3  LR=2e-4 constant    → R1=3.36% R26-33=~23.7% (100轮基线) ✅
+2026-06-10  FedAvgM 引入     服务端动量平滑，Round 1 失败/BN破坏导致 Round 2-3 mAP 崩塌 ⚠️
+2026-06-10  TB 清理         删除旧 MNIST/fedbn/fedla 实验目录，保留当前实验
+2026-06-10  Round 2-3 mAP 崩塌 → 问题定位：Round 1 FedAvgM 失败 + BN 状态错乱，待 kimi agent 彻查
 ```
 
 ---
@@ -48,6 +51,73 @@
 **问题**：对所有非 float tensor 直接取第一个值，`num_batches_tracked` 应该取最大值。
 
 **修复**：对 `num_batches_tracked` 使用 `max()` 而非直接取第一个。
+
+---
+
+## 2026-06-10（傍晚）：FedAvgM 引入 + Round 2-3 mAP 崩塌问题定位
+
+### 问题现象
+
+`run_no_attack_baseline_20260610_1901.log`（50 轮，BS=64，EPOCH=1，FedAvgM=0.9）：
+- Round 1: mAP=**0%**, loss=1427, avg_client=706
+- Round 2: mAP=**3.22%**, loss=1103, avg_client=416  ← FedAvgM 首次生效
+- Round 3: mAP=**0%**, loss=1264, avg_client=347  ← 崩塌
+- Round 4: mAP=**0%**, loss=1111, avg_client=347  ← 持续崩塌
+
+对比正常基线（`run_no_attack_baseline_20260608_0755.log`，无 FedAvgM）：
+- R1: 7.81%, R2: 16.78%, R3: 19.50%, R4: 21.16%（持续收敛）
+
+### 根因定位（待修复）
+
+**不是 FedAvgM 本身的问题，而是「Round 1 时 FedAvgM 未生效 + BN 状态被破坏」的组合效应**：
+
+1. **Round 1 聚合时 FedAvgM 失败**（设备错误 `cuda:0 vs cpu` in `delta = gw - ow`），`global_weights` 未被动量平滑。Round 1 末全局模型 = 无动量的普通 FedAvg 结果。
+
+2. **Round 1 末全局模型 BN 状态混乱**：`model.load_state_dict(global_weights)` 加载的模型，BN 使用的是各客户端聚合后的 running_mean/running_var（而非原始 COCO 预训练值），且在 CPU 上。
+
+3. **Round 2 评估时**：`YOLO(pretrained_yolov8s.pt)` → 替换 nc=10 → `load_state_dict(FL_state_dict, strict=False)` → COCO 预训练 BN 被覆盖为 FL 聚合的 BN → `model.train()` 时 BN 使用 `num_batches_tracked=max()` 聚合的 running stats → **BN 状态比 Round 1 更差**（跨客户端平均后均值趋近，标准差趋零）。
+
+4. **Round 3 评估时**：BN 状态继续恶化，mAP 崩塌为 0。
+
+### 相关代码
+
+| 文件 | 关键位置 | 说明 |
+|------|---------|------|
+| `fl_core.py:747-786` | `rule == 'fedavg'` | FedAvgM 动量平滑，Round 1 失败跳到 except |
+| `fl_core.py:831-832` | `g_model` 备份 | `copy.deepcopy(simulation_model)` 保存测试前模型 |
+| `fl_core.py:854-856` | NaN 回退 | `simulation_model = copy.deepcopy(g_model)` |
+| `fl_algorithm/fed_avg.py:36-41` | `num_batches_tracked=max()` | BN 计数器取最大值 |
+| `models/yolo_wrapper.py:228` | `self.model.criterion = v8DetectionLoss(self.model)` | 每次 `__init__` 新建 criterion |
+| `models/yolo_wrapper.py:201-204` | 新头 `bias_init()` | 新检测头 bias 随机初始化 |
+
+### 修复方向
+
+**核心**：Round 1 FedAvgM 失败后的 BN 状态异常。参考 `run_no_attack_baseline_20260608_0755.log` 正常（无 FedAvgM），说明问题与 FedAvgM 改动相关。
+
+**待 kimi agent 彻查**：详见 `MEMORY/kimi_prompt_round_collapse.md`。
+
+### TensorBoard 目录清理记录
+
+| 目录 | 状态 |
+|------|------|
+| `MNIST_CNNMNIST_fedavg_attack-label_flipping_mr-0.3` | ❌ 已删除（2026-05-15 旧） |
+| `MNIST_CNNMNIST_DPFLA_attack-label_flipping_mr-0.3` | ❌ 已删除（2026-05-15 旧） |
+| `VisDrone_YOLO_fedbn_attack-no_attack_mr-0.0` | ❌ 已删除（2026-06-07 旧） |
+| `VisDrone_YOLO_fedla_attack-no_attack_mr-0.0` | ❌ 已删除（2026-06-08 旧） |
+| `VisDrone_YOLO_fedavg_attack-no_attack_mr-0.0` | ✅ 保留（当前实验） |
+
+### 日志解析结果（logs_3 → TB 事件文件）
+
+| 日志 | TB 目录 | Rounds |
+|------|---------|--------|
+| `mnist/run_dpfla_label_flipping_20260515_1036.log` | `MNIST_CNNMNIST_DPFLA_attack-label_flipping_mr-0.3` | R1-R20 |
+| `mnist/run_no_defense_label_flipping_20260515_1020.log` | `MNIST_CNNMNIST_fedavg_attack-label_flipping_mr-0.3` | R1-R20 |
+| `visdrone/run_no_attack_baseline_20260608_0755.log` | `..._v1781089947` | R0-R7 |
+| `visdrone/run_no_attack_baseline_20260610_1139.log` | `..._v1781089947` | R0-R34 |
+| `visdrone/run_no_attack_baseline_20260610_1901.log` | `..._v1781089947` | R0-R5（中止） |
+| `visdrone/run_no_attack_baseline_20260610_1909.log` | `..._v1781089947` | R0-R1（中止） |
+| `visdrone/run_no_attack_baseline_fedbn_20260607_1625.log` | `VisDrone_YOLO_fedbn_attack-no_attack_mr-0.0` | R0-R9 |
+| `visdrone/run_no_attack_baseline_fedla_20260608_1703.log` | `VisDrone_YOLO_fedla_attack-no_attack_mr-0.0` | R0-R9 |
 
 ---
 

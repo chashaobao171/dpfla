@@ -160,6 +160,8 @@ class FL:
         logger.info(f'  Total HONEST: {len(clients) - self.num_attackers}')
         del self.local_data
 
+        self._server_momentum_buf = {}  # 服务端动量缓冲（FedAvgM）
+
     # ======================================= Start of testning function ===========================================================#
     def test(self, model, device, test_loader, dataset_name=None):
         model.eval()
@@ -745,11 +747,42 @@ print(json.dumps(res))
             elif rule == 'fedavg':
                 cur_time = time.time()
                 # YOLO 检测头与 BN 状态对数值敏感：float16 聚合会累积误差、拖 mAP；统一 float32。
+                old_weights = copy.deepcopy(global_weights)
+                logger.info(f'开始聚合 {len(local_weights)} 个客户端权重...')
                 global_weights = average_weights(
                     local_weights,
                     [1 for i in range(len(local_weights))],
                     float16_floats=False,
                 )
+                logger.info('聚合完成，开始 FedAvgM 动量平滑...')
+                # FedAvgM：服务端动量平滑，加速收敛
+                try:
+                    SERVER_MOMENTUM = 0.9
+                    dev = self.device
+                    keys_in_both = [k for k in global_weights if k in old_weights]
+                    keys_missing_from_old = [k for k in global_weights if k not in old_weights]
+                    if keys_missing_from_old:
+                        logger.warning(f'FedAvgM: 以下 key 在旧权重中不存在，跳过: {keys_missing_from_old[:5]}...')
+                    for key in keys_in_both:
+                        if not (torch.is_tensor(global_weights[key])
+                                and global_weights[key].is_floating_point()):
+                            continue
+                        gw_dev = global_weights[key].device
+                        gw_dtype = global_weights[key].dtype
+                        if key not in self._server_momentum_buf:
+                            self._server_momentum_buf[key] = torch.zeros_like(global_weights[key])
+                        gw = global_weights[key].float()
+                        ow = old_weights[key].float()
+                        buf = self._server_momentum_buf[key].float()
+                        delta = gw - ow
+                        buf = SERVER_MOMENTUM * buf + delta
+                        self._server_momentum_buf[key] = buf.to(gw_dtype)
+                        global_weights[key] = (ow + buf).to(gw_dtype)
+                    logger.info('FedAvgM 动量平滑完成')
+                except Exception as e:
+                    logger.error(f'FedAvgM 动量平滑失败: {e}')
+                    import traceback
+                    logger.error(traceback.format_exc())
                 cpu_runtimes.append(time.time() - cur_time)
 
             elif rule == 'fed_svd':
