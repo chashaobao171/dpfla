@@ -1,0 +1,29 @@
+# Model weights - large files, download from ultralytics or re-upload manually
+*.pt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Logs and runs
+logs_*/
+runs/
+cache/
+
+# Temp files
+*.yaml
+!visdrone.yaml
+visdrone_temp*.yaml
+*.log
+
+# Data (large, download separately)
+data/
+
+# Editor config (machine-specific)
+.idea/
+.kiro/
+.vscode/
+*.swp
+*.swo

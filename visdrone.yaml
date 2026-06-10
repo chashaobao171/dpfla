@@ -1,0 +1,23 @@
+# VisDrone数据集配置文件（YOLO格式）
+# 用于YOLO原生训练和评估
+
+# 数据集路径（Windows使用正斜杠）
+path: D:/Pycharmworkplace/visdrone  # 数据集根目录
+train: VisDrone2019-DET-train/VisDrone2019-DET-train/images  # 训练集图像路径（相对于path）
+val: VisDrone2019-DET-val/VisDrone2019-DET-val/images      # 验证集图像路径（相对于path）
+
+# 类别数量
+nc: 10
+
+# 类别名称（VisDrone数据集的10个类别）
+names:
+  0: pedestrian
+  1: people
+  2: bicycle
+  3: car
+  4: van
+  5: truck
+  6: tricycle
+  7: awning-tricycle
+  8: bus
+  9: motor

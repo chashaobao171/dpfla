@@ -1,0 +1,84 @@
+# ============================================
+# DPFLA 联邦学习项目依赖（autodl A10 环境适配版）
+# Python 3.12 + RTX 4080 SUPER 32GB + CUDA 12.4
+# ============================================
+#
+# 安装顺序：
+#   1. pip install -r requirements.txt
+#   2. pip install --upgrade opencv-python-headless  # 升级到 numpy 2.x 兼容版
+#   3. python -c "import cv2,ultralytics; print(cv2.__version__,ultralytics.__version__)"
+#
+# 注意事项：
+#   - numpy==2.2.6（由 scipy==1.14.1 依赖链提升）
+#   - opencv-python-headless 必须升级到兼容 numpy 2.x 的版本（原 4.8.1.78 不兼容）
+#   - scipy==1.14.1 是 numpy 1.26.4/2.x 双兼容的最小版本
+#   - scikit-learn==1.6.1 兼容当前 numpy/scipy 版本
+#
+# 如需 PyTorch 单独安装（autodl 镜像通常已预装，勿随意覆盖）：
+#   conda/pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu124
+#
+
+# ============================================
+# 深度学习框架
+# ============================================
+torch==2.5.1
+torchvision==0.20.1
+# --index-url https://download.pytorch.org/whl/cu124
+
+# ============================================
+# YOLO 模型
+# ============================================
+# 依赖 opencv-python-headless（numpy 2.x 兼容版），见上方第 2 步
+ultralytics>=8.0.0
+
+# ============================================
+# 数据处理
+# ============================================
+numpy>=2.0.0          # 当前 2.2.6（由 scipy==1.14.1 依赖链安装）
+opencv-python-headless  # 动态最新兼容版（numpy 2.x）；不要固定旧版本
+pandas>=2.0.0
+Pillow>=9.5.0
+
+# ============================================
+# 机器学习工具
+# ============================================
+scipy==1.14.1         # numpy 1.26.4/2.x 双兼容的最小版本
+scikit-learn>=1.6.0   # 1.6.x 兼容当前 scipy/numpy 版本
+
+# ============================================
+# 日志和进度
+# ============================================
+loguru>=0.7.0
+tqdm>=4.65.0
+wandb>=0.25.0         # 可选：实验曲线记录
+
+# ============================================
+# 可视化
+# ============================================
+matplotlib>=3.7.0
+tensorboard>=2.8.0
+setuptools>=69.5.1,<70  # 防止 tensorboard 启动报错
+
+# ============================================
+# 版本约束说明
+# ============================================
+# numpy>=2.0.0          — torch 2.5.x / scipy 1.14.1 均支持
+# opencv-python-headless — 必须兼容 numpy 2.x；不要回退到 4.8.1.78
+# scipy==1.14.1         — numpy 1.26.4 和 2.x 双兼容；1.13.x/1.15.x 均有 ABI 冲突
+# scikit-learn>=1.6.0   — 兼容 scipy 1.14.x + numpy 2.x
+# setuptools<70          — tensorboard>=2.8.0 的兼容性约束
+
+# ============================================
+# 数据准备（CIFAR-10 解压）
+# ============================================
+# 推荐来源：/root/autodl-pub/cifar-10/cifar-10-python.tar.gz
+#   - 解压后得 cifar-10-batches-py/（torchvision 原生格式）
+# 备用来源：/root/autodl-pub/cifar-10/cifar-10-binary.tar.gz
+#
+# 目标路径：/root/chashaobao/data/
+# 执行一次即可：
+#   mkdir -p /root/chashaobao/data && \
+#   tar -xzf /root/autodl-pub/cifar-10/cifar-10-python.tar.gz -C /root/chashaobao/data/
+#
+# 验证：python -c "from torchvision.datasets import CIFAR10; d=CIFAR10('/root/chashaobao/data', download=False); print(len(d))"
+#   期望输出：50000（训练集）
