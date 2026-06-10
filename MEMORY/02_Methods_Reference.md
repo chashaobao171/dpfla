@@ -1,7 +1,8 @@
 # 02_Methods_Reference.md — 方法论参考
-<!-- 最后更新：2026-06-01 -->
+
+<!-- 最后更新：2026-06-10 -->
 <!-- 算法原理 / 代码骨架 / 设计决策 -->
-<!-- 需要理解算法或代码设计时查阅 -->
+<!-- new/ 版本为最新，合并后写入此文件 -->
 
 ---
 
@@ -13,7 +14,7 @@
 
 ### 攻击类型
 
-| 攻击名称 | 原理 | 实现位置 |
+|| 攻击名称 | 原理 | 实现位置 |
 |---------|------|---------|
 | 标签翻转 (label_flipping) | 恶意客户端将 source_class 的标签翻转为 target_class | `attack_alg/label_flipping_attack.py` |
 | 高斯攻击 (gaussian_attack) | 向本地模型更新注入高斯噪声 | `attack_alg/gaussian_attack.py` |
@@ -21,19 +22,19 @@
 
 ### 防御算法（聚合规则）
 
-| 算法 | 原理 | 文件 |
-|------|------|------|
-| **DPFLA** | SVD 降维 + K-Means 聚类，检测异常更新 | `fl_algorithm/DPFLA.py` |
-| FedAvg | 简单平均（无防御） | `fl_algorithm/fed_avg.py` |
-| FoolsGold | 历史余弦相似度防御 | `fl_algorithm/fools_gold.py` |
-| Trimmed Mean | 剔除极端值后平均 | `fl_algorithm/t_mean.py` |
-| Median | 逐坐标取中位数 | `fl_algorithm/median.py` |
-| Multi-Krum | 基于欧氏距离的异常检测 | `fl_algorithm/m_krum.py` |
-
-| **FedProx** | 本地训罚 loss 加近端项，限制偏离全局模型 | Non-IID 收敛 | 待实现 |
-| **SCAFFOLD** | 控制变量显式抵消 client drift | Non-IID 收敛 | 待实现 |
-| **FedBN** | 聚合时排除 BN 参数，各客户端保留自己的 BN 统计量 | **BN 层问题** | 待实现 |
-| **FedLA** | 按每类标签分布加权，而非按样本数加权 | **标签淹没问题** | 待实现 |
+|| 算法 | 原理 | 状态 |
+|------|------|------|------|
+| **DPFLA**（主路径） | SVD 降维 + K-Means 聚类，检测异常更新 | ✅ 实现 |
+| **FedLA** | 按每类标签分布加权，而非按样本数加权 | ✅ 实现，待完整验证 |
+| **FedBN** | 聚合时排除 BN 参数（对 VisDrone 标签偏斜无效） | ✅ 实现，FedAvg 全程领先 |
+| FedAvg | 简单平均（无防御） | ✅ 实现 |
+| FoolsGold | 历史余弦相似度防御 | ✅ 实现 |
+| Trimmed Mean | 剔除极端值后平均 | ✅ 实现 |
+| Median | 逐坐标取中位数 | ✅ 实现 |
+| Multi-Krum | 基于欧氏距离的异常检测 | ✅ 实现 |
+| SCAFFOLD | 控制变量显式抵消 client drift | ❌ 未实现 |
+| FedProx | 本地训练加近端项惩罚 | ❌ 未实现 |
+| BN-SCAFFOLD | BN 层 control variate | ❌ 未实现 |
 
 ---
 
@@ -90,7 +91,7 @@ scores = [1 if lbl == majority_label else 0 for lbl in labels]
 - 从 bad 恢复：先给缓释权重，再逐轮回到 1.0
 - 冷却期：高置信或高异常时触发，防止"一轮好就立刻满权重"
 
-### 辅助异常评分（MAD z-score）
+#### 辅助异常评分（MAD z-score）
 
 ```python
 def _robust_anomaly_score(feature_matrix):
@@ -98,12 +99,51 @@ def _robust_anomaly_score(feature_matrix):
     med = np.median(x, axis=0)
     mad = np.median(np.abs(x - med), axis=0)
     z = np.abs((x - med) / (1.4826 * mad))
-    z = np.minimum(z, 2.3)  # 小客户端数时防止爆炸
+    z = np.minimum(z, 2.3)
     score = 1.0 / (1.0 + np.exp(-(raw - center) / scale))
     return score
 ```
 
-特征包含：更新范数的对数、与群体均值的方向余弦相似度、层间更新集中度。
+---
+
+## §FedLA 标签感知聚合
+
+### 原理
+
+FedLA 按每类标签分布加权，而非按样本数加权。样本少的类（tricycle、awning-tricycle）在 FedAvg 中梯度被淹没，FedLA 确保每类获得公平代表权。
+
+### 公式
+
+```
+w_la[i] = Σ_c ( client_i[cls=c] / global_total[cls=c] )
+```
+
+### 代码实现
+
+```python
+def average_weights_fedla(w, client_hists, num_classes, marks=None, float16_floats=False):
+    # Step 1: 计算每类全局总量
+    class_totals = [sum(h.get(cls, 0) for h in client_hists) for cls in range(num_classes)]
+    # Step 2: 每个客户端权重 = Σ(本地类数/全局类数)
+    # Step 3: 归一化使均值为 1.0（与 FedAvg 同一量纲）
+    # Step 4: 加权平均
+```
+
+### 调用位置
+
+`fl_core.py` → `rule == 'fedla'` 分支 → 收集 `local_hists` → 调用 `average_weights_fedla(local_hists, num_classes)`
+
+---
+
+## §FedBN（对 VisDrone 无效，保留原理）
+
+### 原理
+
+聚合时排除 BN 参数（`running_mean/running_var/gamma/beta`），让各客户端保留自己的 BN 统计量。适用于**特征偏移**（各客户端视觉风格不同但标签分布相似）。
+
+### 对 VisDrone 无效的原因
+
+VisDrone 的 Non-IID 是**标签分布偏斜**（不同区域类别比例不同），而非**特征偏移**（不同客户端图像风格不同）。FedBN 保持 BN 统计量对标签偏斜问题无帮助。
 
 ---
 
@@ -126,34 +166,24 @@ fl_core.py (FL 编排器)
 ### YOLOWrapper 设计
 
 `models/yolo_wrapper.py` 封装 Ultralytics YOLOv8：
-
-```python
-class YOLOWrapper(nn.Module):
-    # 初始化：加载预训练 yolov8*.pt，将 COCO 80 类检测头替换为 nc=10
-    # 关键修复：criterion (v8DetectionLoss) 移到 GPU，requires_grad=True
-    # 虚拟 fc2 层：兼容 DPFLA（实际 DPFLA YOLO 走检测头 cv3.weight）
-    
-    def forward(x, targets=None, return_features=False):
-        if self.training and targets is not None:
-            # 训练模式：前向 + YOLO 内置损失 + backward
-            preds = self.model(x)
-            loss_tuple = self.model.criterion(preds, batch)
-            return loss_tuple[0], loss_tuple[0]  # (loss, features)
-        else:
-            # 推理模式
-            return self.model(x)
-    
-    def state_dict():  # 返回 model.state_dict() + fc2 层
-    def load_state_dict():  # 分离 fc2，加载 YOLO，再加载 fc2
-```
+- 初始化：加载预训练 yolov8*.pt，将 COCO 80 类检测头替换为 nc=10
+- criterion (v8DetectionLoss) 移到 GPU，requires_grad=True
+- 虚拟 fc2 层：兼容 DPFLA（DPFLA YOLO 走检测头 cv3.weight）
 
 ### 检测头参数选择（DPFLA YOLO 路径）
 
 ```python
-# 优先使用检测头 cv3 末端的类别分支权重
 preferred_keys = ['model.22.cv3.0.2.weight', 'model.22.cv3.1.2.weight', 'model.22.cv3.2.2.weight']
-# 每个类别一个特征单元：拼接 cv3.{0,1,2}[unit] 的 weight + bias
 ```
+
+### ⚠️ fl_core.py val bug（当前卡点）
+
+`fl_core.py` 的子进程 YOLO val 存在 ultralytics 内部机制冲突（`f` 属性、names 匹配问题），导致每次 val 返回 0%。
+
+修复方向：
+1. **回退到子进程方式之前的 val 方案**
+2. **在 val 子进程里用 visdrone_temp.yaml**，让 ultralytics 自动处理 nc=10
+3. **用 `torch.save()` 保存 state_dict**，子进程用 `load_state_dict()` 替代 `YOLO(path)` 加载
 
 ---
 
@@ -164,27 +194,21 @@ preferred_keys = ['model.22.cv3.0.2.weight', 'model.22.cv3.1.2.weight', 'model.2
 ```python
 def run_experiment():
     for epoch in global_rounds:
-        # 1. 选客户端
         selected_clients = choose_clients()
-        
-        # 2. 本地训练
+
         for client in selected_clients:
             update, grad, local_model, loss = client.participant_update(...)
             local_weights.append(update)
             local_grads.append(grad)
             local_losses.append(loss)
-        
-        # 3. 聚合
+
         if rule == 'DPFLA':
             scores = dpfla.score(simulation_model, local_models, ...)
             global_weights = average_weights(local_weights, scores)
         elif rule == 'fedavg':
             global_weights = average_weights(local_weights, [1]*n)
-        
-        # 4. 更新全局模型
+
         simulation_model.load_state_dict(global_weights)
-        
-        # 5. 评估
         accuracy, test_loss = test(simulation_model, ...)
 ```
 
@@ -195,7 +219,7 @@ def participant_update(global_epoch, model, attack_type, ...):
     # 1. 攻击注入
     if attack_type == 'label_flipping' and self.client_type == 'attacker':
         poisoned_data = label_flipping(self.local_data, mapping)
-    
+
     # 2. 本地 SGD
     for epoch in local_epochs:
         for batch in train_loader:
@@ -203,7 +227,7 @@ def participant_update(global_epoch, model, attack_type, ...):
             loss.backward()
             optimizer.step()
             model.zero_grad()
-    
+
     return model.state_dict(), client_grad, model, avg_loss
 ```
 
@@ -216,7 +240,6 @@ def average_weights(w, marks, float16_floats=False):
         if not v0.is_floating_point():
             w_avg[key] = v0  # 跳过整数/布尔参数
         else:
-            # 浮点参数加权平均
             acc = v0 * marks[0]
             for i in range(1, len(w)):
                 acc = acc + w[i][key] * marks[i]
@@ -265,9 +288,10 @@ python convert_visdrone_to_yolo.py --mode visdrone10 \
 
 ### 评估实现
 
-YOLO 原生评估在**子进程**中执行（隔离 inference_mode 副作用）：
+⚠️ 当前子进程 val 有 bug（见 §fl_core.py val bug）。正确实现应在**子进程**中执行 YOLO 评估以隔离 inference_mode 副作用：
+
 ```python
-# fl_core.py: test()
+# fl_core.py: test() - 待修复
 m = YOLO(weights_path)
 metrics = m.val(data=yaml_path, imgsz=640, conf=0.001, iou=0.5,
                 augment=False, plots=False, device=device_py)
@@ -278,156 +302,46 @@ metrics = m.val(data=yaml_path, imgsz=640, conf=0.001, iou=0.5,
 
 ## §设计决策记录
 
-| 决策 | 原因 | 状态 |
+|| 决策 | 原因 | 状态 |
 |------|------|------|
 | 评估禁用 fallback | 避免指标口径分叉 | ✅ 冻结 |
 | float32 聚合 | float16 累积误差影响 BN 状态 | ✅ 冻结 |
 | DPFLA 主路径 = SVD+KMeans | 原始方法学术可验证 | ✅ 冻结 |
 | YOLO 标签翻转只改 labels | 避免 bbox 不一致 | ✅ 冻结 |
-| 检测头 cv3 权重作为 DPFLA 特征 | 与 COCO 预训练对齐 | 🔄 待验证 |
-| BN 层参数排除在聚合之外 | YOLO Non-IID 场景必须（FedBN 核心） | 🔄 待实现 |
-| 聚合时标签分布感知加权 | FedLA 核心，预期 mAP +5~6% | 🔄 待实现 |
+| 检测头 cv3 权重作为 DPFLA 特征 | 与 COCO 预训练对齐 | ✅ 冻结 |
+| FedBN 对 VisDrone 无效 | 标签偏斜 vs 特征偏移 | ✅ 冻结 |
+| FedLA 本地标签统计缓存 | `_cached_label_hist` 避免每轮重复扫描 | ✅ 冻结 |
+| fl_core.py val 方式 | 子进程方案有 bug，待修复 | 🔄 进行中 |
+| 分层学习率 backbone×0.5 / head×2.0 | 适度适配，暂不调整 | ✅ 冻结 |
+
 ---
 
-## §Non-IID Client Drift 问题与解决方案（BN 层方案见下节）
+## §Non-IID Client Drift 问题
 
 ### 问题根源
 
 FedAvg 在 Non-IID 数据下，客户端本地梯度方向差异大，简单平均导致多个不同方向的力互相抵消，全局模型停在 loss 死区。
 
-### 解决方案对比
+### VisDrone 特殊性
 
-#### FedProx（最小改动，推荐先做）
+VisDrone 的 Non-IID 是**标签分布偏斜**（不同区域类别比例不同），而非**特征偏移**（不同客户端图像风格不同）。这导致：
+- FedBN（保留 BN 统计量）对标签偏斜无效
+- FedLA（按标签分布加权）是更适合 VisDrone 的方向
+- SCAFFOLD 原版对 BN 层不友好，需 BN-SCAFFOLD 或配合 FedBN
 
-**论文**：`FedProx: Federated Optimization in Heterogeneous Networks` — Li et al., MLSys 2020
+### 推荐方案
 
-**核心**：在本地训练的 loss 中加入近端项惩罚：`loss_prox = loss_local + μ/2 * ||w - w_global||²`
-
-**优点**：实现极简单，不需要改 `fl_core.py` 的聚合逻辑
-
-**实现位置**：`client.py` 的 `participant_update()`
-
-#### SCAFFOLD（效果最优，推荐做，但需配合 FedBN 才能在 YOLO 上有效）
-
-**论文**：`SCAFFOLD: Stochastic Controlled Averaging for Federated Learning` — Karimireddy et al., ICML 2020
-
-**核心**：每个客户端维护控制变量 `c_i`，全局服务器维护 `c`，通过方差缩减显式抵消 drift。
-
-**YOLO 注意事项**：原版 SCAFFOLD 对含 BN 层的模型不友好（BN 统计量会导致 control variate 偏差）。YOLO 场景推荐用 BN-SCAFFOLD，或至少配合 FedBN 使用。
-
-**优点**：理论上可证收敛到最优解，可与 DPFLA 叠加
-
-**实现位置**：`client.py`（添加 `c_i`）+ `fl_core.py`（SCAFFOLD 聚合逻辑）
-
-#### 为什么 Multi-Krum/Trimmed Mean 对 Non-IID 收敛问题效果有限
-
-这些算法针对"恶意/异常更新"设计，能过滤明显偏离的客户端，但无法解决**所有客户端都正常但方向不同**的问题。Client drift 下所有客户端都是"正常的坏人"，Krum 反而会选错。
+1. **FedLA**（已实现）：按每类标签分布加权，预期 mAP +5~6%
+2. **FedProx + FedLA**（IEEE IV 2024）：近端项 + 标签感知，预期 mAP +6%，收敛加速 30%
 
 ---
 
-## §BN 层问题与解决方案（2026-06-01 新增）
+## §mAP 暴跌根因（快速索引）
 
-### 问题根源
+完整报告见 `01_Workbench_Memory.md` → §VisDrone mAP 暴跌根因诊断。
 
-YOLO 模型含大量 Batch Normalization 层。在 Non-IID 联邦学习中：
-
-1. **本地 BN 统计漂移**：每个客户端的 `running_mean/running_var` 会漂移到各自的数据分布
-2. **全局统计失配**：FedAvg 简单平均后，聚合的 BN 参数不再代表任何客户端的真实分布
-3. **推理性能下降**：推理时 BN 层使用与实际特征分布严重不匹配的统计量
-
-**后果**：仅靠解决 Client Drift 的算法（FedProx/SCAFFOLD）无法突破，因为 BN 层在底层拖累了所有方向正确的梯度。
-
-### FedBN（最优先）
-
-**论文**：`FedBN: Federated Learning on Non-IID Features via Local Batch Normalization` — Li et al., ICLR 2021
-
-**GitHub**：`github.com/med-air/FedBN`
-
-**核心**：聚合时**排除 BN 参数**（`running_mean/running_var/gamma/beta`），让各客户端保留自己的 BN 统计量。
-
-```python
-# average_weights() 中加入：
-def _is_bn_param(key):
-    return ('running_mean' in key or 'running_var' in key or
-            'running_std' in key or
-            'bn' in key.lower() or
-            ('bias' in key and 'bn' in key.lower()))
-
-# 聚合时：BN 参数取第一个诚实客户端的值（FedBN 核心）
-# 其他参数仍然加权平均
 ```
-
-**优点**：
-- 改动极小，只需改 `average_weights()`
-- 可叠加于所有其他算法（FedProx、SCAFFOLD、DPFLA）之上
-- 预期 mAP +2~5%
-
-### BN-SCAFFOLD
-
-**论文**：`BN-SCAFFOLD: Controlling the Drift of Batch Normalization Statistics` — `arXiv:2410.03281`
-
-**核心**：在 SCAFFOLD 控制变量基础上，对 BN 统计量也加 control variate，显式修正 BN 漂移。
-
-**优点**：理论上比 FedBN 更精确，但实现更复杂
-
-**实现位置**：`fl_core.py`（BN 参数 control variate）+ `client.py`（客户端 BN 控制变量）
-
----
-
-## §标签感知聚合（2026-06-01 新增）
-
-### 问题根源
-
-FedAvg 按样本数加权，导致：
-- 样本多的类（car）主导聚合方向
-- 样本少的类（tricycle、awning-tricycle）梯度被淹没
-
-### FedLA（Label-Aware Aggregation）
-
-**论文**：`Label-Aware Aggregation for Improved Federated Learning` — Khalil et al., FMEC 2023
-**扩展**：`Federated Learning with Heterogeneous Data Handling for Robust Vehicular Object Detection` — Khalil et al., IEEE IV 2024
-
-**GitHub**：`github.com/TixXx1337/Federated-Learning-with-Heterogeneous-Data-Handling`
-
-**核心**：聚合时按**每类标签分布**（而非样本数）加权。
-
-```python
-def compute_label_weights(client_label_hists, num_classes=10):
-    """
-    client_label_hists: list of dict {class_id: count}
-    返回: 归一化后的客户端权重列表
-    """
-    # Step 1: 计算每类的全局总数量
-    class_totals = [sum(h.get(cls, 0) for h in client_label_hists)
-                    for cls in range(num_classes)]
-
-    # Step 2: 每个客户端权重 = sum(本地类数/全局类数)
-    client_weights = []
-    for hist in client_label_hists:
-        w = sum(hist.get(cls, 0) / max(class_totals[cls], 1)
-                for cls in range(num_classes))
-        client_weights.append(w)
-
-    # Step 3: 归一化
-    total = sum(client_weights)
-    return [w / total for w in client_weights]
+死亡组合：BS=16 + EPOCH=3 + HEAD_LR×5 + LR=5e-4 + COSINE+WARMUP
+好配置：BS=64 + EPOCH=10 + LR=2e-4 + CONSTANT
+恢复后实测：R6=21.93%, R8=22.49%
 ```
-
-**项目已有**：客户端 `_build_local_label_hist()` 方法直接返回 `{class_id: count}`，可复用
-
-**预期**：mAP +5~6%，IEEE IV 2024 在 NuScenes 目标检测上验证
-
-### FedProx+LA（最优组合）
-
-**论文**：同上 IEEE IV 2024
-
-**核心**：FedProx 近端项（限制参数漂移）+ FedLA 标签感知（按类分布加权）
-
-**效果**：mAP +6%，收敛速度 +30%
-
-**实现位置**：
-- 近端项：`client.py:participant_update()` 的 loss
-- 标签感知：`fl_core.py` 聚合逻辑
-
----
-
