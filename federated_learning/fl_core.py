@@ -774,11 +774,13 @@ print(json.dumps(res))
                                 and global_weights[key].is_floating_point()):
                             continue
                         gw_dtype = global_weights[key].dtype
+                        gw_dev = global_weights[key].device
                         if key not in self._server_momentum_buf:
                             self._server_momentum_buf[key] = torch.zeros_like(global_weights[key])
                         gw = global_weights[key].float()
-                        ow = old_weights[key].float()
-                        buf = self._server_momentum_buf[key].float()
+                        # old_weights 在 CPU 上，global_weights 在 GPU 上；统一到 gw 的设备
+                        ow = old_weights[key].float().to(gw_dev)
+                        buf = self._server_momentum_buf[key].float().to(gw_dev)
                         delta = gw - ow
                         buf = SERVER_MOMENTUM * buf + delta
                         self._server_momentum_buf[key] = buf.to(gw_dtype)

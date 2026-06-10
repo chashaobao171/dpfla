@@ -17,9 +17,10 @@
 2026-06-10  配置回退        BS=64 EPOCH=10 LR_SCHEDULE=constant   ← 已恢复
 2026-06-10  YOLOv8s→YOLOv8l 尝试  → FAILED（fl_core.py val bug，Pretrained mAP=0%）
 2026-06-10  Bug 1+2+3 修复   BS=64 EPOCH=3  LR=2e-4 constant    → R1=3.36% R26-33=~23.7% (100轮基线) ✅
-2026-06-10  FedAvgM 引入     服务端动量平滑，Round 1 失败/BN破坏导致 Round 2-3 mAP 崩塌 ⚠️ → ✅ 已修复
+2026-06-10  FedAvgM 引入     服务端动量平滑，Round 1 失败/BN破坏导致 Round 2-3 mAP 崩塌 ⚠️ → 部分修复（learnable_keys ✅，设备错误待验）
 2026-06-10  TB 清理         删除旧 MNIST/fedbn/fedla 实验目录，保留当前实验
-2026-06-10  Round 2-3 mAP 崩塌 → Kimi 根因定位：FedAvgM 对 BN buffer 做动量平滑 → ✅ 已修复
+2026-06-10  Round 2-3 mAP 崩塌 → Kimi 根因定位：FedAvgM 对 BN buffer 做动量平滑 → ✅ learnable_keys 已加
+2026-06-10  FedAvgM 设备错误  Round 1 动量平滑失败：old_weights 在 CPU、global_weights 在 GPU → ✅ 已修复
 ```
 
 ---

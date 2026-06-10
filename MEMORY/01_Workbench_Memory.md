@@ -15,8 +15,11 @@
 |------|------|------|
 | `fl_core.py` | `learnable_keys` 白名单过滤，只对可学习参数做动量，跳过 BN `running_mean`/`running_var` | ✅ 已修复 |
 | `fl_core.py` | BN running_var debug 日志监控 | ✅ 已合入 |
+| `fl_core.py` | 设备统一：old_weights (CPU) 与 global_weights (GPU) 统一到 gw_dev 后再做 delta | ✅ 已修复 |
 
 **根因**：FedAvgM 对所有 floating_point tensor（包括 BN buffer）做 `buf = 0.9 * buf + delta`，导致 running_var 持续压缩至趋近 0，BN 前向输出全为 0，mAP=0。
+
+**次生问题**：Round 1 FedAvgM 失败（设备不匹配：old_weights 在 CPU、global_weights 在 GPU），导致 Round 1 实际上没有动量平滑。已在设备统一修复后解决。
 
 **分析报告**：`MEMORY/fedavgm_bn_bug_analysis.md`（Kimi agent 产出）
 
