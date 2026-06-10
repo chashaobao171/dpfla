@@ -203,13 +203,6 @@ class YOLOWrapper(nn.Module):
                 new_head.bias_init()
                 self.model.model[-1] = new_head
                 logger.info(f'✓ 检测头已替换: nc {head.nc} → {num_classes}（骨干仍为 COCO 预训练）')
-                # 重置 BN 统计量：COCO 预训练的 running_mean/var 对 VisDrone 不适用，
-                # 强制让 BN 在训练开始后用本地数据重新统计
-                for module in self.model.modules():
-                    if isinstance(module, (nn.BatchNorm2d, nn.SyncBatchNorm)):
-                        module.reset_running_stats()
-                        module.train()
-                logger.debug('✓ 已重置所有 BN 统计量（running_mean/var）并切换为 train 模式')
             elif isinstance(head, Detect):
                 logger.info(f'✓ 检测头 nc={head.nc} 已与 num_classes={num_classes} 一致，跳过替换')
             

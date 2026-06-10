@@ -252,7 +252,7 @@ class Client():
                 self.local_data,
                 self.local_bs,
                 shuffle=True,
-                drop_last=False,
+                drop_last=True,  # 丢弃最后一个不完整 batch，避免 BN 用极小样本计算异常统计量
                 collate_fn=detection_collate_fn,
                 num_workers=num_workers,
                 pin_memory=pin_memory,
