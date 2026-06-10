@@ -495,6 +495,13 @@ class Client():
         # 训练完成
         logger.info(f'✅ {self.client_pseudonym} 训练完成！总损失: {np.mean(epoch_loss):.4f}')
 
+        # 梯度累加后除以总 batch 数，得到平均梯度（DPFLA SVD 分析依赖此尺度）
+        total_steps = len(train_loader) * epochs
+        if total_steps > 0 and client_grad:
+            for name in client_grad:
+                client_grad[name] = client_grad[name] / total_steps
+            logger.debug(f'  → 梯度已平均化（除以 {total_steps} 个总步数）')
+
         # 强化版标签翻转攻击：梯度大幅放大后上传
         # 原理：在返回 state_dict 前，将恶意更新的幅度乘以大系数
         # 效果：等效提升恶意端在 FedAvg 中的影响力，打破 7:3 的压制

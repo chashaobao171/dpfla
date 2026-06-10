@@ -7,27 +7,19 @@
 
 ---
 
-## §当前进度（2026-06-10）
+## §当前进度（2026-06-10 下午）
 
-### 核心问题：fl_core.py val bug
+### Bug 1+2+3 已修复
 
-`fl_core.py` 的子进程 YOLO val 存在 ultralytics 内部机制冲突，导致每次 val 返回 0%，**无法用于判断基线质量**。
+| Bug | 文件 | 修复 | 状态 |
+|-----|------|------|------|
+| val 子进程检测头错乱 | `fl_core.py` | torch.save(state_dict+nc/names) + 子进程动态替换 Detect 头 | ✅ 已修复并验证 |
+| 梯度未平均 | `client.py` | 训练后 client_grad /= total_batches | ✅ 已修复并验证 |
+| BN 聚合 num_batches_tracked | `fed_avg.py` | max() 替代直接取第一个 | ✅ 已修复并验证 |
 
-**根因**：
-1. `fl_core.py` 通过 `model.yolo.save(weights_path)` 导出 pt 文件
-2. 子进程用 `YOLO(weights_path)` 加载并 `val()`
-3. `yolo.save()` 导出的 ultralytics ckpt 格式丢失检测头的 `f` 属性（层索引引用）
-4. 子进程 `val()` 时报错 `AttributeError: 'Detect' object has no attribute 'f'`
-5. 即使绕过崩溃，`names` 仍是 COCO 80 类而非 VisDrone 10 类
-
-**修复方向（任选其一）**：
-1. **回退到子进程方式之前的 val 方案**（最稳妥）
-2. **在 val 子进程里用 visdrone_temp.yaml**，让 ultralytics 自动处理 nc=10，不依赖 `yolo.save()` + `names` 手动设置
-3. **用 `torch.save()` 保存 state_dict**，子进程用 `load_state_dict()` 替代 `YOLO(path)` 加载
-
-**相关文件改动**：
-- `federated_learning/fl_core.py`：`test()` 改用子进程 YOLO val（引入 bug），**必须回退或修复**
-- `federated_learning/models/yolo_wrapper.py`：删除了 `new_head.training = True`（无副作用，可保留）
+**验证结果（100 轮基线，BS=64 EPOCH=3）**：
+- R1: 3.36% → R26-33: ~23.7%，收敛正常
+- TensorBoard 数据已写入：`runs/VisDrone_YOLO_fedavg_attack-no_attack_mr-0.0/`
 
 ### 好配置 vs 差配置对比
 
@@ -280,7 +272,7 @@ runs/VisDrone_YOLO_<rule>_attack-<attack_type>_mr-<malicious_rate>/
 || 日期 | 决策 | 状态 |
 |------|------|------|
 | 2026-06-10 | 配置回退：EPOCH 3→10，BS 16→64，cosine→constant | ✅ 冻结 |
-| 2026-06-10 | fl_core.py val bug，val 返回全 0%，必须修复 | 🔄 进行中 |
+| 2026-06-10 | fl_core.py val bug → Bug 1+2+3 修复完成，100 轮基线 R26-33=~23.7% | ✅ 冻结 |
 | 2026-06-09 | 集中式 oracle ~41% vs 联邦 ~22%，差距 2x | 🔄 进行中 |
 | 2026-06-09 | Mosaic + MixUp 实现完成 | ✅ 合入 |
 | 2026-06-08 | FedBN 对 VisDrone 标签偏斜无效，FedAvg 全程领先 | ✅ 冻结 |
@@ -327,6 +319,7 @@ runs/VisDrone_YOLO_<rule>_attack-<attack_type>_mr-<malicious_rate>/
 2026-06-09  FedAvg 差配置   BS=16 EPOCH=3  LR=5e-4 cosine       → ~14.68% mAP (R30)
 2026-06-10  配置回退        BS=64 EPOCH=10 LR_SCHEDULE=constant   ← 已恢复
 2026-06-10  YOLOv8s→YOLOv8l 尝试  → FAILED（fl_core.py val bug，mAP=0%）
+2026-06-10  Bug 1+2+3 修复  BS=64 EPOCH=3 100轮 → R26-33=~23.7% ✅
 ```
 
 ---

@@ -188,37 +188,84 @@ class FL:
                 original_device = next(model.parameters()).device
                 with tempfile.TemporaryDirectory() as td:
                     weights_path = os.path.join(td, "tmp_eval.pt")
-                    model.yolo.save(weights_path)
+                    eval_script_path = os.path.join(td, "eval_model.py")
+                    # 直接保存 state_dict + 元信息，避免 model.yolo.save() 丢失 VisDrone 10 类检测头
+                    checkpoint = {
+                        'state_dict': model.state_dict(),
+                        'nc': 10,
+                        'names': {i: name for i, name in enumerate([
+                            'pedestrian', 'people', 'bicycle', 'car', 'van',
+                            'tricycle', 'truck', 'awning-tricycle', 'bus', 'motor'
+                        ])},
+                        'model_size': getattr(model, 'model_size', 's'),
+                    }
+                    torch.save(checkpoint, weights_path)
 
-                    # 说明：直接解析 `yolo val` CLI 文本在 subprocess(capture_output=True) 下可能拿不到输出（stdout/stderr 为空）。
-                    # 为了让指标口径稳定，改用 Ultralytics Python API 并输出 JSON，父进程从 JSON 中读取 mAP@0.5。
-                    import json
-
-                    # 必须生成合法 Python 字面量：CPU 为 device='cpu'，不能写成 device=cpu
                     device_py = "0" if original_device.type == "cuda" else "'cpu'"
-                    py_code = (
-                        "import json; "
-                        "from ultralytics import YOLO; "
-                        f"m=YOLO({weights_path!r}); "
-                        # 显式关闭 Ultralytics 的可视化/保存开关，避免在每次评估时产生日志图片（runs/detect/*）。
-                        f"metrics=m.val(data={yaml_path!r}, imgsz=640, conf=0.001, iou=0.5, augment=False, plots=False, save_json=False, save_txt=False, device={device_py}, verbose=False); "
-                        "res={"
-                        "  'precision': float(metrics.box.mp),"
-                        "  'recall': float(metrics.box.mr),"
-                        "  'mAP50': float(metrics.box.map50),"
-                        "  'mAP50_95': float(metrics.box.map)"
-                        "}; "
-                        "print(json.dumps(res))"
-                    )
 
-                    cmd = ["python3", "-c", py_code]
-                    proc = subprocess.run(cmd, capture_output=True, text=True)
+                    # 写临时脚本：避免多行字符串语法问题
+                    eval_script = f"""
+import json, torch
+from ultralytics import YOLO
+from ultralytics.nn.modules.head import Detect
+import torch.nn as nn
+
+ckpt = torch.load({weights_path!r}, map_location='cpu', weights_only=False)
+m = YOLO(f"yolov8{{ckpt['model_size']}}.pt")
+m.model.eval()
+orig_head = m.model.model[-1]
+
+if isinstance(orig_head, Detect):
+    ch = tuple(orig_head.cv2[i][0].conv.in_channels for i in range(orig_head.nl))
+    new_head = Detect(nc=ckpt['nc'], ch=ch)
+    # 复制原始 Detect 头的全部自定义属性（避免 validator 遍历时 AttributeError）
+    new_head.i = getattr(orig_head, 'i', None)
+    new_head.type = getattr(orig_head, 'type', '')
+    new_head.f = getattr(orig_head, 'f', None)
+    new_head.stride = orig_head.stride
+    new_head.grid = getattr(orig_head, 'grid', [])
+    new_head.anchor_grid = getattr(orig_head, 'anchor_grid', [])
+    new_head.anchors = getattr(orig_head, 'anchors', [])
+    new_head.strides = getattr(orig_head, 'strides', None)
+    m.model.model[-1] = new_head
+
+m.model.load_state_dict(ckpt['state_dict'], strict=False)
+m.model.names = ckpt['names']
+
+metrics = m.val(
+    data={yaml_path!r},
+    imgsz=640,
+    conf=0.001,
+    iou=0.5,
+    augment=False,
+    plots=False,
+    save_json=False,
+    save_txt=False,
+    device={device_py},
+    verbose=False
+)
+res = {{
+    'precision': float(metrics.box.mp),
+    'recall': float(metrics.box.mr),
+    'mAP50': float(metrics.box.map50),
+    'mAP50_95': float(metrics.box.map)
+}}
+print(json.dumps(res))
+"""
+                    with open(eval_script_path, 'w') as f:
+                        f.write(eval_script)
+
+                    proc = subprocess.run(
+                        ["python3", eval_script_path],
+                        capture_output=True, text=True
+                    )
                     out = (proc.stdout or "") + "\n" + (proc.stderr or "")
                     if proc.returncode != 0:
                         raise RuntimeError(f"yolo python val failed (code={proc.returncode}). Output:\n{out[-3000:]}")
 
                     out_clean = (proc.stdout or "").strip()
                     last_line = out_clean.splitlines()[-1] if out_clean else ""
+                    import json
                     try:
                         res = json.loads(last_line)
                     except Exception as je:

@@ -31,9 +31,14 @@ def average_weights(w, marks, float16_floats: bool = False):
             w_avg[key] = v0
             continue
 
-        # 非浮点Tensor：直接取第一个（避免 long/bool 被乘 float）
+        # 非浮点Tensor：按类型分别处理
         if not v0.is_floating_point():
-            w_avg[key] = v0
+            if 'num_batches_tracked' in key:
+                # num_batches_tracked 应取最大值（各客户端见过的 batch 数累计）
+                w_avg[key] = max(w[i][key] for i in range(len(w)))
+            else:
+                # 其他非浮点 buffer（如整数索引等）：直接取第一个
+                w_avg[key] = v0
             continue
 
         # 浮点Tensor：做加权平均
