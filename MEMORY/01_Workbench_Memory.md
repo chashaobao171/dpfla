@@ -7,7 +7,20 @@
 
 ---
 
-## §当前进度（2026-06-10 下午）
+## §当前进度（2026-06-10 傍晚）
+
+### Bug 4：FedAvgM 对 BN buffer 做动量平滑（mAP 崩塌）
+
+| 文件 | 修复 | 状态 |
+|------|------|------|
+| `fl_core.py` | `learnable_keys` 白名单过滤，只对可学习参数做动量，跳过 BN `running_mean`/`running_var` | ✅ 已修复 |
+| `fl_core.py` | BN running_var debug 日志监控 | ✅ 已合入 |
+
+**根因**：FedAvgM 对所有 floating_point tensor（包括 BN buffer）做 `buf = 0.9 * buf + delta`，导致 running_var 持续压缩至趋近 0，BN 前向输出全为 0，mAP=0。
+
+**分析报告**：`MEMORY/fedavgm_bn_bug_analysis.md`（Kimi agent 产出）
+
+---
 
 ### Bug 1+2+3 已修复
 

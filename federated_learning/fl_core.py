@@ -756,18 +756,23 @@ print(json.dumps(res))
                 )
                 logger.info('聚合完成，开始 FedAvgM 动量平滑...')
                 # FedAvgM：服务端动量平滑，加速收敛
+                # 注意：只对可学习参数做动量平滑，跳过 BN buffer（running_mean/running_var）
+                # 原因：FedAvgM 的 delta 是权重更新方向，对统计量做动量会破坏 BN 归一化
+                # 实现：取 simulation_model 的 named_parameters() 作为白名单，与 FedAIoT 逻辑一致
                 try:
                     SERVER_MOMENTUM = 0.9
-                    dev = self.device
+                    learnable_keys = {name for name, _ in simulation_model.named_parameters() if _.requires_grad}
                     keys_in_both = [k for k in global_weights if k in old_weights]
                     keys_missing_from_old = [k for k in global_weights if k not in old_weights]
                     if keys_missing_from_old:
                         logger.warning(f'FedAvgM: 以下 key 在旧权重中不存在，跳过: {keys_missing_from_old[:5]}...')
                     for key in keys_in_both:
+                        # 跳过 BN buffer 等非可学习参数（running_mean/running_var/num_batches_tracked）
+                        if key not in learnable_keys:
+                            continue
                         if not (torch.is_tensor(global_weights[key])
                                 and global_weights[key].is_floating_point()):
                             continue
-                        gw_dev = global_weights[key].device
                         gw_dtype = global_weights[key].dtype
                         if key not in self._server_momentum_buf:
                             self._server_momentum_buf[key] = torch.zeros_like(global_weights[key])
@@ -778,6 +783,14 @@ print(json.dumps(res))
                         buf = SERVER_MOMENTUM * buf + delta
                         self._server_momentum_buf[key] = buf.to(gw_dtype)
                         global_weights[key] = (ow + buf).to(gw_dtype)
+                    # 调试日志：监控 BN 统计量是否正常（未被 FedAvgM 污染）
+                    if keys_in_both:
+                        sample_key = next((k for k in keys_in_both if 'running_var' in k), None)
+                        if sample_key:
+                            rv = global_weights[sample_key]
+                            logger.debug(f'BN running_var sample [{sample_key}]: '
+                                         f'range=[{rv.min():.4f}, {rv.max():.4f}], mean={rv.mean():.4f}, '
+                                         f'std={rv.std():.4f}')
                     logger.info('FedAvgM 动量平滑完成')
                 except Exception as e:
                     logger.error(f'FedAvgM 动量平滑失败: {e}')

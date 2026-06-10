@@ -17,9 +17,9 @@
 2026-06-10  配置回退        BS=64 EPOCH=10 LR_SCHEDULE=constant   ← 已恢复
 2026-06-10  YOLOv8s→YOLOv8l 尝试  → FAILED（fl_core.py val bug，Pretrained mAP=0%）
 2026-06-10  Bug 1+2+3 修复   BS=64 EPOCH=3  LR=2e-4 constant    → R1=3.36% R26-33=~23.7% (100轮基线) ✅
-2026-06-10  FedAvgM 引入     服务端动量平滑，Round 1 失败/BN破坏导致 Round 2-3 mAP 崩塌 ⚠️
+2026-06-10  FedAvgM 引入     服务端动量平滑，Round 1 失败/BN破坏导致 Round 2-3 mAP 崩塌 ⚠️ → ✅ 已修复
 2026-06-10  TB 清理         删除旧 MNIST/fedbn/fedla 实验目录，保留当前实验
-2026-06-10  Round 2-3 mAP 崩塌 → 问题定位：Round 1 FedAvgM 失败 + BN 状态错乱，待 kimi agent 彻查
+2026-06-10  Round 2-3 mAP 崩塌 → Kimi 根因定位：FedAvgM 对 BN buffer 做动量平滑 → ✅ 已修复
 ```
 
 ---
@@ -95,6 +95,25 @@
 **核心**：Round 1 FedAvgM 失败后的 BN 状态异常。参考 `run_no_attack_baseline_20260608_0755.log` 正常（无 FedAvgM），说明问题与 FedAvgM 改动相关。
 
 **待 kimi agent 彻查**：详见 `MEMORY/kimi_prompt_round_collapse.md`。
+
+### 修复方案（2026-06-10 傍晚）
+
+**根因**：FedAvgM 对所有 floating_point tensor 做动量平滑，错误地包含了 BN 的 `running_mean`/`running_var`（buffer），导致这些统计量被持续压缩，BN 输出趋近 0。
+
+**修复**（`fl_core.py:764`）：只对 `simulation_model.named_parameters()` 中的可学习参数做动量平滑，BN buffer 自动跳过。
+
+```python
+# 新增 1 行：构建可学习参数名集合
+learnable_keys = {name for name, _ in simulation_model.named_parameters() if _.requires_grad}
+
+# 新增 1 个跳过条件
+if key not in learnable_keys:
+    continue  # 跳过 BN buffer 等非可学习参数
+```
+
+**验证**：Kimi 分析报告 `MEMORY/fedavgm_bn_bug_analysis.md`。
+
+**额外**：添加 BN running_var debug 日志监控（`fl_core.py:786-793`）。
 
 ### TensorBoard 目录清理记录
 
