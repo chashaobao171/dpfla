@@ -28,7 +28,7 @@ def apply_default_yolo_model_size() -> str:
 
 
 # 4090 默认：学习率不过激，先保证稳定收敛；需要更猛再通过 FL_LOCAL_LR 调大
-LOCAL_LR = float(os.environ.get("FL_LOCAL_LR", "0.01"))      # 2e-4 → 0.01（配合 FedAvgM）
+LOCAL_LR = float(os.environ.get("FL_LOCAL_LR", "0.0002"))    # 0.01 → 0.0002（历史好配置，2e-4）
 LR_MIN = float(os.environ.get("FL_LR_MIN", "5e-6"))
 LR_SCHEDULE = "constant"  # cosine 在 Batch 2 加
 
@@ -37,7 +37,7 @@ NUM_WORKERS = int(os.environ.get("FL_NUM_WORKERS", "10"))
 MALICIOUS_RATE = float(os.environ.get("FL_MALICIOUS_RATE", "0.1"))
 
 GLOBAL_ROUNDS = int(os.environ.get("FL_GLOBAL_ROUNDS", "50"))   # 20 → 50
-LOCAL_EPOCHS = int(os.environ.get("FL_LOCAL_EPOCHS", "1"))     # 10 → 1（高频低深）
+LOCAL_EPOCHS = int(os.environ.get("FL_LOCAL_EPOCHS", "3"))      # 1 → 3（历史好配置）
 TRAIN_BATCH_SIZE = int(os.environ.get("FL_TRAIN_BATCH_SIZE", "64"))
 TEST_BATCH_SIZE = int(os.environ.get("FL_TEST_BATCH_SIZE", "256"))
 CPU_THREADS = int(os.environ.get("FL_CPU_THREADS", "16"))
