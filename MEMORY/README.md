@@ -1,43 +1,48 @@
-# MEMORY 文件索引（必读顺序）
+# MEMORY — 项目记忆包
+
+<!-- 最后更新：2026-10-10 -->
+<!-- 目标：不带错误判断的客观记录。判断必须标注置信度与出处；被推翻的结论进 04_Retracted.md -->
+
+## 使用规则（重要）
+
+本目录的唯一目标是**可核验的客观记录**。所有条目必须遵守下面的标注规约：
+
+| 标注 | 含义 | 硬性要求 |
+|------|------|---------|
+| 【实测】 | 有日志 / 代码 / 命令的直接证据 | 必须附**日期 + 出处**（日志文件名或 `file:line`） |
+| 【推断】 | 基于证据的推断，未直接实测 | 必须显式写"未验证"及推断依据 |
+| 【已证伪】 | 曾写入本记忆、后被推翻 | **必须移入 `04_Retracted.md`**，禁止在被推翻处继续保留旧结论 |
+| 【待定】 | 来源可疑 / 未核验 | 不得作为决策依据 |
+
+**铁律**
+
+1. 没有出处的判断，不得写入 `01_Facts.md`。
+2. 结论被推翻时**不是删掉**，而是移入 `04_Retracted.md` 并记录推翻证据（防止后人再踩）。
+3. `00_Current_State.md` 必须带"最后更新"时间；过期即失效。
+4. 路径 / 数据 / 命令以 `05_Environment.md` 为**唯一事实源**，其它文件只引用、不重复定义。
+5. 禁止在记忆里出现"精确到 100% 确定"式表述——有几分证据说几分话。
+
+## 阅读顺序
 
 ```
-MEMORY/
-├── 00_QuickStart.md          ← 先读这个！新会话第一页（≤5分钟上手）
-├── 01_Workbench_Memory.md    ← 深度工作台记忆（实验记录/故障/冻结决策）
-├── 02_Methods_Reference.md   ← 方法论参考（算法原理/代码骨架/设计决策）
-├── 03_ThirdParty_Skeleton.md ← 第三方参考工程最小骨架（仅供借鉴）
-├── 01_ChangeLog.md           ← 改动历史（每次重大改动追加记录）
-└── 04_GitGuide.md            ← GitHub 日常更新流程（token / 命令速查）
+README.md              ← 先读（规则）
+00_Current_State.md    ← 新会话第一页：现在做到哪、目标、阻塞
+01_Facts.md            ← 事实层：全部实测数据（带日期+出处）
+02_Methods.md          ← 方法原理：DPFLA / FedLA / FedBN / YOLO 集成
+03_History.md          ← 时间线：改动与回退（追加式）
+04_Retracted.md        ← 已证伪结论（防重复踩坑）
+05_Environment.md      ← 环境 / 路径 / 数据 / 冻结红线
+06_Git_Workflow.md     ← Git 与备份流程
+07_ThirdParty.md       ← 第三方参考工程（客观对照，不承载本项目结论）
 ```
 
----
+## 快速定位
 
-## 各文件职责
-
-| 文件 | 目标读者 | 更新频率 |
-|------|---------|---------|
-| `00_QuickStart.md` | 每次新会话第一个打开的文件 | 每次任务变更时更新 |
-| `01_Workbench_Memory.md` | 需要理解历史实验/故障时查阅 | 追加式更新 |
-| `02_Methods_Reference.md` | 理解算法原理/代码设计时查阅 | 结构性更新 |
-| `03_ThirdParty_Skeleton.md` | 迁移第三方工程时查阅 | 一次性建立，后续微调 |
-| `01_ChangeLog.md` | 查看所有历史改动和回退记录 | 追加式更新 |
-| `04_GitGuide.md` | 日常 git 提交/推送参考 | 基本不变 |
-
----
-
-## 快速定位提示
-
-| 需要找什么 | 去哪个文件 |
-|-----------|-----------|
-| 上次做到哪了 | `00_QuickStart.md` → §当前状态 |
-| 核心算法原理 | `02_Methods_Reference.md` → §DPFLA / §YOLO集成 |
-| 实验脚本怎么跑 | `00_QuickStart.md` → §运行命令 |
-| 遇到报错/故障 | `01_Workbench_Memory.md` → §故障字典 |
-| 冻结红线（不能改什么） | `00_QuickStart.md` → §冻结红线 |
-| 路径/数据/环境配置 | `01_Workbench_Memory.md` → §环境配置 |
-| 改动历史/回退记录 | `01_ChangeLog.md` |
-| Git 日常更新流程 | `04_GitGuide.md` |
-| mAP 暴跌根因诊断（完整报告） | `01_Workbench_Memory.md` → §VisDrone mAP 暴跌根因诊断 |
-
-cd /root/chashaobao/DPFLA-master-lastest/DPFLA-master
-FL_ATTACHED=1 python run-test/visdrone/run_no_attack_baseline.py
+| 想找 | 去哪 |
+|------|------|
+| 现在做到哪了 | `00_Current_State.md` |
+| 某条数据可信吗 | `01_Facts.md`（看日期与出处） |
+| 某个方案为什么被否 | `04_Retracted.md` |
+| 跑实验的命令 / 路径 | `05_Environment.md` |
+| 上次改了什么 | `03_History.md` |
+| 第三方工程到底怎么写的 | `07_ThirdParty.md` |
