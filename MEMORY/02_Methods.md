@@ -141,7 +141,9 @@ YOLO 标签格式：`class_id x_center y_center width height`（归一化）。
 | 子进程 YOLO val | 隔离 inference_mode 副作用 | ✅ 可用（非 bug，见 04_Retracted） |
 | FedAvgM / 梯度裁剪 | 模仿 FedAIoT，但借鉴对象错误 | ❌ 已回退，默认关（见 04_Retracted） |
 
-## §Non-IID Client Drift
+## §Non-IID Client Drift（本项目不用，仅存档）
+
+> ⚠️ 2026-10-10 用户明确：**本项目只要 IID，不考虑 Non-IID**。VisDrone 脚本均未设 `dd_type`，走默认 `IID`（`alpha=1e6`）。本节仅作背景存档。
 
 VisDrone 的 Non-IID 是**标签分布偏斜**。FedAvg 在 Non-IID 下客户端梯度方向差异大，简单平均可能互相抵消，停在 loss 死区。
 - FedBN（保 BN 统计量）对标签偏斜无效

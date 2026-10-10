@@ -46,7 +46,7 @@
 |------|------|------|------|
 | 2026-06-09 | Mosaic + MixUp 实现（50%/10%）| `visdrone_dataset.py` | ✅ 合入，效果未单变量验证 |
 | 2026-06-09 | 分层 LR backbone×0.5 / head×2.0 | `client.py` | ✅ 合入 |
-| 2026-06-09 | AMP 混合精度（autocast + GradScaler）| `client.py` | ✅ 合入 |
+| 2026-06-09 | AMP 混合精度（旧记"已完成"）| `client.py` | ⚠️ **与实现不符**：2026-10-10 全仓核查无 `autocast`/`GradScaler`（见 04_Retracted R9）|
 | 2026-06-09 | val conf 0.001 → 0.25（子进程 eval 仍用 0.001）| `fl_core.py` | ✅ 合入 |
 | 2026-06-09 | 差配置诊断：BS16+EPOCH3+cosine → 14.68% | `visdrone_fed_hparams.py` | 已回退 |
 | 2026-06-08 | FedLA 实现完成（`average_weights_fedla()`）| `fl_core.py` | R8=22.49% |

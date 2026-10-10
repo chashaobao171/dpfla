@@ -3,23 +3,27 @@
 <!-- 最后更新：2026-10-10 -->
 <!-- 本文件是路径、数据、命令的唯一事实源；其它记忆文件只引用，不重复定义。 -->
 
-## §1 当前环境（2026-10-10 实测）
+## §1 当前环境（2026-10-10 实测，有卡模式）
 
 | 项 | 值 |
 |----|----|
-| 平台 | autodl 云主机，**无卡模式** |
-| GPU | ❌ 无（`torch.cuda.is_available()=False`、`nvidia-smi` 无设备） |
-| CPU | 1 核（`nproc`=1） |
-| 内存 | 754 GB |
+| 平台 | autodl 云主机，**有卡模式** |
+| GPU | ✅ **NVIDIA GeForce RTX 4080 SUPER 32GB**（driver 595.71.05，compute cap 8.9）|
+| CPU | 12 核（`nproc`=12） |
+| 内存 | 503 GB |
 | 磁盘 | `/root/autodl-tmp` 50G（可用 ~48G） |
-| torch | 2.5.1+cu124（CUDA 运行时存在，但无设备） |
+| torch / CUDA | 2.5.1+cu124 / CUDA 12.4，`cuda.is_available()=True` |
 
-> ⚠️ 无卡 + 1 核 → **本环境只能改代码 / 静态调试，跑不了 YOLO 联邦训练**。实验需切有卡实例。
+> ⚠️ **无卡 vs 有卡差异**：无卡模式为 无 GPU / 1 核 / 754G；有卡模式为上表。切换后需重新确认。
+>
+> ⚠️ **沙箱拦截**：默认沙箱会拦截 `/dev/nvidia*`，导致 `nvidia-smi` 误报 "No devices were found"、`cuda.is_available()=False`。
+> **跑训练/GPU 命令必须用非沙箱模式**，否则 GPU 不可见。
 
 **环境验证命令**
 
 ```bash
-python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+# 期望：2.5.1+cu124  True  NVIDIA GeForce RTX 4080 SUPER
 python -c "from ultralytics import YOLO; print('YOLO OK')"
 nvidia-smi
 ```
@@ -83,10 +87,10 @@ python run-test/visdrone/run_dpfla_label_flipping.py
 tensorboard --logdir runs/ --port 6006
 ```
 
-- 默认 `nohup` 脱壳（关终端仍跑）；前台实时加 `FL_ATTACHED=1`。
+- 默认 `nohup` 脱壳（关终端仍跑）；前台实时加 `FL_ATTACHED=1`；**tmux 启动脚本**：`./scripts/run_fl_tmux.sh <实验名> [ENV=VAL...]`（实时日志 + 断网不影响）。
 - 日志：`logs_3/visdrone/<tag>_<北京时间>.log`；曲线：`runs/VisDrone_YOLO_<rule>_attack-<attack>_mr-<rate>/`
 
-**常用环境变量覆盖**：`YOLO_MODEL_SIZE`、`FL_GLOBAL_ROUNDS`、`FL_LOCAL_EPOCHS`、`FL_TRAIN_BATCH_SIZE`、`FL_NUM_WORKERS`、`FL_LOCAL_LR`、`FL_SERVER_MOMENTUM`(默认0)、`FL_GRAD_CLIP`(默认0)。
+**常用环境变量覆盖**：`YOLO_MODEL_SIZE`、`FL_IMG_SIZE`(默认640，训练+评估口径)、`FL_GLOBAL_ROUNDS`、`FL_LOCAL_EPOCHS`、`FL_TRAIN_BATCH_SIZE`、`FL_NUM_WORKERS`、`FL_LOCAL_LR`、`FL_SERVER_MOMENTUM`(默认0)、`FL_GRAD_CLIP`(默认0)。
 
 ## §5 冻结红线（禁止擅改）
 
@@ -97,6 +101,7 @@ tensorboard --logdir runs/ --port 6006
 5. **基线配置（以当前代码为准，见 01_Facts §6）**：`TRAIN_BATCH_SIZE=64`、`LOCAL_EPOCHS=3`、`LOCAL_LR=2e-4`、`LR_SCHEDULE=constant`。禁用 cosine。
    > 历史记录里曾出现 `LOCAL_EPOCHS=10` 的"好配置"表述，但实测达到 R26-33≈23.7% 的 100 轮基线用的是 **EPOCH=3**；两者不冲突（BS=64 下 EPOCH=3 即可收敛）。
 6. **单变量原则**：任何实验一次只改一个变量（87e3f7a 的教训）。
+7. **数据分布固定 IID**：脚本不设 `dd_type`，走默认 `IID`（`arguments.py:58`）；**不考虑 Non-IID**（2026-10-10 用户确认）。
 
 > 注：旧版"红线第 7 条：fl_core.py val bug"已删除——该结论已证伪，见 `04_Retracted.md` R2。
 

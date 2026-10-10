@@ -403,6 +403,12 @@ class Client():
         else:
             optimizer = PerturbedGradientDescent(model.parameters(), lr=lr, mu=0.001)
 
+        # AMP 混合精度（env 门控，默认关 → 历史基线口径不变）
+        # 作用：显存约减半，是 1024 高分辨率的必要条件（纯 fp32 在 32GB 上会 OOM）
+        # 启用：export FL_AMP=1
+        use_amp = (os.environ.get('FL_AMP', '0').strip() == '1') and ('cuda' in str(self.device).lower())
+        amp_scaler = torch.cuda.amp.GradScaler(enabled=use_amp) if use_amp else None
+
         model.train()
         epoch_loss = []
         client_grad = {}  # 使用字典而不是列表
@@ -455,14 +461,21 @@ class Client():
                 # 对于VisDrone，传递targets给模型以使用YOLO内置训练
                 if dataset_name == 'VisDrone':
                     # YOLO模型在训练模式下会直接返回损失
-                    loss, features = model(data, return_features=True, targets=target)
+                    if use_amp:
+                        with torch.autocast(device_type='cuda', dtype=torch.float16):
+                            loss, features = model(data, return_features=True, targets=target)
+                    else:
+                        loss, features = model(data, return_features=True, targets=target)
                     # 不需要再调用criterion，loss已经是YOLO原生损失
                 else:
                     output, features = model(data, return_features=True)
                     # 计算损失
                     loss = self.criterion(output, target)
 
-                loss.backward()
+                if amp_scaler is not None:
+                    amp_scaler.scale(loss).backward()
+                else:
+                    loss.backward()
                 epoch_loss.append(loss.item())
                 # get gradients - 使用字典而不是列表，避免索引问题
                 cur_time = time.time()
@@ -477,9 +490,15 @@ class Client():
                     # 历史教训：max_norm=10.0 恒开启后，同初始状态第 1 个 epoch 训练损失 705→1010，收敛大幅变慢
                     # 如需启用：export FL_GRAD_CLIP=10.0
                     clip_max_norm = float(os.environ.get('FL_GRAD_CLIP', '0') or 0)
+                    if amp_scaler is not None:
+                        amp_scaler.unscale_(optimizer)  # AMP：裁剪前需先反缩放
                     if clip_max_norm > 0:
                         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=clip_max_norm)
-                    optimizer.step()
+                    if amp_scaler is not None:
+                        amp_scaler.step(optimizer)
+                        amp_scaler.update()
+                    else:
+                        optimizer.step()
                 model.zero_grad()
                 optimizer.zero_grad()
 

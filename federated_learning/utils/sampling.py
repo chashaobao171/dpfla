@@ -190,14 +190,18 @@ def get_visdrone(root_path=None):
         else:
             root_path = 'D:/Pycharmworkplace/visdrone'
 
+    # 输入分辨率（单变量实验开关）：FL_IMG_SIZE，默认 640（= 历史基线口径，行为不变）
+    # 训练与评估共用此值，保证口径一致
+    img_size = int(os.environ.get('FL_IMG_SIZE', '640'))
+
     # 如果根目录是 YOLO 格式（images/labels），就直接使用 YOLO loader
     if os.path.exists(os.path.join(root_path, 'images')) and os.path.exists(os.path.join(root_path, 'labels')):
-        trainset = get_yolo_visdrone_dataset(root_path=root_path, split='train', img_size=640)
-        testset = get_yolo_visdrone_dataset(root_path=root_path, split='val', img_size=640)
+        trainset = get_yolo_visdrone_dataset(root_path=root_path, split='train', img_size=img_size)
+        testset = get_yolo_visdrone_dataset(root_path=root_path, split='val', img_size=img_size)
     else:
         # 否则回退到原始 VisDrone 目录结构（VisDrone2019-DET-*/）
-        trainset = get_visdrone_dataset(root_path=root_path, split='train', img_size=640)
-        testset = get_visdrone_dataset(root_path=root_path, split='val', img_size=640)
+        trainset = get_visdrone_dataset(root_path=root_path, split='train', img_size=img_size)
+        testset = get_visdrone_dataset(root_path=root_path, split='val', img_size=img_size)
     return trainset, testset
 
 

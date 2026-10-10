@@ -80,3 +80,12 @@
 - **来源**：`05_FedAIoT_Reference_Report.md`（agent 产出，且该报告已因 R1 被证伪）。
 - **状态**：**未从一手来源核验**。
 - **正确处理**：不得作为决策依据。若需引用，须先跑通/核验 FedAIoT 的原始实验。
+
+---
+
+## R9【已证伪】"AMP 混合精度（autocast + GradScaler）已合入训练循环"
+
+- **原结论**：旧 ChangeLog / 新 `03_History.md` 记 `client.py` 已合入 AMP。
+- **推翻证据**：2026-10-10 全仓核查（排除 `FedAIoT-main/`）：`grep -rn "autocast|GradScaler|ModelEMA"` **零命中**；[client.py](file:///root/chashaobao/DPFLA-master/federated_learning/client.py) 训练循环为纯 fp32 `loss.backward(); optimizer.step()`。
+- **正确处理**：VisDrone 训练循环**没有 AMP、没有 EMA、没有 LR scheduler**。旧记载与实现不符，不得据其推断"已启用混合精度"。
+

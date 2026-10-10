@@ -206,6 +206,9 @@ class FL:
 
                     device_py = "0" if original_device.type == "cuda" else "'cpu'"
 
+                    # 输入分辨率：与训练口径一致（FL_IMG_SIZE，默认 640）
+                    img_sz = int(os.environ.get('FL_IMG_SIZE', '640'))
+
                     # 写临时脚本：避免多行字符串语法问题
                     eval_script = f"""
 import json, torch
@@ -237,7 +240,7 @@ m.model.names = ckpt['names']
 
 metrics = m.val(
     data={yaml_path!r},
-    imgsz=640,
+    imgsz={img_sz},
     conf=0.001,
     iou=0.5,
     augment=False,
