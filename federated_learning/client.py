@@ -252,7 +252,7 @@ class Client():
                 self.local_data,
                 self.local_bs,
                 shuffle=True,
-                drop_last=True,  # 丢弃最后一个不完整 batch，避免 BN 用极小样本计算异常统计量
+                drop_last=False,  # 回退到 mAP 23.7% 基线口径（9b3169d）；如遇 BN 小 batch 异常可改 True
                 collate_fn=detection_collate_fn,
                 num_workers=num_workers,
                 pin_memory=pin_memory,
@@ -473,7 +473,12 @@ class Client():
                 if isinstance(optimizer, PerturbedGradientDescent):
                     optimizer.step(server_model.parameters(), self.device)
                 else:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
+                    # 梯度裁剪：默认关闭（对齐 mAP 23.7% 基线口径 9b3169d，无裁剪）
+                    # 历史教训：max_norm=10.0 恒开启后，同初始状态第 1 个 epoch 训练损失 705→1010，收敛大幅变慢
+                    # 如需启用：export FL_GRAD_CLIP=10.0
+                    clip_max_norm = float(os.environ.get('FL_GRAD_CLIP', '0') or 0)
+                    if clip_max_norm > 0:
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=clip_max_norm)
                     optimizer.step()
                 model.zero_grad()
                 optimizer.zero_grad()
@@ -498,10 +503,14 @@ class Client():
         if (attack_type == 'label_flipping'
                 and self.client_type == 'attacker'
                 and attacked == 1):
-            GRADIENT_SCALE = 15.0  # 放大倍数，需足够大使恶意信号超过诚实端（30%*15 > 70%）
+            # 放大倍数可通过环境变量覆盖（默认 15）；CIFAR 等不稳定模型可调小避免数值爆炸
+            GRADIENT_SCALE = float(os.environ.get('FL_GRADIENT_SCALE', '15.0'))
             global_weights = global_model_snapshot.state_dict()
             with torch.no_grad():
                 for key in model.state_dict():
+                    # 跳过 BN 统计量：running_var 被放大可能变负，前向传播 sqrt(负数) 产生 NaN
+                    if 'running_mean' in key or 'running_var' in key or 'num_batches_tracked' in key:
+                        continue
                     if model.state_dict()[key].is_floating_point():
                         delta = model.state_dict()[key].float() - global_weights[key].float()
                         model.state_dict()[key].copy_(

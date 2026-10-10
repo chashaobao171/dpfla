@@ -37,6 +37,9 @@ python run-test/cifar10/run_dpfla_label_flipping.py
 ```bash
 python run-test/visdrone/run_no_attack_baseline.py
 python run-test/visdrone/run_dpfla_label_flipping.py
+FL_ATTACHED=1 python run-test/visdrone/run_no_attack_baseline.py
+(FL_ATTACHED=1 的作用是 禁用nohup，使能实时查看命令行，但关闭终端后实验也中断)
+
 ```
 
 ---

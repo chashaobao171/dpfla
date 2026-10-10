@@ -89,7 +89,7 @@ class YOLOWrapper(nn.Module):
     - 添加虚拟fc2层以兼容DPFLA算法
     """
     
-    def __init__(self, model_size='n', num_classes=10, pretrained=True, model_path=None):
+    def __init__(self, model_size='s', num_classes=10, pretrained=True, model_path=None):
         """
         初始化YOLO封装类
         

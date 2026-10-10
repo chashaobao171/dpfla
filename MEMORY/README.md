@@ -38,3 +38,6 @@ MEMORY/
 | 改动历史/回退记录 | `01_ChangeLog.md` |
 | Git 日常更新流程 | `04_GitGuide.md` |
 | mAP 暴跌根因诊断（完整报告） | `01_Workbench_Memory.md` → §VisDrone mAP 暴跌根因诊断 |
+
+cd /root/chashaobao/DPFLA-master-lastest/DPFLA-master
+FL_ATTACHED=1 python run-test/visdrone/run_no_attack_baseline.py
