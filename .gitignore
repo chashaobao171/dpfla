@@ -18,6 +18,10 @@ cache/
 visdrone_temp*.yaml
 *.log
 
+# 例外：归档的合格日志要进仓库（供跨主机同步与对外引用）
+!log/
+!log/**/*.log
+
 # Data (large, download separately)
 data/
 
