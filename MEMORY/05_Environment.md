@@ -1,6 +1,6 @@
 # 05_Environment.md — 环境 / 路径 / 数据 / 冻结红线
 
-<!-- 最后更新：2026-10-10 -->
+<!-- 最后更新：2026-10-14 -->
 <!-- 本文件是路径、数据、命令的唯一事实源；其它记忆文件只引用，不重复定义。 -->
 
 ## §1 两台主机（以 autodl 控制台为准，2026-10-13 核实）
@@ -43,6 +43,7 @@ nvidia-smi
 | CIFAR10 | `/root/autodl-tmp/data/cifar-10-batches-py` |
 | 文档 / 对比图 | 项目根 `docs/`（`visdrone_fl_research_report.md`、`cifar_compare.png`、`mnist_compare.png`） |
 | 历史日志 | 项目根 `logs_3/`（含 `demo_out.log`、`visdrone_all.log`、`oracle_1ep_*.log`） |
+| **TensorBoard 曲线** | 项目根 **`tb/`**（**受 git 跟踪 → 跨主机留存**）；本机镜像 `/root/tf-logs/`（仓库外，不跨机）|
 
 **实测数量**：train 图 6471 张 / val 图 548 张（均含 10 类原始标注）。
 
@@ -85,14 +86,16 @@ python run-test/visdrone/run_no_defense_label_flipping.py
 # DPFLA 防御（DPFLA + 标签翻转）—— 核心实验
 python run-test/visdrone/run_dpfla_label_flipping.py
 
-# TensorBoard
-tensorboard --logdir runs/ --port 6006
+# TensorBoard（曲线目录 tb/，受 git 跟踪，可跨主机）
+tensorboard --logdir tb/ --port 6006
 ```
 
 - 默认 `nohup` 脱壳（关终端仍跑）；前台实时加 `FL_ATTACHED=1`；**tmux 启动脚本**：`./scripts/run_fl_tmux.sh <实验名> [ENV=VAL...]`（实时日志 + 断网不影响）。
-- 日志：`logs_3/visdrone/<tag>_<北京时间>.log`；曲线：`runs/VisDrone_YOLO_<rule>_attack-<attack>_mr-<rate>/`
+- 日志：`logs_3/visdrone/<tag>_<北京时间>.log`；**曲线：`tb/<dataset>_<model>_<rule>_attack-<attack>_mr-<rate>_yolov8<size>_img<res>_<运行时间戳>/`**
+  - 命名规则（`fl_core.py:636-652`，2026-10-14 起生效）：含 **模型大小 + 分辨率 + 时间戳** → **每次运行独立目录**，TensorBoard 中互不混淆；目录写在 **`tb/`**（纳 git）与 `/root/tf-logs/`（本机镜像）
+  - ⚠️ 旧命名（`runs/VisDrone_YOLO_<rule>_attack-<attack>_mr-<rate>/`）**不含分辨率/模型/时间戳**，故 10-10 与 10-13 两次运行**同名混在一起**；旧 `runs/` 仍被 gitignore，仅本机可见
 
-**常用环境变量覆盖**：`YOLO_MODEL_SIZE`、`FL_IMG_SIZE`(默认640，训练+评估口径)、`FL_GLOBAL_ROUNDS`、`FL_LOCAL_EPOCHS`、`FL_TRAIN_BATCH_SIZE`、`FL_NUM_WORKERS`、`FL_LOCAL_LR`、`FL_SERVER_MOMENTUM`(默认0)、`FL_GRAD_CLIP`(默认0)。
+**常用环境变量覆盖**：`YOLO_MODEL_SIZE`、`FL_IMG_SIZE`(默认640，训练+评估口径)、`FL_GLOBAL_ROUNDS`、`FL_LOCAL_EPOCHS`、`FL_TRAIN_BATCH_SIZE`、`FL_NUM_WORKERS`、`FL_LOCAL_LR`、`FL_SERVER_MOMENTUM`(默认0)、`FL_GRAD_CLIP`(默认0)、`FL_FLIP_RATIO`(默认0.3，标签翻转的实例比例；1.0=全翻)。
 
 ## §5 冻结红线（禁止擅改）
 

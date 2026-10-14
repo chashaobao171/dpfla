@@ -634,16 +634,19 @@ print(json.dumps(res))
         mapping = {'honest': 'Good update', 'attacker': 'Bad update'}
 
         # TensorBoard 可视化：写入两个目录
-        # 1. runs/ - 本地工程目录（已有）
-        # 2. /root/tf-logs/ - AutoDL 平台监控目录
-        log_dir_local = os.path.join(
-            "runs",
-            f"{self.dataset_name}_{self.model_name}_{rule}_attack-{attack_type}_mr-{self.attackers_ratio}"
+        # 1. tb/            - 工程内，**纳入 git 跟踪** → 曲线可跨主机留存
+        # 2. /root/tf-logs/ - AutoDL 平台监控目录（仅本机，仓库外）
+        # 命名含 模型大小 / 分辨率 / 运行时间戳 → 每次运行独立目录，TensorBoard 中互不混淆
+        _env_size = (os.environ.get("YOLO_MODEL_SIZE") or "").strip().lower()
+        _size_tag = f"yolov8{_env_size}_" if _env_size in ("n", "s", "m", "l", "x") else ""
+        _img_sz = int(os.environ.get("FL_IMG_SIZE", "640"))
+        _run_ts = time.strftime("%Y%m%d_%H%M")
+        run_name = (
+            f"{self.dataset_name}_{self.model_name}_{rule}_attack-{attack_type}"
+            f"_mr-{self.attackers_ratio}_{_size_tag}img{_img_sz}_{_run_ts}"
         )
-        log_dir_autodl = os.path.join(
-            "/root/tf-logs",
-            f"{self.dataset_name}_{self.model_name}_{rule}_attack-{attack_type}_mr-{self.attackers_ratio}"
-        )
+        log_dir_local = os.path.join("tb", run_name)
+        log_dir_autodl = os.path.join("/root/tf-logs", run_name)
         os.makedirs(log_dir_autodl, exist_ok=True)
         writer_local = SummaryWriter(log_dir=log_dir_local)
         writer_autodl = SummaryWriter(log_dir=log_dir_autodl)

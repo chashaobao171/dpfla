@@ -1,6 +1,6 @@
 # 04_Retracted.md — 已证伪 / 已推翻的结论
 
-<!-- 最后更新：2026-10-10 -->
+<!-- 最后更新：2026-10-14 -->
 <!-- 目的：本记忆包历史上出现过错误结论。此文件集中记录，禁止再次作为决策依据。 -->
 <!-- 规则：每条写清 原结论 → 出处 → 推翻证据 → 正确处理。 -->
 
@@ -88,4 +88,30 @@
 - **原结论**：旧 ChangeLog / 新 `03_History.md` 记 `client.py` 已合入 AMP。
 - **推翻证据**：2026-10-10 全仓核查（排除 `FedAIoT-main/`）：`grep -rn "autocast|GradScaler|ModelEMA"` **零命中**；[client.py](file:///root/chashaobao/DPFLA-master/federated_learning/client.py) 训练循环为纯 fp32 `loss.backward(); optimizer.step()`。
 - **正确处理**：VisDrone 训练循环**没有 AMP、没有 EMA、没有 LR scheduler**。旧记载与实现不符，不得据其推断"已启用混合精度"。
+  - 补充（2026-10-14）：`FL_AMP=1` 门控版 AMP **已由本会话加入**（默认关），见 `05_Environment.md`。
+
+---
+
+## R10【已证伪】"本项目标签翻转攻击没有梯度放大"（agent 自查误判）
+
+- **原结论**：2026-10-14 我（agent）核查后断言"**梯度放大根本没有启用**——`EnhancedLabelFlipAttack`（`GRADIENT_FACTOR=3.0`）只存在于定义文件，全仓无 import/调用"。
+- **推翻证据**：
+  - 该次核查**只查了 `enhanced_label_flip_attack.py`，漏掉了 `client.py` 里的内联实现**。
+  - [client.py:522-543](file:///root/chashaobao/DPFLA-master/federated_learning/client.py#L522-L543)：`attack_type=='label_flipping' and client_type=='attacker' and attacked==1` 时，把本地更新 `delta` 乘 **`FL_GRADIENT_SCALE`（默认 15.0）** 后上传（跳过 BN 统计量）。
+  - 日志实锤：`⚠️ Client 3 强化攻击：梯度放大 ×15.0 已执行`（2026-10-14 三次运行均出现；无攻击基线 0 次）。
+  - 全仓 `FL_GRADIENT_SCALE` 只在 `client.py:529` 出现，**无任何脚本设置它** → 一直生效、一直是 15×。
+- **正确处理**：本项目标签翻转攻击**默认带 15× 梯度放大**（`EnhancedLabelFlipAttack` 是另一套、确实未用，但不代表没有放大）。**不要改代码默认值**（历史 MNIST/CIFAR 实验也带 ×15，改了会破坏可复现性）；需要调弱时用环境变量 `FL_GRADIENT_SCALE=1`（= 纯数据投毒）。
+
+---
+
+## R11【已证伪】"降低 flip_ratio（投毒量）能调弱攻击强度"
+
+- **原结论**：2026-10-14，为把实验②（攻击+无防御）从"R1 崩溃"救回来，引入 `flip_ratio`（只翻源类实例的一部分），并从 `1.0` 降到 `0.1`。
+- **推翻证据**：
+  - `flip_ratio=1.0`：R1 mAP **0.00%**、测试损失 **9412.6**（未训练时 902，无攻击基线 R1 为 21.21%/损失 295）。
+  - `flip_ratio=0.1`（投毒量降 10 倍，日志已验证 class1 剩余 18/20、class9 仅 +2）：R1 仍 **0.00%**、损失 **10866.9**，**无改善**。
+  - 原因：放大（×15）发生在**本地训练之后、上传之前**，与投毒**数量**无关 → 决定破坏力的是放大倍数，不是翻转比例。
+- **正确处理**：调强度**优先用 `FL_GRADIENT_SCALE`**；`flip_ratio` 仅在去掉放大后用于细调。`flip_ratio` 参数本身保留（默认 1.0，向后兼容）。
+
+> ⚠️ **R11 附带教训**：一次崩坏不能只看"投入多少"，要确认**伤害发生在链条的哪一步**（本例发生在聚合前的放大，而非本地训练）。
 

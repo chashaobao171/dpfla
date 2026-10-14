@@ -50,14 +50,12 @@ _yolo_sz = apply_default_yolo_model_size()
 
 # 可调：与 run_no_attack_baseline / run_no_defense 共用 visdrone_fed_hparams；若 OOM 可 export FL_TRAIN_BATCH_SIZE / YOLO_MODEL_SIZE
 
-# 弱攻击但仍能对 FedAvg 产生轻微拖累（行为率过低则两边接近、难分防御收益）
 NUM_CLASSES = 10
-HIGH_FREQ_POOL = [0, 1, 2]
-LOW_FREQ_TARGET_POOL = [9]
-PICK_FROM_HIGH = 1
-PICK_FROM_OTHERS = 0
-DYNAMIC_SEED = 42
-MALICIOUS_BEHAVIOR_RATE = 0.26
+# 单标签反转：固定「一个源类 → 一个目标类」，保证实验②/③口径完全一致且可复现
+SOURCE_CLASS = 1        # people（高频类）
+TARGET_CLASS = 9        # motor（稀有类）
+MALICIOUS_BEHAVIOR_RATE = 1.0   # 100%：每个恶意客户端每轮必发动
+FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "0.3"))   # 被翻实例比例（<1 用于调弱攻击；1.0=全翻）
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -99,7 +97,7 @@ print(f"- 设备: {device}")
 print(f"- train_bs={TRAIN_BATCH_SIZE}, test_bs={TEST_BATCH_SIZE}, cpu_threads={CPU_THREADS}")
 print(f"- 学习率: LOCAL_LR={LOCAL_LR}, LR_MIN={LR_MIN}, schedule={LR_SCHEDULE}")
 print(f"- 恶意行为率(单轮是否发动): {MALICIOUS_BEHAVIOR_RATE:.2f}")
-print(f"- 动态映射: 弱（高频池 {HIGH_FREQ_POOL}, pick_high={PICK_FROM_HIGH}, others={PICK_FROM_OTHERS}）")
+print(f"- 单标签反转: {SOURCE_CLASS} -> {TARGET_CLASS}（翻转比例 {FLIP_RATIO:.2f}）")
 print("\n对照目标（同攻击、同超参，仅聚合规则不同）:")
 print("- 期望 FedAvg 仍略受攻击影响；DPFLA mAP 高于 FedAvg（如 +2% 点差为常见汇报方式）")
 print("- 绝对 mAP 能否到 30% 取决于任务与数据，本脚本不保证")
@@ -118,18 +116,10 @@ try:
         attack_type="label_flipping",
         rule="DPFLA",
         replace_method={
-            "mode": "dynamic_round_highfreq",
-            "num_classes": NUM_CLASSES,
-            "high_freq_pool": HIGH_FREQ_POOL,
-            "low_freq_target_pool": LOW_FREQ_TARGET_POOL,
-            "pick_from_high": PICK_FROM_HIGH,
-            "pick_from_others": PICK_FROM_OTHERS,
-            "rotate_target_each_round": False,
-            "flip_all_visible_classes": False,
-            "expand_target_pool_with_non_source": False,
-            "seed": DYNAMIC_SEED,
-            "source_class": 1,
-            "target_class": LOW_FREQ_TARGET_POOL[0],
+            "mapping": {SOURCE_CLASS: TARGET_CLASS},
+            "source_class": SOURCE_CLASS,
+            "target_class": TARGET_CLASS,
+            "flip_ratio": FLIP_RATIO,
         },
         dataset={"dataset_name": "VisDrone", "model_name": "YOLO"},
         malicious_rate=MALICIOUS_RATE,

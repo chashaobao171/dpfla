@@ -45,12 +45,11 @@ from visdrone_fed_hparams import (
 _yolo_sz = apply_default_yolo_model_size()
 
 NUM_CLASSES = 10
-HIGH_FREQ_POOL = [0, 1, 2]
-LOW_FREQ_TARGET_POOL = [9]
-PICK_FROM_HIGH = 1
-PICK_FROM_OTHERS = 0
-DYNAMIC_SEED = 42
-MALICIOUS_BEHAVIOR_RATE = 0.26
+# 单标签反转：固定「一个源类 → 一个目标类」，保证实验②/③口径完全一致且可复现
+SOURCE_CLASS = 1        # people（高频类）
+TARGET_CLASS = 9        # motor（稀有类）
+MALICIOUS_BEHAVIOR_RATE = 1.0   # 100%：每个恶意客户端每轮必发动
+FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "0.3"))   # 被翻实例比例（<1 用于调弱攻击；1.0=全翻）
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -82,9 +81,7 @@ from server import run_exp
 print("=" * 70)
 print("VisDrone：标签翻转攻击 + 无防御（FedAvg）")
 print("=" * 70)
-print(f"\n动态策略种子: {DYNAMIC_SEED}")
-print(f"- 高频池: {HIGH_FREQ_POOL}")
-print(f"- 目标类池(低频): {LOW_FREQ_TARGET_POOL}")
+print(f"- 单标签反转: {SOURCE_CLASS} -> {TARGET_CLASS}（翻转比例 {FLIP_RATIO:.2f}）")
 print("\n配置:")
 print(f"- {NUM_WORKERS} 客户端，恶意率 {MALICIOUS_RATE * 100:.0f}%")
 print("- 攻击类型: 标签翻转攻击 (label_flipping)")
@@ -105,18 +102,10 @@ try:
         attack_type="label_flipping",
         rule="fedavg",
         replace_method={
-            "mode": "dynamic_round_highfreq",
-            "num_classes": NUM_CLASSES,
-            "high_freq_pool": HIGH_FREQ_POOL,
-            "low_freq_target_pool": LOW_FREQ_TARGET_POOL,
-            "pick_from_high": PICK_FROM_HIGH,
-            "pick_from_others": PICK_FROM_OTHERS,
-            "rotate_target_each_round": False,
-            "flip_all_visible_classes": False,
-            "expand_target_pool_with_non_source": False,
-            "seed": DYNAMIC_SEED,
-            "source_class": 1,
-            "target_class": LOW_FREQ_TARGET_POOL[0],
+            "mapping": {SOURCE_CLASS: TARGET_CLASS},
+            "source_class": SOURCE_CLASS,
+            "target_class": TARGET_CLASS,
+            "flip_ratio": FLIP_RATIO,
         },
         dataset={"dataset_name": "VisDrone", "model_name": "YOLO"},
         malicious_rate=MALICIOUS_RATE,

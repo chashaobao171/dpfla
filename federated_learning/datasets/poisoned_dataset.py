@@ -3,12 +3,14 @@ from torch.utils import data
 
 
 class PoisonedDataset(data.Dataset):
-    def __init__(self, dataset, source_class=None, target_class=None, mapping=None):
+    def __init__(self, dataset, source_class=None, target_class=None, mapping=None, flip_ratio=1.0):
         self.dataset = dataset
         self.source_class = source_class
         self.target_class = target_class
         # mapping: dict[int,int]，支持多类别翻转（例如 {1:7,2:7,3:7}）
         self.mapping = mapping
+        # flip_ratio: 被翻实例的比例（1.0 = 全翻，保持历史行为；<1 只翻一部分，用于调弱攻击）
+        self.flip_ratio = float(flip_ratio)
 
     def __getitem__(self, index):
         x, y = self.dataset[index][0], self.dataset[index][1]
@@ -24,13 +26,23 @@ class PoisonedDataset(data.Dataset):
                 
                 # 将标签按 mapping 翻转（优先）；否则回退到 source_class→target_class
                 if torch.is_tensor(new_labels):
+                    # flip_ratio<1 时只翻一部分实例；按样本 index 定种子 → 跨 epoch 稳定、可复现
+                    flip_sel = None
+                    if self.flip_ratio < 1.0:
+                        g = torch.Generator().manual_seed(12345 + int(index))
+                        flip_sel = torch.rand(new_labels.numel(), generator=g) < self.flip_ratio
+
                     if self.mapping is not None:
                         # 逐类替换（保持向量化）
                         for src, tgt in self.mapping.items():
                             mask = (new_labels == int(src))
+                            if flip_sel is not None:
+                                mask = mask & flip_sel
                             new_labels[mask] = int(tgt)
                     else:
                         mask = (new_labels == self.source_class)
+                        if flip_sel is not None:
+                            mask = mask & flip_sel
                         new_labels[mask] = self.target_class
                 
                 # 返回修改后的target（只翻转 labels，不修改 boxes）

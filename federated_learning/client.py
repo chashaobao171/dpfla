@@ -285,6 +285,9 @@ class Client():
                 if dataset_name != 'IMDB':
                     if label_flip_mapping is not None:
                         # 仅做 labels 翻转（不修改 bbox）
+                        # flip_ratio：被翻实例比例（默认 1.0 = 全翻，向后兼容）
+                        flip_ratio = (float(label_flip_mapping.get("flip_ratio", 1.0))
+                                      if isinstance(label_flip_mapping, dict) else 1.0)
                         if isinstance(label_flip_mapping, dict) and label_flip_mapping.get("mode") == "dynamic_round_highfreq":
                             mapping = self._build_dynamic_label_flip_mapping(global_epoch, label_flip_mapping)
                             logger.info(
@@ -296,11 +299,11 @@ class Client():
                         else:
                             mapping = label_flip_mapping
 
-                        logger.info(f'  → Applying label flipping mapping (size={len(mapping)}): {mapping}')
-                        poisoned_data = label_flipping(self.local_data, mapping=mapping)
+                        logger.info(f'  → Applying label flipping mapping (size={len(mapping)}, flip_ratio={flip_ratio}): {mapping}')
+                        poisoned_data = label_flipping(self.local_data, mapping=mapping, flip_ratio=flip_ratio)
                     else:
-                        logger.info(f'  → Applying label flipping: {source_class} → {target_class}')
-                        poisoned_data = label_flipping(self.local_data, source_class, target_class)
+                        logger.info(f'  → Applying label flipping: {source_class} → {target_class} (flip_ratio={flip_ratio})')
+                        poisoned_data = label_flipping(self.local_data, source_class, target_class, flip_ratio=flip_ratio)
                     
                     # 验证标签是否被修改（仅打印摘要，避免大段 tensor 刷屏）
                     sample_count = min(5, len(poisoned_data))
