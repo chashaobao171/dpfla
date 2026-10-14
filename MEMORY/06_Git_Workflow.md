@@ -1,6 +1,6 @@
 # 06_Git_Workflow.md — Git 与备份流程
 
-<!-- 最后更新：2026-10-10 -->
+<!-- 最后更新：2026-10-14 -->
 
 ## §项目信息
 
@@ -9,23 +9,31 @@
 | GitHub 仓库 | https://github.com/chashaobao171/dpfla |
 | 远址 | `git@github.com:chashaobao171/dpfla.git` |
 | 本地路径 | `/root/chashaobao/DPFLA-master` |
-| 默认分支 | `main`（另有历史 `origin/master`） |
+| `main` | **发布分支**：只在"版本确认可用"时，由**人工手动**推送 |
+| `dev` | **日常工作分支**：改动 / 实验记录**默认推这里**（2026-10-14 起）|
+| `master` | 历史遗留（= 初始提交 `8ef2a47`）|
 
 ## §备份策略（重要）
 
 - **GitHub = 最佳前版本备份**（只存"已确认效果可以"的版本）。
 - **云平台 = 最新工作区**（改代码、调参、跑实验都在这里，允许脏）。
 - **只有认为效果可以了，才一键覆盖 GitHub**，不要边调边推。
+- **分支约定（2026-10-14 起，用户明确）**：
+  - **默认推送 `dev`** —— 日常改动、实验记录都走 dev。
+  - **`main` 只在用户认为"版本可用"时由人工手动推送**，**不作为默认目标**。
 
 ## §一键备份
 
 ```bash
 cd /root/chashaobao/DPFLA-master
-./backup.sh "本次改动说明"     # 不传说明则用时间戳
+./backup.sh "本次改动说明"          # 默认推「当前分支」（日常 = dev）
+./backup.sh "本次改动说明" main     # 推 main 必须显式指定
 ```
 
-`backup.sh` 做的事：`git add -A` → 无改动则退出 → `git commit` → `git pull --rebase origin main` → `git push origin main`。
+`backup.sh` 做的事：`git add -A` → 无改动则退出 → `git commit` → `git pull --rebase origin <分支>` → `git push origin <分支>`；`<分支>` 默认取**当前分支**。
 变基冲突时脚本会中止并提示：`git rebase --abort` 可撤销。
+
+> 2026-10-14 修正：该脚本原先**写死 `origin main`**，会把日常改动推错到 main；现已改为**默认当前分支**。
 
 ## §手动流程（需要更细粒度时）
 
@@ -34,8 +42,8 @@ git status                 # 看改动
 git diff --stat            # 看改了哪些文件
 git add -A
 git commit -m "说明"
-git pull --rebase origin main   # 同步远程
-git push
+git pull --rebase origin dev    # 同步远程（日常为 dev）
+git push origin dev
 ```
 
 ## §.gitignore 规则
