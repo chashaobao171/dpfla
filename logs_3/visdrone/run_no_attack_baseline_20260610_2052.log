@@ -1,0 +1,4 @@
+Detached (nohup, default). Safe to close this terminal.
+Foreground next time: FL_ATTACHED=1 or --attach
+Run to monitor logs:
+tail -f "$(ls -t logs_3/visdrone/run_no_attack_baseline_*.log 2>/dev/null | head -1)"

@@ -48,9 +48,13 @@ git push origin dev
 
 ## §.gitignore 规则
 
-以下**不入库**：`*.pt`（权重）、`logs_*/`、`runs/`、`cache/`、`data/`、`*.log`、`visdrone_temp*.yaml`、`__pycache__/`、`.idea/`、`.kiro/`、`.vscode/`、`.ipynb_checkpoints/`。
+以下**不入库**：`*.pt`（权重）、`runs/`、`cache/`、`data/`、`visdrone_temp*.yaml`、`__pycache__/`、`.idea/`、`.kiro/`、`.vscode/`、`.ipynb_checkpoints/`，以及下面例外之外的 `logs_*/`、`*.log`。
 
-> 注意：`*.yaml` 被忽略，但 `!visdrone.yaml` 例外（保留）。`orthogonal_matrices/` 与 `FedAIoT-main/` **目前仍在 git 跟踪中**。
+> **入 git 的例外**：
+> - `log/` 及其 `*.log` —— 归档的合格日志（跨主机同步 / 对外引用）。
+> - **`logs_3/` 及其 `*.log` —— 原始日志，2026-10-16 用户明确要求"原始日志也一并推送"**，全部跨主机留存（体积约 9MB / 35 文件，可接受）。
+> - `visdrone.yaml`（`*.yaml` 例外保留）；`tb/`（TensorBoard 事件，故意跟踪）。
+> - `orthogonal_matrices/` 与 `FedAIoT-main/` **目前仍在 git 跟踪中**。
 
 ## §安全须知
 

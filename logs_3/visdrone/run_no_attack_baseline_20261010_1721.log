@@ -1,0 +1,164 @@
+2026-10-10 17:21:59.755 | DEBUG    | federated_learning.arguments:log:257 - Arguments: 
+Batch Size: 64
+Test Batch Size: 256
+Global Rounds: 1
+Local Epochs: 1
+Learning Rate: 0.0002
+Momentum: 0.9
+Device: cuda
+Log Interval: 100
+Number of Clients: 10
+Dataset: VisDrone
+Model Name: YOLO
+Data distribution: IID
+Aggregation rule: fedavg
+Attack Type: no_attack
+Malicious Rate: 0.0%
+Malicious Behavior Rate: 0.0
+
+2026-10-10 17:21:59.759 | INFO     | federated_learning.utils.sampling:distribute_dataset:20 - --> Loading of VisDrone dataset
+2026-10-10 17:21:59.762 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:181 - Creating annotation cache for 6471 images...
+2026-10-10 17:21:59.762 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 0/6471
+2026-10-10 17:22:00.279 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 1000/6471
+2026-10-10 17:22:00.744 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 2000/6471
+2026-10-10 17:22:00.960 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 3000/6471
+2026-10-10 17:22:01.209 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 4000/6471
+2026-10-10 17:22:01.671 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 5000/6471
+2026-10-10 17:22:01.932 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 6000/6471
+2026-10-10 17:22:02.068 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:242 - Saving annotation cache to /root/chashaobao/DPFLA-master/cache/cache_VisDrone_train_6471_6ec8b842.pkl
+2026-10-10 17:22:02.171 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:245 - ✓ Cache saved successfully
+2026-10-10 17:22:02.171 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:150 - --> Loaded VisDrone train dataset: 6471 images
+2026-10-10 17:22:02.172 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:181 - Creating annotation cache for 548 images...
+2026-10-10 17:22:02.172 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:186 - Processing annotations: 0/548
+2026-10-10 17:22:02.477 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:242 - Saving annotation cache to /root/chashaobao/DPFLA-master/cache/cache_VisDrone_val_548_f6f27a02.pkl
+2026-10-10 17:22:02.485 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:245 - ✓ Cache saved successfully
+2026-10-10 17:22:02.485 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:150 - --> Loaded VisDrone val dataset: 548 images
+2026-10-10 17:23:38.801 | INFO     | federated_learning.utils.sampling:sample_dirichlet:295 - 标签已缓存到: cache_VisDroneDataset_6471_labels.pkl
+2026-10-10 17:23:38.809 | INFO     | federated_learning.utils.sampling:distribute_dataset:50 - --> Dataset has been loaded!
+2026-10-10 17:23:38.810 | INFO     | federated_learning.models.model:setup_model:25 - --> Creating YOLO model.....
+2026-10-10 17:23:38.810 | INFO     | federated_learning.models.yolo_wrapper:__init__:113 - --> Creating YOLOv8s (pretrained backbone, detection nc=10, aligned with VisDrone val)
+2026-10-10 17:23:38.859 | INFO     | federated_learning.models.yolo_wrapper:__init__:133 - → Loading pretrained YOLOv8s model...
+2026-10-10 17:23:38.898 | INFO     | federated_learning.models.yolo_wrapper:__init__:135 - ✓ Loaded pretrained YOLOv8s (COCO head 将在下方替换为 nc=10)
+2026-10-10 17:23:38.924 | INFO     | federated_learning.models.yolo_wrapper:__init__:205 - ✓ 检测头已替换: nc 80 → 10（骨干仍为 COCO 预训练）
+2026-10-10 17:23:38.925 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: box = 7.5
+2026-10-10 17:23:38.925 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: cls = 0.5
+2026-10-10 17:23:38.925 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: dfl = 1.5
+2026-10-10 17:23:38.925 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:249 - ✓ 已启用所有模型参数的梯度
+2026-10-10 17:23:38.926 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:254 - ✓ 已将criterion移到设备: cpu
+2026-10-10 17:23:38.926 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:256 - ✓ 将使用YOLO模型内置损失函数
+2026-10-10 17:23:38.926 | INFO     | federated_learning.models.yolo_wrapper:__init__:268 - --> YOLO model has been created!
+2026-10-10 17:23:38.927 | INFO     | federated_learning.models.model:setup_model:66 - --> Model has been created!
+2026-10-10 17:23:38.927 | DEBUG    | federated_learning.models.yolo_wrapper:to:719 - → YOLOWrapper.to(cuda) 被调用
+2026-10-10 17:23:39.103 | DEBUG    | federated_learning.models.yolo_wrapper:to:727 -   → 移动criterion到 cuda
+2026-10-10 17:23:39.104 | DEBUG    | federated_learning.models.yolo_wrapper:to:729 -   ✓ criterion已移动到 cuda
+2026-10-10 17:23:39.104 | INFO     | federated_learning.fl_core:__init__:115 - --> Distributing training data among clients
+2026-10-10 17:23:39.104 | INFO     | federated_learning.fl_core:__init__:123 - --> Training data have been distributed among clients
+2026-10-10 17:23:39.104 | INFO     | federated_learning.fl_core:__init__:126 - --> Creating peets instances
+2026-10-10 17:23:39.104 | INFO     | federated_learning.fl_core:__init__:139 - --> Creating 10 client instances...
+2026-10-10 17:23:39.104 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 1/10 (ID: 2)
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 1 created as HONEST
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 2/10 (ID: 7)
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 2 created as HONEST
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 3/10 (ID: 4)
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 3 created as HONEST
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 4/10 (ID: 8)
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 4 created as HONEST
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 5/10 (ID: 0)
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 5 created as HONEST
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 6/10 (ID: 9)
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 6 created as HONEST
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 7/10 (ID: 1)
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 7 created as HONEST
+2026-10-10 17:23:39.105 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 8/10 (ID: 6)
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 8 created as HONEST
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 9/10 (ID: 5)
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 9 created as HONEST
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 10/10 (ID: 3)
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 10 created as HONEST
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:159 - --> All 10 clients created successfully!
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:160 -   Total ATTACKERS: 0
+2026-10-10 17:23:39.106 | INFO     | federated_learning.fl_core:__init__:161 -   Total HONEST: 10
+2026-10-10 17:23:39.136 | INFO     | federated_learning.fl_core:run_experiment:587 - ===>Simulation started...
+2026-10-10 17:23:39.136 | INFO     | federated_learning.fl_core:run_experiment:590 - ====>Testing initial pretrained model...
+2026-10-10 17:23:39.137 | INFO     | federated_learning.fl_core:test:181 - → 使用YOLO原生评估方法（子进程 yolo val，隔离inference_mode）
+2026-10-10 17:23:50.417 | INFO     | federated_learning.fl_core:test:288 - 📊 YOLO原生mAP@0.5: 0.00%
+2026-10-10 17:23:50.418 | INFO     | federated_learning.fl_core:test:289 -    mAP@0.5:0.95: 0.00%
+2026-10-10 17:23:50.418 | INFO     | federated_learning.fl_core:test:290 -    Precision: 0.00%
+2026-10-10 17:23:50.419 | INFO     | federated_learning.fl_core:test:291 -    Recall: 0.01%
+2026-10-10 17:23:50.419 | DEBUG    | federated_learning.models.yolo_wrapper:to:719 - → YOLOWrapper.to(cuda:0) 被调用
+2026-10-10 17:23:50.426 | DEBUG    | federated_learning.models.yolo_wrapper:to:727 -   → 移动criterion到 cuda:0
+2026-10-10 17:23:50.427 | DEBUG    | federated_learning.models.yolo_wrapper:to:729 -   ✓ criterion已移动到 cuda:0
+2026-10-10 17:23:54.666 | DEBUG    | federated_learning.models.yolo_wrapper:forward:499 - ✓ 已将criterion移到设备: cuda:0
+2026-10-10 17:23:54.667 | DEBUG    | federated_learning.models.yolo_wrapper:forward:506 - 模型参数: 202/202 需要梯度
+2026-10-10 17:25:15.608 | INFO     | federated_learning.fl_core:run_experiment:595 - ✓ 初始模型 - 📊 mAP@0.5: 0.00% | 损失: 2764.8208
+2026-10-10 17:25:15.617 | INFO     | federated_learning.fl_core:run_experiment:671 - ====>Global model training started...
+2026-10-10 17:25:16.012 | DEBUG    | federated_learning.fl_core:run_experiment:678 - | Global training round : 1/1 |
+2026-10-10 17:25:16.012 | INFO     | federated_learning.fl_core:run_experiment:680 - 选中 10 个客户端进行训练
+2026-10-10 17:25:16.013 | INFO     | federated_learning.fl_core:run_experiment:690 - >>> 客户端 1/10: Client 1 开始训练...
+2026-10-10 17:25:16.095 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 3: type=honest, attack_type=no_attack, malicious_behavior_rate=0.0
+2026-10-10 17:25:16.096 | DEBUG    | federated_learning.client:participant_update:364 -   → Attack type is no_attack, not label_flipping
+2026-10-10 17:25:16.136 | INFO     | federated_learning.client:participant_update:413 - 🔄 Client 3 开始训练: 11 batches, 1 epoch(s)
+2026-10-10 17:25:23.729 | INFO     | federated_learning.client:participant_update:420 -    Client 3 - Epoch 1/1 - 9% (1/11)
+2026-10-10 17:25:24.480 | ERROR    | federated_learning.models.yolo_wrapper:_log_once:288 - YOLO损失计算失败: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 31.48 GiB of which 17.69 MiB is free. Including non-PyTorch memory, this process has 31.44 GiB memory in use. Of the allocated memory 31.09 GiB is allocated by PyTorch, and 31.29 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+2026-10-10 17:25:24.485 | DEBUG    | federated_learning.models.yolo_wrapper:_log_once:294 - Traceback: Traceback (most recent call last):
+  File "/root/chashaobao/DPFLA-master/federated_learning/models/yolo_wrapper.py", line 534, in forward
+    preds = self.model(x)
+            ^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/ultralytics/nn/tasks.py", line 142, in forward
+    return self.predict(x, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/ultralytics/nn/tasks.py", line 159, in predict
+    return self._predict_once(x, profile, visualize, embed)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/ultralytics/nn/tasks.py", line 181, in _predict_once
+    x = m(x)  # run
+        ^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/ultralytics/nn/modules/block.py", line 311, in forward
+    y.extend(m(y[-1]) for m in self.m)
+  File "/root/miniconda3/lib/python3.12/site-packages/ultralytics/nn/modules/block.py", line 311, in <genexpr>
+    y.extend(m(y[-1]) for m in self.m)
+             ^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/ultralytics/nn/modules/block.py", line 481, in forward
+    return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/ultralytics/nn/modules/conv.py", line 78, in forward
+    return self.act(self.bn(self.conv(x)))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/modules/activation.py", line 432, in forward
+    return F.silu(input, inplace=self.inplace)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/lib/python3.12/site-packages/torch/nn/functional.py", line 2379, in silu
+    return torch._C._nn.silu_(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 31.48 GiB of which 17.69 MiB is free. Including non-PyTorch memory, this process has 31.44 GiB memory in use. Of the allocated memory 31.09 GiB is allocated by PyTorch, and 31.29 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+

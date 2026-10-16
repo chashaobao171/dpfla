@@ -20,9 +20,13 @@ cache/
 visdrone_temp*.yaml
 *.log
 
-# 例外：归档的合格日志要进仓库（供跨主机同步与对外引用）
+# 例外①：归档的合格日志要进仓库（供跨主机同步与对外引用）
 !log/
 !log/**/*.log
+
+# 例外②：原始日志也一并推送（2026-10-16 用户要求：logs_3/ 全部原始日志跨主机留存，体积 ~9MB 可接受）
+!logs_3/
+!logs_3/**/*.log
 
 # Data (large, download separately)
 data/
