@@ -51,11 +51,11 @@ _yolo_sz = apply_default_yolo_model_size()
 # 可调：与 run_no_attack_baseline / run_no_defense 共用 visdrone_fed_hparams；若 OOM 可 export FL_TRAIN_BATCH_SIZE / YOLO_MODEL_SIZE
 
 NUM_CLASSES = 10
-# 单标签反转：固定「一个源类 → 一个目标类」，保证实验②/③口径完全一致且可复现
-SOURCE_CLASS = 1        # people（高频类）
-TARGET_CLASS = 9        # motor（稀有类）
+# 多标签反转（多源→多目标）：{0,1,2}->9(motor)，{3,4}->8(bus)，合计覆盖 83.5% 的框
+FLIP_GROUPS = {9: (0, 1, 2), 8: (3, 4)}
+FLIP_MAPPING = {src: tgt for tgt, srcs in FLIP_GROUPS.items() for src in srcs}
 MALICIOUS_BEHAVIOR_RATE = 1.0   # 100%：每个恶意客户端每轮必发动
-FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "0.3"))   # 被翻实例比例（<1 用于调弱攻击；1.0=全翻）
+FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "1.0"))   # 被翻实例比例（1.0=全翻；<1 用于调弱攻击）
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -97,7 +97,7 @@ print(f"- 设备: {device}")
 print(f"- train_bs={TRAIN_BATCH_SIZE}, test_bs={TEST_BATCH_SIZE}, cpu_threads={CPU_THREADS}")
 print(f"- 学习率: LOCAL_LR={LOCAL_LR}, LR_MIN={LR_MIN}, schedule={LR_SCHEDULE}")
 print(f"- 恶意行为率(单轮是否发动): {MALICIOUS_BEHAVIOR_RATE:.2f}")
-print(f"- 单标签反转: {SOURCE_CLASS} -> {TARGET_CLASS}（翻转比例 {FLIP_RATIO:.2f}）")
+print(f"- 多标签反转: {FLIP_MAPPING}（翻转比例 {FLIP_RATIO:.2f}）")
 print("\n对照目标（同攻击、同超参，仅聚合规则不同）:")
 print("- 期望 FedAvg 仍略受攻击影响；DPFLA mAP 高于 FedAvg（如 +2% 点差为常见汇报方式）")
 print("- 绝对 mAP 能否到 30% 取决于任务与数据，本脚本不保证")
@@ -116,9 +116,7 @@ try:
         attack_type="label_flipping",
         rule="DPFLA",
         replace_method={
-            "mapping": {SOURCE_CLASS: TARGET_CLASS},
-            "source_class": SOURCE_CLASS,
-            "target_class": TARGET_CLASS,
+            "mapping": FLIP_MAPPING,
             "flip_ratio": FLIP_RATIO,
         },
         dataset={"dataset_name": "VisDrone", "model_name": "YOLO"},
