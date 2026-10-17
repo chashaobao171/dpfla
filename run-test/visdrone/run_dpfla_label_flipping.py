@@ -51,9 +51,8 @@ _yolo_sz = apply_default_yolo_model_size()
 # 可调：与 run_no_attack_baseline / run_no_defense 共用 visdrone_fed_hparams；若 OOM 可 export FL_TRAIN_BATCH_SIZE / YOLO_MODEL_SIZE
 
 NUM_CLASSES = 10
-# 多标签反转（多源→多目标）：{0,1,2}->9(motor)，{3,4}->8(bus)，合计覆盖 83.5% 的框
-FLIP_GROUPS = {9: (0, 1, 2), 8: (3, 4)}
-FLIP_MAPPING = {src: tgt for tgt, srcs in FLIP_GROUPS.items() for src in srcs}
+# 全类循环反转（all-to-all）：i -> (i+1)%10，100% 覆盖，每类既源又目标
+FLIP_MAPPING = {i: (i + 1) % NUM_CLASSES for i in range(NUM_CLASSES)}
 MALICIOUS_BEHAVIOR_RATE = 1.0   # 100%：每个恶意客户端每轮必发动
 FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "1.0"))   # 被翻实例比例（1.0=全翻；<1 用于调弱攻击）
 
