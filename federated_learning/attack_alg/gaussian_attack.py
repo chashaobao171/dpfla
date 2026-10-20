@@ -11,6 +11,11 @@ def gaussian_attack(update, client_pseudonym, malicious_behavior_rate=0,
         # 跳过非浮点类型的参数（如BatchNorm的running_mean, num_batches_tracked等）
         if not update[key].is_floating_point():
             continue
+        # 跳过 BN 统计量：running_var 量级极小（yolov8m 实测均值 0.045 / 1% 分位 0.0017），
+        # 加噪后极易变负 → eval 模式 sqrt(负数+eps) → NaN → YOLO val 拿不到任何框 → mAP 直接归 0。
+        # 与标签翻转分支梯度放大处的防护一致（见 client.py 中跳过 running_var 的写法）。
+        if 'running_mean' in key or 'running_var' in key or 'num_batches_tracked' in key:
+            continue
         
         r = np.random.random()
         if r <= malicious_behavior_rate:
