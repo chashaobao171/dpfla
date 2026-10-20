@@ -1,6 +1,6 @@
 # 02_Methods.md — 方法原理
 
-<!-- 最后更新：2026-10-10 -->
+<!-- 最后更新：2026-10-20 -->
 <!-- 算法原理 / 代码骨架 / 设计决策。涉及"结论"处标注【实测】/【推断】 -->
 
 ## §DPFLA 核心原理
@@ -80,7 +80,7 @@ main.py / run-test/*  →  server.py (run_exp→Arguments→FL.run_experiment)
 - `criterion`（v8DetectionLoss）在 GPU、`requires_grad=True`
 - 虚拟 `fc2` 层：兼容 DPFLA 接口
 
-### FedAvg 聚合（`fl_avg.py`）
+### FedAvg 聚合（`fl_algorithm/fed_avg.py`）
 
 ```python
 def average_weights(w, marks, float16_floats=False):
