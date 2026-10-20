@@ -543,11 +543,18 @@ class Client():
             )
 
         if (attack_type == 'gaussian' and self.client_type == 'attacker'):
+            # 高斯攻击强度 = 上传更新上叠加噪声的 std（纯加噪，**不做任何放大**）
+            # 默认 0.5 保持不变（向后兼容）；调强度只改环境变量，不动代码默认值
+            gaussian_std = float(os.environ.get('FL_GAUSSIAN_STD', '0.5'))
             update, flag = gaussian_attack(model.state_dict(), self.client_pseudonym,
-                                           malicious_behavior_rate=malicious_behavior_rate, device=self.device)
+                                           malicious_behavior_rate=malicious_behavior_rate,
+                                           device=self.device, std=gaussian_std)
             if flag == 1:
                 self.performed_attacks += 1
                 attacked = 1
+                logger.warning(
+                    f'⚠️  {self.client_pseudonym} 高斯攻击：噪声 std={gaussian_std} 已施加（不放大）'
+                )
             model.load_state_dict(update)
 
         # print('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
