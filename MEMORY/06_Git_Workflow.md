@@ -55,7 +55,9 @@ git push origin dev
 > - **`logs_3/` 及其 `*.log` —— 原始日志，2026-10-16 用户明确要求"原始日志也一并推送"**，全部跨主机留存（体积约 9MB / 35 文件，可接受）。
 > - `visdrone.yaml`（`*.yaml` 例外保留）；`tb/`（TensorBoard 事件，故意跟踪）。
 >
-> **TensorBoard 保留策略（2026-10-21 用户要求）**：`tb/` 与旧 `runs/` 都只保留与 `log/` 归档实验**一一对应**的事件文件，其余在收尾时删除。现状：`tb/` 为空；`runs/` 仅留 7 个 tfevents（对应 `log/` 的 7 份归档）。
+> **TensorBoard 保留策略（2026-10-21 用户要求）**：`tb/`（仓库镜像）、`/root/tf-logs`（**TB 实际 logdir**）、`runs/` 三处都只保留：① **最近刚跑的那一次**；② 与 `log/` 归档实验**一一对应**的事件文件；其余收尾时删除。
+> - 注意：**AutoPanel 的 TensorBoard 读的是 `/root/tf-logs`**（仓库外），只删 `tb/` 界面上不会消失。
+> - 现状：`/root/tf-logs` 6 个；`tb/` 1 个（20261021_1140）；`runs/` 7 个。
 > - `orthogonal_matrices/` 与 `FedAIoT-main/` **目前仍在 git 跟踪中**。
 
 ## §安全须知

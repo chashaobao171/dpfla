@@ -44,6 +44,8 @@ nvidia-smi
 | 文档 / 对比图 | 项目根 `docs/`（`visdrone_fl_research_report.md`、`cifar_compare.png`、`mnist_compare.png`） |
 | 历史日志 | 项目根 `logs_3/`（含 `demo_out.log`、`visdrone_all.log`、`oracle_1ep_*.log`） |
 | **TensorBoard 曲线** | 项目根 **`tb/`**（**受 git 跟踪 → 跨主机留存**）；本机镜像 `/root/tf-logs/`（仓库外，不跨机）|
+| **TensorBoard 服务实际 logdir** | **`/root/tf-logs`**（AutoPanel 后台进程 PID 907，端口 6007，`--reload=5`）——**界面上能看到的是这个目录，不是仓库 `tb/`**；清理时必须两边都删 |
+| **当前保留（2026-10-21）** | `/root/tf-logs` 仅 6 个：刚跑的 `..._20261021_1140` + `log/` 对应的 5 个（VisDrone 基线、CIFAR10 三份、MNIST 基线）；`/root/tf-logs-archive` 已删除 |
 
 **实测数量**：train 图 6471 张 / val 图 548 张（均含 10 类原始标注）。
 

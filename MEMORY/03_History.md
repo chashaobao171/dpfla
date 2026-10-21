@@ -6,6 +6,7 @@
 
 ## 2026-10-21
 
+- **TensorBoard 真正 logdir 排查**（用户仍能看到未清理项）：确认 AutoPanel 的 TB 进程为 `--logdir /root/tf-logs`，而此前只清了仓库内 `tb/`。已清理 `/root/tf-logs`（29 → **6**，只留刚跑的 20261021_1140 + `log/` 对应的 5 个）、删除 `/root/tf-logs-archive`；全盘 tfevents 现为 6(tf-logs) + 7(runs) + 1(tb 镜像) = 14。
 - **高斯 σ=0.05 复验**（用户要求）：R1 0.00%（损失 408.8596，与 10-20 完全一致 → 可复现），R2 0.00%（损失 366.6）→ 判定为"权重破坏"型崩档，按判据 R2 后停止；日志留在 `logs_3/visdrone/run_no_defense_gaussian_20261021_1140.log`，tb 按新策略删除。
 
 - **日志/张量板清理**（用户要求）：`tb/` 11 个目录**全部删除**——按规则"只保留与 `log/` 归档实验对应的 tensorboard"，而现存 11 个 tb 无一条对应 `log/`（VisDrone 基线早于 `tb/` 启用）。
