@@ -17,7 +17,7 @@
 | 数据集 | 角色 | 指标 | 攻击率 | 原始出处 |
 |---|---|---|---|---|
 | **VisDrone** | ① 基线 | **mAP@0.5 = 45.08%**（R5）| 0% | `run_no_attack_baseline_20261013_1456.log` |
-| VisDrone | ② 攻击无防御 | ⬜ 待跑 | — | — |
+| VisDrone | ② 攻击无防御 | **mAP@0.5 = 32.37%**（R10；基线 45.08%，−12.7）| **30%** | `run_no_defense_gaussian_20261021_1231.log`（高斯 σ=0.02）|
 | VisDrone | ③ 攻击+DPFLA | ⬜ 待跑 | — | — |
 | **MNIST** | ① 基线 | 准确率 **95.81%** | 0% | `demo1_mnist_fedavg_noattack_20260902_1113.log` |
 | MNIST | ② 攻击无防御 | 准确率 **4.57%**（被击穿）| **30%** | `run_no_defense_label_flipping_20260515_1020.log` |
