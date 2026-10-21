@@ -54,6 +54,8 @@ git push origin dev
 > - `log/` 及其 `*.log` —— 归档的合格日志（跨主机同步 / 对外引用）。
 > - **`logs_3/` 及其 `*.log` —— 原始日志，2026-10-16 用户明确要求"原始日志也一并推送"**，全部跨主机留存（体积约 9MB / 35 文件，可接受）。
 > - `visdrone.yaml`（`*.yaml` 例外保留）；`tb/`（TensorBoard 事件，故意跟踪）。
+>
+> **TensorBoard 保留策略（2026-10-21 用户要求）**：`tb/` 与旧 `runs/` 都只保留与 `log/` 归档实验**一一对应**的事件文件，其余在收尾时删除。现状：`tb/` 为空；`runs/` 仅留 7 个 tfevents（对应 `log/` 的 7 份归档）。
 > - `orthogonal_matrices/` 与 `FedAIoT-main/` **目前仍在 git 跟踪中**。
 
 ## §安全须知
