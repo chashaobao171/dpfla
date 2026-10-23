@@ -6,6 +6,17 @@
 
 ## 2026-10-23
 
+- **【17:41 起】VisDrone 换 MinMax（服务端注入）**：
+  - 新增 `run-test/visdrone/run_screen_server_attack.py`（FL_SERVER_ATTACK / FL_RULE 控制），口径 v8m@1280 / BS16 / **test_bs=64** / AMP / 10 端 / 30% 恶意；脚本内置 CUDA 重试，避免瞬时不可用回落 CPU。
+  - 踩坑：hparams 默认 `TEST_BATCH_SIZE=256` 在 1280 下初始评估 OOM（单进程已占 33GB）；与既有 VisDrone 口径一致改用 64。
+  - **DPFLA R1 = 21.17%**（无攻击基线 R1 21.21%，高斯线 R1 21.16%）→ MinMax 被防住；MinMax λ*=2.8869，3 恶意端相对距离 0.00，aux=0.844 → 权重 0.020。
+  - 异常：另有 **1 个诚实端 aux=0.908 → 权重 0.020**（VisDrone 首次出现诚实端高 aux；R1 未见性能损失）。
+  - **R2 崩溃根因（19:10 定位）**：`YOLOWrapper.load_state_dict()` 先 `pop('fc2.weight'/'fc2.bias')`，**修改了调用方传入的 state_dict**；服务端注入后同步 `local_models` 时传的是 `local_weights` 原字典 → 3 个恶意端 fc2 被删。R1 恰好 0 号客户端是恶意端（w[0] 同样被删）不报错；R2 0 号变诚实端 → `average_weights` 抛 `KeyError: 'fc2.weight'`。**修复：load_state_dict 内先 `dict(state_dict)` 浅拷贝再 pop。**
+  - 期间误判为显存问题，另加的"评估前 `model.to('cpu')` + `empty_cache`"保留（1280 下评估子进程确实需要独立显存），但**不是崩溃主因**。
+  - **DPFLA 5 轮完成（20:02）**：21.17 / 35.93 / 40.67 / 42.52 / **43.85**（基线 21.21/37.05/41.44/43.82/45.08）→ **≥35 目标达成**，R5 与高斯+DPLFA（43.79）持平。
+  - **收尾 deepcopy 异常（R5 后 Last-10 汇总）已修**：`average_weights` 不再 `copy.deepcopy(w[0])`，改 `v.detach().clone()`；5 轮数据不受影响。
+  - **TB 整理（20:06）**：VisDrone 只留 5 条 —— 无攻击基线(1421)、高斯 FedAvg(1232)、高斯 DPFLA(1450)、**MinMax DPFLA(1911)**、MinMax TMean(2003，运行中)；失败/中断的 1741/1841/1838/1827/1802 移出到 `/tmp/pruned_visdrone_20261023/`；CIFAR 仍各 9 条（tf-logs 与 tb/ 同步）。
+  - 计划：TMean（20:03 起，运行中）→ MKrum → FedAvg，随后 15 轮正式对比。
 - **【16:40–17:03】换攻击范式：MinMax 服务端注入，P3 CIFAR 达标（+2% 三口径全满足）**：
   - 新增 `federated_learning/attack_alg/server_attacks.py`：`minmax`（FLPoison `min.py` 二分 λ）/ `alie`（norm.ppf 推 z_max）/ `signflipping`；`fl_core.py` 聚合前注入并把被替换的恶意端**同步写回 `local_models`**（否则 DPFLA 读到未攻击更新，实测掉到 48.15）。
   - `DPFLA.py` 新增**协同重复检测**：到最近其他端相对距离 <0.01 判重复 → risk=0.98、权重 0.020（MinMax 三个恶意端向量完全相同，相对距离 0.00）。

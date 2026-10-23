@@ -23,7 +23,12 @@ def average_weights(w, marks, float16_floats: bool = False):
         return {}
 
     marks_sum = float(sum(marks)) if sum(marks) != 0 else 1.0
-    w_avg = copy.deepcopy(w[0])
+    # 不用 copy.deepcopy(w[0])：last-10 缓冲里的张量可能仍带 autograd 图，
+    # deepcopy 会抛 "Only Tensors created explicitly by the user ... support deepcopy"。
+    w_avg = {
+        k: (v.detach().clone() if torch.is_tensor(v) else copy.deepcopy(v))
+        for k, v in w[0].items()
+    }
 
     for key, v0 in w_avg.items():
         # 非Tensor（极少见）：直接取第一个

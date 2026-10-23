@@ -346,6 +346,27 @@ FedAvg vs FedBN 逐轮（同口径）：
 【出处】`logs_3/cifar10/run_screen_minmax_{fedavg,DPFLA,mkrum,tmean}_20261023_1651.log`；归档 `log/cifar10/06–09_*_minmax_*`。
 【归档口径·2026-10-23 用户要求】`log/cifar10` 与 `tb/` 只保留 9 条：基线、标签翻转（FedAvg+DPFLA+MKrum+TMean）、MinMax（FedAvg+DPFLA+MKrum+TMean）；`logs_3/` 不动。
 
+## §5d VisDrone MinMax 线（2026-10-23，服务端注入 / v8m@1280 / 5 轮）★
+
+**口径**：`run-test/visdrone/run_screen_server_attack.py`；v8m @1280 / train_bs16 / **test_bs64** / AMP / 10 客户端 IID / 30% 恶意 / 行为率 1.0 / 不放大。攻击与服务端注入实现同 CIFAR（`attack_alg/server_attacks.py`）。
+
+| 轮 | DPFLA（MinMax） | 参照 |
+|---|---|---|
+| R1 | 21.17% | 无攻击基线 21.21% |
+| R2 | 35.93% | 基线 R2 37.05% |
+| R3 | **40.67%** | 基线 R3 41.44% |
+| R4 | **42.52%** | 基线 R4 43.82% |
+| R5 | **43.85%** | 基线 R5 45.08% / 高斯+DPLFA 43.79% |
+
+【实测】**DPFLA 在 MinMax 下 5 轮全程 ≥ 基线 −1.4 点，R5 43.85 ≥ 35% 目标**；3 恶意端 aux=0.874 → 权重 0.020，协同重复检测每轮命中（相对距离 0.00）。
+【实测·R1 误杀】R1 另有 1 个诚实端 aux=0.908 → 权重 0.020（6 个诚实端仍满权重，R1 未掉点）；R2 起不再出现。
+【出处】`logs_3/visdrone/run_screen_minmax_DPFLA_20261023_1910.log`；TB `VisDrone_YOLO_DPFLA_attack-minmax_..._1911`。
+
+### 两个必修 bug（2026-10-23 定位）
+1. **`KeyError: 'fc2.weight'`（R2 必崩）**：`YOLOWrapper.load_state_dict()` 直接 `pop('fc2.weight/bias')`，**改写了调用方传入的 state_dict**；服务端注入后同步 `local_models` 时把恶意端的 fc2 键删掉 → `average_weights` 在 `w[0]`（诚实端）与 `w[i]`（恶意端）键集不一致时崩溃。R1 因 0 号恰为恶意端而未暴露。**修复**：`load_state_dict` 入口先 `dict(state_dict)` 浅拷贝。`yolo_wrapper.py:669-680`。
+2. **收尾 `deepcopy` 异常**：`average_weights(last10_updates)` 对带 autograd 图的张量 `copy.deepcopy(w[0])` → `Only Tensors created explicitly by the user ... support deepcopy`。**修复**：改为 `{k: v.detach().clone() if tensor else deepcopy(v)}`。`fed_avg.py:24-31`。5 轮数据不受影响（异常发生在 R5 结束后的 Last-10 汇总）。
+3. （非 bug）评估前 `model.to('cpu') + empty_cache` 已保留：1280 下评估子进程需独立显存，原先 256 评估 batch 会 OOM。
+
 ## §6 当前生效配置（代码事实，2026-10-10 核对）
 
 出处：`run-test/visdrone/visdrone_fed_hparams.py`、`federated_learning/fl_core.py`、`federated_learning/client.py`

@@ -669,7 +669,12 @@ class YOLOWrapper(nn.Module):
     def load_state_dict(self, state_dict, *args, **kwargs):
         """
         加载模型参数，用于联邦学习参数更新
+
+        注意：先做浅拷贝再 pop，避免修改调用方传入的 state_dict（原实现会删掉
+        fc2.weight/bias，导致后续 average_weights 在 w[0] 与 w[i] 键集不一致时
+        抛 KeyError，2026-10-23 VisDrone MinMax R2 崩溃即此因）。
         """
+        state_dict = dict(state_dict)
         # 分离fc2层的参数
         fc2_weight = state_dict.pop('fc2.weight', None)
         fc2_bias = state_dict.pop('fc2.bias', None)

@@ -1,0 +1,553 @@
+2026-10-23 18:40:54.882 | DEBUG    | federated_learning.arguments:log:257 - Arguments: 
+Batch Size: 16
+Test Batch Size: 64
+Global Rounds: 5
+Local Epochs: 3
+Learning Rate: 0.0002
+Momentum: 0.9
+Device: cuda
+Log Interval: 100
+Number of Clients: 10
+Dataset: VisDrone
+Model Name: YOLO
+Data distribution: IID
+Aggregation rule: DPFLA
+Attack Type: minmax
+Malicious Rate: 30.0%
+Malicious Behavior Rate: 1.0
+
+2026-10-23 18:40:54.884 | INFO     | federated_learning.utils.sampling:distribute_dataset:20 - --> Loading of VisDrone dataset
+2026-10-23 18:40:54.886 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:172 - Loading cached annotations from /root/chashaobao/DPFLA-master/cache/cache_VisDrone_train_6471_6ec8b842.pkl
+2026-10-23 18:40:55.006 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:175 - ✓ Loaded 6471 cached annotations
+2026-10-23 18:40:55.006 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:150 - --> Loaded VisDrone train dataset: 6471 images
+2026-10-23 18:40:55.007 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:172 - Loading cached annotations from /root/chashaobao/DPFLA-master/cache/cache_VisDrone_val_548_f6f27a02.pkl
+2026-10-23 18:40:55.020 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:175 - ✓ Loaded 548 cached annotations
+2026-10-23 18:40:55.020 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:150 - --> Loaded VisDrone val dataset: 548 images
+2026-10-23 18:40:55.020 | INFO     | federated_learning.utils.sampling:sample_dirichlet:235 - 从缓存加载标签: cache_VisDroneDataset_6471_labels.pkl
+2026-10-23 18:40:55.023 | INFO     | federated_learning.utils.sampling:distribute_dataset:50 - --> Dataset has been loaded!
+2026-10-23 18:40:55.023 | INFO     | federated_learning.models.model:setup_model:27 - --> Creating YOLO model.....
+2026-10-23 18:40:55.023 | INFO     | federated_learning.models.yolo_wrapper:__init__:113 - --> Creating YOLOv8m (pretrained backbone, detection nc=10, aligned with VisDrone val)
+2026-10-23 18:40:55.329 | INFO     | federated_learning.models.yolo_wrapper:__init__:133 - → Loading pretrained YOLOv8m model...
+2026-10-23 18:40:55.388 | INFO     | federated_learning.models.yolo_wrapper:__init__:135 - ✓ Loaded pretrained YOLOv8m (COCO head 将在下方替换为 nc=10)
+2026-10-23 18:40:55.399 | INFO     | federated_learning.models.yolo_wrapper:__init__:205 - ✓ 检测头已替换: nc 80 → 10（骨干仍为 COCO 预训练）
+2026-10-23 18:40:55.399 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: box = 7.5
+2026-10-23 18:40:55.399 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: cls = 0.5
+2026-10-23 18:40:55.399 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: dfl = 1.5
+2026-10-23 18:40:55.400 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:249 - ✓ 已启用所有模型参数的梯度
+2026-10-23 18:40:55.400 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:254 - ✓ 已将criterion移到设备: cpu
+2026-10-23 18:40:55.400 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:256 - ✓ 将使用YOLO模型内置损失函数
+2026-10-23 18:40:55.401 | INFO     | federated_learning.models.yolo_wrapper:__init__:268 - --> YOLO model has been created!
+2026-10-23 18:40:55.402 | INFO     | federated_learning.models.model:setup_model:70 - --> Model has been created!
+2026-10-23 18:40:55.402 | DEBUG    | federated_learning.models.yolo_wrapper:to:719 - → YOLOWrapper.to(cuda) 被调用
+2026-10-23 18:40:55.613 | DEBUG    | federated_learning.models.yolo_wrapper:to:727 -   → 移动criterion到 cuda
+2026-10-23 18:40:55.613 | DEBUG    | federated_learning.models.yolo_wrapper:to:729 -   ✓ criterion已移动到 cuda
+2026-10-23 18:40:55.613 | INFO     | federated_learning.fl_core:__init__:115 - --> Distributing training data among clients
+2026-10-23 18:40:55.613 | INFO     | federated_learning.fl_core:__init__:123 - --> Training data have been distributed among clients
+2026-10-23 18:40:55.613 | INFO     | federated_learning.fl_core:__init__:126 - --> Creating peets instances
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:139 - --> Creating 10 client instances...
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 1/10 (ID: 2)
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:151 -   ✓ Client 1 created as ATTACKER
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 2/10 (ID: 7)
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:151 -   ✓ Client 2 created as ATTACKER
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 3/10 (ID: 4)
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:151 -   ✓ Client 3 created as ATTACKER
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 4/10 (ID: 8)
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 4 created as HONEST
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 5/10 (ID: 0)
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 5 created as HONEST
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 6/10 (ID: 9)
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 6 created as HONEST
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 7/10 (ID: 1)
+2026-10-23 18:40:55.614 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 7 created as HONEST
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 8/10 (ID: 6)
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 8 created as HONEST
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 9/10 (ID: 5)
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 9 created as HONEST
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 10/10 (ID: 3)
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 10 created as HONEST
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:159 - --> All 10 clients created successfully!
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:160 -   Total ATTACKERS: 3
+2026-10-23 18:40:55.615 | INFO     | federated_learning.fl_core:__init__:161 -   Total HONEST: 7
+2026-10-23 18:40:55.647 | INFO     | federated_learning.fl_core:run_experiment:602 - ===>Simulation started...
+2026-10-23 18:40:55.647 | INFO     | federated_learning.fl_core:run_experiment:605 - ====>Testing initial pretrained model...
+2026-10-23 18:40:55.648 | INFO     | federated_learning.fl_core:test:181 - → 使用YOLO原生评估方法（子进程 yolo val，隔离inference_mode）
+2026-10-23 18:40:55.649 | DEBUG    | federated_learning.models.yolo_wrapper:to:719 - → YOLOWrapper.to(cpu) 被调用
+2026-10-23 18:40:55.684 | DEBUG    | federated_learning.models.yolo_wrapper:to:727 -   → 移动criterion到 cpu
+2026-10-23 18:40:55.684 | DEBUG    | federated_learning.models.yolo_wrapper:to:729 -   ✓ criterion已移动到 cpu
+2026-10-23 18:40:55.961 | INFO     | federated_learning.fl_core:test:201 - 评估前释放显存：allocated 0.17G / reserved 0.18G → 释放后 allocated 0.09G / reserved 0.09G
+2026-10-23 18:41:07.468 | INFO     | federated_learning.fl_core:test:303 - 📊 YOLO原生mAP@0.5: 0.00%
+2026-10-23 18:41:07.468 | INFO     | federated_learning.fl_core:test:304 -    mAP@0.5:0.95: 0.00%
+2026-10-23 18:41:07.468 | INFO     | federated_learning.fl_core:test:305 -    Precision: 0.00%
+2026-10-23 18:41:07.468 | INFO     | federated_learning.fl_core:test:306 -    Recall: 0.03%
+2026-10-23 18:41:07.469 | DEBUG    | federated_learning.models.yolo_wrapper:to:719 - → YOLOWrapper.to(cuda:0) 被调用
+2026-10-23 18:41:07.511 | DEBUG    | federated_learning.models.yolo_wrapper:to:727 -   → 移动criterion到 cuda:0
+2026-10-23 18:41:07.512 | DEBUG    | federated_learning.models.yolo_wrapper:to:729 -   ✓ criterion已移动到 cuda:0
+2026-10-23 18:41:08.503 | DEBUG    | federated_learning.models.yolo_wrapper:forward:499 - ✓ 已将criterion移到设备: cuda:0
+2026-10-23 18:41:08.505 | DEBUG    | federated_learning.models.yolo_wrapper:forward:506 - 模型参数: 262/262 需要梯度
+2026-10-23 18:41:28.661 | INFO     | federated_learning.fl_core:run_experiment:610 - ✓ 初始模型 - 📊 mAP@0.5: 0.00% | 损失: 902.3954
+2026-10-23 18:41:28.666 | INFO     | federated_learning.fl_core:run_experiment:689 - ====>Global model training started...
+2026-10-23 18:41:28.972 | DEBUG    | federated_learning.fl_core:run_experiment:696 - | Global training round : 1/5 |
+2026-10-23 18:41:28.973 | INFO     | federated_learning.fl_core:run_experiment:698 - 选中 10 个客户端进行训练
+2026-10-23 18:41:28.973 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 1/10: Client 1 开始训练...
+2026-10-23 18:41:29.034 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 3: type=attacker, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:41:29.034 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:41:29.066 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 3 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:41:30.706 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:41:32.186 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:41:32.187 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:41:32.187 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f258b4bee60>
+2026-10-23 18:41:32.187 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:41:49.292 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:41:49.500 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 3 - Epoch 1/3 完成 - 平均损失: 160.0508
+2026-10-23 18:41:51.056 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:42:07.376 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:42:07.521 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 3 - Epoch 2/3 完成 - 平均损失: 124.3738
+2026-10-23 18:42:09.059 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:42:25.293 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:42:25.442 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 3 - Epoch 3/3 完成 - 平均损失: 107.0940
+2026-10-23 18:42:25.443 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 3 训练完成！总损失: 107.0940
+2026-10-23 18:42:25.445 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:42:25.578 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 1/10: Client 1 训练完成 (损失: 107.0940)
+2026-10-23 18:42:25.579 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 2/10: Client 5 开始训练...
+2026-10-23 18:42:25.636 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 1: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:42:25.637 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:42:25.666 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 1 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:42:26.969 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:42:27.161 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:42:27.161 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:42:27.162 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f25968b20b0>
+2026-10-23 18:42:27.162 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:42:43.472 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:42:43.712 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 1 - Epoch 1/3 完成 - 平均损失: 168.6266
+2026-10-23 18:42:45.635 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:43:01.929 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:43:02.125 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 1 - Epoch 2/3 完成 - 平均损失: 129.5660
+2026-10-23 18:43:03.862 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:43:20.142 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:43:20.340 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 1 - Epoch 3/3 完成 - 平均损失: 110.9893
+2026-10-23 18:43:20.340 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 1 训练完成！总损失: 110.9893
+2026-10-23 18:43:20.342 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:43:20.530 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 2/10: Client 5 训练完成 (损失: 110.9893)
+2026-10-23 18:43:20.531 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 3/10: Client 2 开始训练...
+2026-10-23 18:43:20.603 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 8: type=attacker, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:43:20.603 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:43:20.632 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 8 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:43:22.675 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:43:22.846 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:43:22.847 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:43:22.847 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f25839a5e70>
+2026-10-23 18:43:22.847 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:43:39.009 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:43:39.240 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 8 - Epoch 1/3 完成 - 平均损失: 162.2425
+2026-10-23 18:43:40.488 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:43:56.827 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:43:57.002 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 8 - Epoch 2/3 完成 - 平均损失: 125.1856
+2026-10-23 18:43:58.368 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:44:14.821 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:44:14.992 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 8 - Epoch 3/3 完成 - 平均损失: 107.5231
+2026-10-23 18:44:14.992 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 8 训练完成！总损失: 107.5231
+2026-10-23 18:44:14.994 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:44:15.160 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 3/10: Client 2 训练完成 (损失: 107.5231)
+2026-10-23 18:44:15.161 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 4/10: Client 9 开始训练...
+2026-10-23 18:44:15.235 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 6: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:44:15.236 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:44:15.266 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 6 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:44:16.952 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:44:17.119 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:44:17.120 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:44:17.120 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f2583356800>
+2026-10-23 18:44:17.120 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:44:33.296 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:44:33.444 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 6 - Epoch 1/3 完成 - 平均损失: 165.3711
+2026-10-23 18:44:35.057 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:44:51.351 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:44:51.502 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 6 - Epoch 2/3 完成 - 平均损失: 127.7168
+2026-10-23 18:44:53.351 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:45:09.599 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:45:09.745 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 6 - Epoch 3/3 完成 - 平均损失: 110.0933
+2026-10-23 18:45:09.745 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 6 训练完成！总损失: 110.0933
+2026-10-23 18:45:09.748 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:45:09.934 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 4/10: Client 9 训练完成 (损失: 110.0933)
+2026-10-23 18:45:09.935 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 5/10: Client 10 开始训练...
+2026-10-23 18:45:09.994 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 4: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:45:09.994 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:45:10.024 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 4 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:45:12.068 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:45:12.241 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:45:12.241 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:45:12.241 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f258b5ce350>
+2026-10-23 18:45:12.242 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:45:28.260 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:45:28.458 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 4 - Epoch 1/3 完成 - 平均损失: 158.0761
+2026-10-23 18:45:30.166 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:45:46.326 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:45:46.448 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 4 - Epoch 2/3 完成 - 平均损失: 122.1589
+2026-10-23 18:45:47.902 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:46:04.030 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:46:04.155 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 4 - Epoch 3/3 完成 - 平均损失: 105.9533
+2026-10-23 18:46:04.155 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 4 训练完成！总损失: 105.9533
+2026-10-23 18:46:04.157 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:46:04.329 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 5/10: Client 10 训练完成 (损失: 105.9533)
+2026-10-23 18:46:04.330 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 6/10: Client 3 开始训练...
+2026-10-23 18:46:04.388 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 5: type=attacker, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:46:04.389 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:46:04.418 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 5 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:46:06.440 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:46:06.612 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:46:06.612 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:46:06.612 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f2583356350>
+2026-10-23 18:46:06.612 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:46:22.946 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:46:23.117 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 5 - Epoch 1/3 完成 - 平均损失: 162.8077
+2026-10-23 18:46:24.227 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:46:41.033 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:46:41.206 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 5 - Epoch 2/3 完成 - 平均损失: 125.5647
+2026-10-23 18:46:42.412 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:46:59.062 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:46:59.240 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 5 - Epoch 3/3 完成 - 平均损失: 107.6602
+2026-10-23 18:46:59.241 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 5 训练完成！总损失: 107.6602
+2026-10-23 18:46:59.243 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:46:59.412 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 6/10: Client 3 训练完成 (损失: 107.6602)
+2026-10-23 18:46:59.413 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 7/10: Client 6 开始训练...
+2026-10-23 18:46:59.475 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 10: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:46:59.475 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:46:59.505 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 10 开始训练: 40 batches, 3 epoch(s)
+2026-10-23 18:47:00.928 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 1/3 - 2% (1/40)
+2026-10-23 18:47:01.097 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:47:01.098 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:47:01.098 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f2583357f70>
+2026-10-23 18:47:01.098 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:47:16.853 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 1/3 - 100% (40/40)
+2026-10-23 18:47:17.259 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 10 - Epoch 1/3 完成 - 平均损失: 166.3110
+2026-10-23 18:47:18.684 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 2/3 - 2% (1/40)
+2026-10-23 18:47:34.545 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 2/3 - 100% (40/40)
+2026-10-23 18:47:34.912 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 10 - Epoch 2/3 完成 - 平均损失: 127.8237
+2026-10-23 18:47:36.241 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 3/3 - 2% (1/40)
+2026-10-23 18:47:52.175 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 3/3 - 100% (40/40)
+2026-10-23 18:47:52.549 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 10 - Epoch 3/3 完成 - 平均损失: 109.5758
+2026-10-23 18:47:52.549 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 10 训练完成！总损失: 109.5758
+2026-10-23 18:47:52.552 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 120 个总步数）
+2026-10-23 18:47:52.755 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 7/10: Client 6 训练完成 (损失: 109.5758)
+2026-10-23 18:47:52.756 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 8/10: Client 7 开始训练...
+2026-10-23 18:47:53.065 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 2: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:47:53.066 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:47:53.102 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 2 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:47:54.883 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:47:55.090 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:47:55.091 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:47:55.091 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f25833eff10>
+2026-10-23 18:47:55.091 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:48:11.128 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:48:11.329 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 2 - Epoch 1/3 完成 - 平均损失: 164.7726
+2026-10-23 18:48:12.458 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:48:28.984 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:48:29.183 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 2 - Epoch 2/3 完成 - 平均损失: 127.4688
+2026-10-23 18:48:30.420 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:48:46.839 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:48:47.038 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 2 - Epoch 3/3 完成 - 平均损失: 109.6451
+2026-10-23 18:48:47.038 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 2 训练完成！总损失: 109.6451
+2026-10-23 18:48:47.040 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:48:47.251 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 8/10: Client 7 训练完成 (损失: 109.6451)
+2026-10-23 18:48:47.252 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 9/10: Client 8 开始训练...
+2026-10-23 18:48:47.311 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 7: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:48:47.311 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:48:47.342 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 7 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:48:49.437 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:48:49.610 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:48:49.611 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:48:49.611 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f2583356a10>
+2026-10-23 18:48:49.611 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:49:05.688 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:49:05.845 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 7 - Epoch 1/3 完成 - 平均损失: 160.2590
+2026-10-23 18:49:06.973 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:49:23.254 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:49:23.403 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 7 - Epoch 2/3 完成 - 平均损失: 123.6776
+2026-10-23 18:49:24.997 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:49:41.257 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:49:41.403 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 7 - Epoch 3/3 完成 - 平均损失: 106.7627
+2026-10-23 18:49:41.404 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 7 训练完成！总损失: 106.7627
+2026-10-23 18:49:41.406 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:49:41.594 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 9/10: Client 8 训练完成 (损失: 106.7627)
+2026-10-23 18:49:41.595 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 10/10: Client 4 开始训练...
+2026-10-23 18:49:41.669 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:49:41.670 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:49:41.700 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 9 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:49:43.285 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:49:43.460 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:49:43.461 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:49:43.461 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f2583253490>
+2026-10-23 18:49:43.461 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:49:59.630 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:49:59.868 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 9 - Epoch 1/3 完成 - 平均损失: 170.6323
+2026-10-23 18:50:01.882 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:50:18.335 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:50:18.517 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 9 - Epoch 2/3 完成 - 平均损失: 131.7730
+2026-10-23 18:50:19.781 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:50:36.213 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:50:36.397 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 9 - Epoch 3/3 完成 - 平均损失: 112.9623
+2026-10-23 18:50:36.397 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 9 训练完成！总损失: 112.9623
+2026-10-23 18:50:36.399 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:50:36.586 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 10/10: Client 4 训练完成 (损失: 112.9623)
+2026-10-23 18:50:36.586 | INFO     | federated_learning.fl_core:run_experiment:730 - ✓ 所有客户端训练完成！平均损失: 108.8259
+2026-10-23 18:50:36.587 | INFO     | federated_learning.fl_core:run_experiment:731 - 开始聚合参数...
+2026-10-23 18:50:58.889 | INFO     | federated_learning.attack_alg.server_attacks:_minmax_update:73 -   MinMax 二分结束：λ*=2.8869（upper_bound=4.1105）
+2026-10-23 18:50:59.178 | WARNING  | federated_learning.attack_alg.server_attacks:apply_server_attack:136 - ⚠️  服务端注入攻击 minmax 已应用（恶意端 3/10 个，良性端 7 个参与构造）
+2026-10-23 18:50:59.945 | INFO     | federated_learning.fl_algorithm.DPFLA:score:211 - ✅ 使用 SVD+KMeans 聚类评分（主实验路径）
+2026-10-23 18:50:59.952 | INFO     | federated_learning.fl_algorithm.DPFLA:score:261 - YOLO特征层选择: ['model.22.cv3.0.2.weight', 'model.22.cv3.1.2.weight', 'model.22.cv3.2.2.weight'], has_bias=True, 按类别切片单元数=10
+2026-10-23 18:51:00.197 | WARNING  | federated_learning.fl_algorithm.DPFLA:score:363 - 🔗 协同重复检测：3 个端的更新与另一端几乎相同（最近相对距离 0.00e+00）
+2026-10-23 18:51:03.118 | DEBUG    | federated_learning.fl_algorithm.DPFLA:batch_detect_outliers_kmeans:704 - Silhouette统计: n=10 | min=0.6540 | p25=0.8448 | median=0.8628 | p75=0.8880 | max=0.8918 | mean=0.8464
+2026-10-23 18:51:03.118 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:456 - -------------------------------------
+2026-10-23 18:51:03.119 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:457 - Max Silhouette Coefficient: 0.8918110945771435
+2026-10-23 18:51:03.119 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:458 - Detect Class: 7
+2026-10-23 18:51:03.119 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:459 - Defense result:
+2026-10-23 18:51:03.119 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Bad update | KMeans标签=0 | aux异常=0.844 | aux否决=1 | risk=0.980 | streak=1 | cooldown=2 | 聚合权重=0.020
+2026-10-23 18:51:03.119 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.294 | aux否决=0 | risk=0.136 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 18:51:03.119 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Bad update | KMeans标签=0 | aux异常=0.844 | aux否决=1 | risk=0.980 | streak=1 | cooldown=2 | 聚合权重=0.020
+2026-10-23 18:51:03.119 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.306 | aux否决=0 | risk=0.140 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 18:51:03.119 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.255 | aux否决=0 | risk=0.126 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 18:51:03.119 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Bad update | KMeans标签=0 | aux异常=0.844 | aux否决=1 | risk=0.980 | streak=1 | cooldown=2 | 聚合权重=0.020
+2026-10-23 18:51:03.120 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.193 | aux否决=0 | risk=0.110 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 18:51:03.120 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.207 | aux否决=0 | risk=0.114 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 18:51:03.120 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.178 | aux否决=0 | risk=0.106 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 18:51:03.120 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.908 | aux否决=1 | risk=0.980 | streak=1 | cooldown=2 | 聚合权重=0.020
+2026-10-23 18:51:03.260 | DEBUG    | federated_learning.fl_core:run_experiment:888 - Aggregation took
+2026-10-23 18:51:03.315 | INFO     | federated_learning.fl_core:run_experiment:900 - 开始测试全局模型（Round 1/5）...
+2026-10-23 18:51:04.092 | INFO     | federated_learning.fl_core:test:181 - → 使用YOLO原生评估方法（子进程 yolo val，隔离inference_mode）
+2026-10-23 18:51:04.094 | DEBUG    | federated_learning.models.yolo_wrapper:to:719 - → YOLOWrapper.to(cpu) 被调用
+2026-10-23 18:51:04.113 | DEBUG    | federated_learning.models.yolo_wrapper:to:727 -   → 移动criterion到 cpu
+2026-10-23 18:51:04.113 | DEBUG    | federated_learning.models.yolo_wrapper:to:729 -   ✓ criterion已移动到 cpu
+2026-10-23 18:51:04.379 | INFO     | federated_learning.fl_core:test:201 - 评估前释放显存：allocated 1.24G / reserved 1.55G → 释放后 allocated 1.16G / reserved 1.47G
+2026-10-23 18:51:15.863 | INFO     | federated_learning.fl_core:test:303 - 📊 YOLO原生mAP@0.5: 21.17%
+2026-10-23 18:51:15.863 | INFO     | federated_learning.fl_core:test:304 -    mAP@0.5:0.95: 10.48%
+2026-10-23 18:51:15.863 | INFO     | federated_learning.fl_core:test:305 -    Precision: 30.16%
+2026-10-23 18:51:15.863 | INFO     | federated_learning.fl_core:test:306 -    Recall: 28.86%
+2026-10-23 18:51:15.863 | DEBUG    | federated_learning.models.yolo_wrapper:to:719 - → YOLOWrapper.to(cuda:0) 被调用
+2026-10-23 18:51:15.901 | DEBUG    | federated_learning.models.yolo_wrapper:to:727 -   → 移动criterion到 cuda:0
+2026-10-23 18:51:15.901 | DEBUG    | federated_learning.models.yolo_wrapper:to:729 -   ✓ criterion已移动到 cuda:0
+2026-10-23 18:51:35.631 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/5 - 📊 mAP@0.5: 21.17% | 损失: 294.1627
+2026-10-23 18:51:35.632 | INFO     | federated_learning.fl_core:run_experiment:968 - Backdoor ASR 0.0
+2026-10-23 18:51:36.161 | DEBUG    | federated_learning.fl_core:test_label_predictions:552 - Skipping label predictions for detection task
+2026-10-23 18:51:36.327 | DEBUG    | federated_learning.fl_core:run_experiment:696 - | Global training round : 2/5 |
+2026-10-23 18:51:36.327 | INFO     | federated_learning.fl_core:run_experiment:698 - 选中 10 个客户端进行训练
+2026-10-23 18:51:36.328 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 1/10: Client 6 开始训练...
+2026-10-23 18:51:36.386 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 10: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:51:36.386 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:51:36.416 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 10 开始训练: 40 batches, 3 epoch(s)
+2026-10-23 18:51:38.662 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 1/3 - 2% (1/40)
+2026-10-23 18:51:38.874 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:51:38.874 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:51:38.874 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f25832a9930>
+2026-10-23 18:51:38.874 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:51:54.581 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 1/3 - 100% (40/40)
+2026-10-23 18:51:54.957 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 10 - Epoch 1/3 完成 - 平均损失: 71.4468
+2026-10-23 18:51:56.364 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 2/3 - 2% (1/40)
+2026-10-23 18:52:12.245 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 2/3 - 100% (40/40)
+2026-10-23 18:52:12.620 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 10 - Epoch 2/3 完成 - 平均损失: 69.3249
+2026-10-23 18:52:14.285 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 3/3 - 2% (1/40)
+2026-10-23 18:52:30.138 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 3/3 - 100% (40/40)
+2026-10-23 18:52:30.524 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 10 - Epoch 3/3 完成 - 平均损失: 66.7038
+2026-10-23 18:52:30.524 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 10 训练完成！总损失: 66.7038
+2026-10-23 18:52:30.527 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 120 个总步数）
+2026-10-23 18:52:30.766 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 1/10: Client 6 训练完成 (损失: 66.7038)
+2026-10-23 18:52:30.767 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 2/10: Client 1 开始训练...
+2026-10-23 18:52:30.826 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 3: type=attacker, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:52:30.826 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:52:30.856 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 3 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:52:32.683 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:52:32.888 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:52:32.888 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:52:32.888 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f258b4dd750>
+2026-10-23 18:52:32.888 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:52:49.099 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:52:49.248 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 3 - Epoch 1/3 完成 - 平均损失: 71.3728
+2026-10-23 18:52:50.432 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:53:06.963 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:53:07.112 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 3 - Epoch 2/3 完成 - 平均损失: 69.2644
+2026-10-23 18:53:08.291 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:53:24.683 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:53:24.831 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 3 - Epoch 3/3 完成 - 平均损失: 67.0268
+2026-10-23 18:53:24.832 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 3 训练完成！总损失: 67.0268
+2026-10-23 18:53:24.834 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:53:25.051 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 2/10: Client 1 训练完成 (损失: 67.0268)
+2026-10-23 18:53:25.052 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 3/10: Client 2 开始训练...
+2026-10-23 18:53:25.114 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 8: type=attacker, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:53:25.114 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:53:25.145 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 8 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:53:27.494 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:53:27.665 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:53:27.666 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:53:27.666 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f25832a9b40>
+2026-10-23 18:53:27.666 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:53:43.890 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:53:44.061 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 8 - Epoch 1/3 完成 - 平均损失: 71.4617
+2026-10-23 18:53:45.440 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:54:01.846 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:54:02.017 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 8 - Epoch 2/3 完成 - 平均损失: 68.4274
+2026-10-23 18:54:03.300 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:54:19.748 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:54:19.923 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 8 - Epoch 3/3 完成 - 平均损失: 65.9025
+2026-10-23 18:54:19.923 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 8 训练完成！总损失: 65.9025
+2026-10-23 18:54:19.925 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:54:20.158 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 3/10: Client 2 训练完成 (损失: 65.9025)
+2026-10-23 18:54:20.158 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 4/10: Client 10 开始训练...
+2026-10-23 18:54:20.225 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 4: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:54:20.226 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:54:20.257 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 4 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:54:22.231 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:54:22.416 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:54:22.416 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:54:22.416 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f258b4bf1f0>
+2026-10-23 18:54:22.417 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:54:38.498 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:54:38.619 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 4 - Epoch 1/3 完成 - 平均损失: 70.9003
+2026-10-23 18:54:40.369 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:54:56.575 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:54:56.703 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 4 - Epoch 2/3 完成 - 平均损失: 67.7879
+2026-10-23 18:54:57.937 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:55:14.185 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:55:14.307 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 4 - Epoch 3/3 完成 - 平均损失: 65.1373
+2026-10-23 18:55:14.308 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 4 训练完成！总损失: 65.1373
+2026-10-23 18:55:14.310 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:55:14.516 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 4/10: Client 10 训练完成 (损失: 65.1373)
+2026-10-23 18:55:14.518 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 5/10: Client 4 开始训练...
+2026-10-23 18:55:14.588 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:55:14.588 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:55:14.618 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 9 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:55:16.647 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:55:16.824 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:55:16.824 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:55:16.824 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f258b4de2f0>
+2026-10-23 18:55:16.824 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:55:33.096 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:55:33.271 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 9 - Epoch 1/3 完成 - 平均损失: 71.7172
+2026-10-23 18:55:34.786 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:55:51.259 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:55:51.429 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 9 - Epoch 2/3 完成 - 平均损失: 69.1025
+2026-10-23 18:55:52.624 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:56:09.238 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:56:09.408 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 9 - Epoch 3/3 完成 - 平均损失: 66.6243
+2026-10-23 18:56:09.409 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 9 训练完成！总损失: 66.6243
+2026-10-23 18:56:09.411 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:56:09.610 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 5/10: Client 4 训练完成 (损失: 66.6243)
+2026-10-23 18:56:09.611 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 6/10: Client 7 开始训练...
+2026-10-23 18:56:09.673 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 2: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:56:09.673 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:56:09.704 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 2 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:56:11.754 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:56:11.961 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:56:11.962 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:56:11.962 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f25839e5b10>
+2026-10-23 18:56:11.962 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:56:28.150 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:56:28.349 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 2 - Epoch 1/3 完成 - 平均损失: 70.6589
+2026-10-23 18:56:29.595 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:56:45.966 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:56:46.170 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 2 - Epoch 2/3 完成 - 平均损失: 67.9104
+2026-10-23 18:56:47.811 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:57:04.130 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:57:04.334 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 2 - Epoch 3/3 完成 - 平均损失: 65.6419
+2026-10-23 18:57:04.334 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 2 训练完成！总损失: 65.6419
+2026-10-23 18:57:04.336 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:57:04.563 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 6/10: Client 7 训练完成 (损失: 65.6419)
+2026-10-23 18:57:04.564 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 7/10: Client 3 开始训练...
+2026-10-23 18:57:04.634 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 5: type=attacker, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:57:04.634 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:57:04.665 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 5 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:57:06.355 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:57:06.533 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:57:06.533 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:57:06.533 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f258b579900>
+2026-10-23 18:57:06.533 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:57:22.878 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:57:23.057 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 5 - Epoch 1/3 完成 - 平均损失: 71.2193
+2026-10-23 18:57:24.197 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:57:40.702 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:57:40.883 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 5 - Epoch 2/3 完成 - 平均损失: 68.3798
+2026-10-23 18:57:42.308 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:57:58.869 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:57:59.051 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 5 - Epoch 3/3 完成 - 平均损失: 65.8676
+2026-10-23 18:57:59.051 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 5 训练完成！总损失: 65.8676
+2026-10-23 18:57:59.053 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:57:59.247 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 7/10: Client 3 训练完成 (损失: 65.8676)
+2026-10-23 18:57:59.248 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 8/10: Client 8 开始训练...
+2026-10-23 18:57:59.310 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 7: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:57:59.310 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:57:59.339 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 7 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:58:00.856 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:58:01.051 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:58:01.051 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:58:01.052 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f2ac49d6fb0>
+2026-10-23 18:58:01.052 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:58:17.810 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:58:17.961 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 7 - Epoch 1/3 完成 - 平均损失: 70.7616
+2026-10-23 18:58:19.113 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:58:35.631 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:58:35.774 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 7 - Epoch 2/3 完成 - 平均损失: 67.7154
+2026-10-23 18:58:37.565 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:58:53.943 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:58:54.091 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 7 - Epoch 3/3 完成 - 平均损失: 65.4616
+2026-10-23 18:58:54.091 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 7 训练完成！总损失: 65.4616
+2026-10-23 18:58:54.093 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:58:54.284 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 8/10: Client 8 训练完成 (损失: 65.4616)
+2026-10-23 18:58:54.285 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 9/10: Client 5 开始训练...
+2026-10-23 18:58:54.368 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 1: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:58:54.368 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:58:54.399 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 1 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:58:56.347 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:58:56.540 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:58:56.540 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:58:56.541 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f2ac4b8e980>
+2026-10-23 18:58:56.541 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 18:59:12.657 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 1/3 - 100% (41/41)
+2026-10-23 18:59:12.850 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 1 - Epoch 1/3 完成 - 平均损失: 71.8188
+2026-10-23 18:59:14.359 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 2/3 - 2% (1/41)
+2026-10-23 18:59:30.720 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 2/3 - 100% (41/41)
+2026-10-23 18:59:30.917 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 1 - Epoch 2/3 完成 - 平均损失: 68.9633
+2026-10-23 18:59:32.156 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 3/3 - 2% (1/41)
+2026-10-23 18:59:48.893 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 3/3 - 100% (41/41)
+2026-10-23 18:59:49.098 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 1 - Epoch 3/3 完成 - 平均损失: 65.9597
+2026-10-23 18:59:49.099 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 1 训练完成！总损失: 65.9597
+2026-10-23 18:59:49.101 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 18:59:49.320 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 9/10: Client 5 训练完成 (损失: 65.9597)
+2026-10-23 18:59:49.320 | INFO     | federated_learning.fl_core:run_experiment:708 - >>> 客户端 10/10: Client 9 开始训练...
+2026-10-23 18:59:49.380 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 6: type=honest, attack_type=minmax, malicious_behavior_rate=1.0
+2026-10-23 18:59:49.381 | DEBUG    | federated_learning.client:participant_update:367 -   → Attack type is minmax, not label_flipping
+2026-10-23 18:59:49.411 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 6 开始训练: 41 batches, 3 epoch(s)
+2026-10-23 18:59:51.415 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 1/3 - 2% (1/41)
+2026-10-23 18:59:51.605 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-10-23 18:59:51.605 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-10-23 18:59:51.605 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f25833ed1b0>
+2026-10-23 18:59:51.606 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-10-23 19:00:07.754 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 1/3 - 100% (41/41)
+2026-10-23 19:00:07.898 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 6 - Epoch 1/3 完成 - 平均损失: 71.3171
+2026-10-23 19:00:09.263 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 2/3 - 2% (1/41)
+2026-10-23 19:00:25.601 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 2/3 - 100% (41/41)
+2026-10-23 19:00:25.744 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 6 - Epoch 2/3 完成 - 平均损失: 68.5133
+2026-10-23 19:00:27.290 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 3/3 - 2% (1/41)
+2026-10-23 19:00:43.629 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 3/3 - 100% (41/41)
+2026-10-23 19:00:43.774 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 6 - Epoch 3/3 完成 - 平均损失: 65.9914
+2026-10-23 19:00:43.774 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 6 训练完成！总损失: 65.9914
+2026-10-23 19:00:43.777 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 123 个总步数）
+2026-10-23 19:00:43.974 | INFO     | federated_learning.fl_core:run_experiment:719 - <<< 客户端 10/10: Client 9 训练完成 (损失: 65.9914)
+2026-10-23 19:00:43.975 | INFO     | federated_learning.fl_core:run_experiment:730 - ✓ 所有客户端训练完成！平均损失: 66.0317
+2026-10-23 19:00:43.975 | INFO     | federated_learning.fl_core:run_experiment:731 - 开始聚合参数...
+2026-10-23 19:01:05.719 | INFO     | federated_learning.attack_alg.server_attacks:_minmax_update:73 -   MinMax 二分结束：λ*=1.7771（upper_bound=2.4046）
+2026-10-23 19:01:06.006 | WARNING  | federated_learning.attack_alg.server_attacks:apply_server_attack:136 - ⚠️  服务端注入攻击 minmax 已应用（恶意端 3/10 个，良性端 7 个参与构造）
+2026-10-23 19:01:06.526 | INFO     | federated_learning.fl_algorithm.DPFLA:score:211 - ✅ 使用 SVD+KMeans 聚类评分（主实验路径）
+2026-10-23 19:01:06.533 | INFO     | federated_learning.fl_algorithm.DPFLA:score:261 - YOLO特征层选择: ['model.22.cv3.0.2.weight', 'model.22.cv3.1.2.weight', 'model.22.cv3.2.2.weight'], has_bias=True, 按类别切片单元数=10
+2026-10-23 19:01:06.777 | WARNING  | federated_learning.fl_algorithm.DPFLA:score:363 - 🔗 协同重复检测：3 个端的更新与另一端几乎相同（最近相对距离 0.00e+00）
+2026-10-23 19:01:09.618 | DEBUG    | federated_learning.fl_algorithm.DPFLA:batch_detect_outliers_kmeans:704 - Silhouette统计: n=10 | min=0.8790 | p25=0.9271 | median=0.9391 | p75=0.9478 | max=0.9531 | mean=0.9337
+2026-10-23 19:01:09.618 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:456 - -------------------------------------
+2026-10-23 19:01:09.618 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:457 - Max Silhouette Coefficient: 0.9530549437788624
+2026-10-23 19:01:09.618 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:458 - Detect Class: 2
+2026-10-23 19:01:09.618 | DEBUG    | federated_learning.fl_algorithm.DPFLA:score:459 - Defense result:
+2026-10-23 19:01:09.618 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.253 | aux否决=0 | risk=0.126 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Bad update | KMeans标签=0 | aux异常=0.874 | aux否决=1 | risk=0.980 | streak=2 | cooldown=2 | 聚合权重=0.020
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Bad update | KMeans标签=0 | aux异常=0.874 | aux否决=1 | risk=0.980 | streak=2 | cooldown=2 | 聚合权重=0.020
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.236 | aux否决=0 | risk=0.121 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.308 | aux否决=0 | risk=0.140 | streak=0 | cooldown=1 | 聚合权重=0.450
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.226 | aux否决=0 | risk=0.119 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Bad update | KMeans标签=0 | aux异常=0.874 | aux否决=1 | risk=0.980 | streak=2 | cooldown=2 | 聚合权重=0.020
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.357 | aux否决=0 | risk=0.153 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.280 | aux否决=0 | risk=0.133 | streak=0 | cooldown=0 | 聚合权重=1.000
+2026-10-23 19:01:09.619 | INFO     | federated_learning.fl_algorithm.DPFLA:score:576 - Good update | KMeans标签=1 | aux异常=0.360 | aux否决=0 | risk=0.154 | streak=0 | cooldown=0 | 聚合权重=1.000

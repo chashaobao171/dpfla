@@ -189,6 +189,21 @@ class FL:
                     raise RuntimeError('YOLOWrapper缺少yolo属性，无法导出权重进行评估')
 
                 original_device = next(model.parameters()).device
+
+                # 评估子进程需要独立显存：先把主模型挪到 CPU 并释放缓存，
+                # 否则 1280 口径下主进程 + 评估子进程会超出 48G（R2 评估时静默被杀）。
+                if original_device.type == 'cuda':
+                    _alloc = torch.cuda.memory_allocated() / 1024 ** 3
+                    _reserved = torch.cuda.memory_reserved() / 1024 ** 3
+                    model.to('cpu')
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                    logger.info(
+                        f'评估前释放显存：allocated {_alloc:.2f}G / reserved {_reserved:.2f}G'
+                        f' → 释放后 allocated {torch.cuda.memory_allocated() / 1024 ** 3:.2f}G'
+                        f' / reserved {torch.cuda.memory_reserved() / 1024 ** 3:.2f}G'
+                    )
+
                 with tempfile.TemporaryDirectory() as td:
                     weights_path = os.path.join(td, "tmp_eval.pt")
                     eval_script_path = os.path.join(td, "eval_model.py")
