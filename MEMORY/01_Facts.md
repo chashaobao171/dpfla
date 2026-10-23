@@ -372,6 +372,22 @@ FedAvg vs FedBN 逐轮（同口径）：
 【实测·R1 误杀】R1 另有 1 个诚实端 aux=0.908 → 权重 0.020（6 个诚实端仍满权重，R1 未掉点）；R2 起不再出现。
 【出处】`logs_3/visdrone/run_screen_minmax_DPFLA_20261023_1910.log`；TB `VisDrone_YOLO_DPFLA_attack-minmax_..._1911`。
 
+## §5e VisDrone SignFlipping 线（2026-10-23 夜，服务端注入 / v8m@1280 / 5 轮）
+
+**口径**：同 §5d；`FL_SERVER_ATTACK=signflipping`（每个恶意端把自己的更新取反 `g - (w_i - g)`，非全知）。
+
+| 轮 | DPFLA（Sign） |
+|---|---|
+| R1 | 20.26% |
+| R2 | 35.25% |
+| R3 | 40.68% |
+| R4 | 42.78% |
+| R5 | **43.37%** |
+
+【实测】SignFlipping 下 DPFLA R5 43.37，与 MinMax（43.85）接近；待 TMean / MKrum / FedAvg 四臂完成后判定 ≥1%。
+【口径说明·末尾“第二次评估”】R5 之后日志还会再出现一次 mAP（本次 **39.30%**），那是 `fl_core.py:1011-1017` 的 **"Last 10 updates results"**：把最近 N 轮的**全局权重快照等权平均**后重新评估，用于诊断，**不是 R5 的指标**。5 轮实验时它平均了 R1–R5 的权重（含 R1 20.26），所以必然低于 R5 43.37。正式指标只取 `Round 5/5 - mAP@0.5`。
+【出处】`logs_3/visdrone/run_screen_signflipping_DPFLA_20261023_2259.log`；`log/visdrone/auto_results.md`。
+
 ### 两个必修 bug（2026-10-23 定位）
 1. **`KeyError: 'fc2.weight'`（R2 必崩）**：`YOLOWrapper.load_state_dict()` 直接 `pop('fc2.weight/bias')`，**改写了调用方传入的 state_dict**；服务端注入后同步 `local_models` 时把恶意端的 fc2 键删掉 → `average_weights` 在 `w[0]`（诚实端）与 `w[i]`（恶意端）键集不一致时崩溃。R1 因 0 号恰为恶意端而未暴露。**修复**：`load_state_dict` 入口先 `dict(state_dict)` 浅拷贝。`yolo_wrapper.py:669-680`。
 2. **收尾 `deepcopy` 异常**：`average_weights(last10_updates)` 对带 autograd 图的张量 `copy.deepcopy(w[0])` → `Only Tensors created explicitly by the user ... support deepcopy`。**修复**：改为 `{k: v.detach().clone() if tensor else deepcopy(v)}`。`fed_avg.py:24-31`。5 轮数据不受影响（异常发生在 R5 结束后的 Last-10 汇总）。
