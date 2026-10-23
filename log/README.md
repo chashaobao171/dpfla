@@ -19,7 +19,7 @@
 |---|---|---|---|---|
 | **VisDrone** | ① 基线 | **mAP@0.5 = 47.64%**（R13 峰值；25 轮平台 ≈47%，R25 45.73%）| 0% | `run_no_attack_baseline_20261021_1421.log` |
 | VisDrone | ② 攻击无防御 | **mAP@0.5 = 32.37%**（R10；基线 45.08%，−12.7）| **30%** | `run_no_defense_gaussian_20261021_1231.log`（高斯 σ=0.02）|
-| VisDrone | ③ 攻击+DPFLA | ⬜ 待跑 | — | — |
+| VisDrone | ③ MinMax+DPFLA | **R5 43.85%**（R1 21.17 / R2 35.93 / R3 40.67 / R4 42.52；基线同期 21.21/37.05/41.44/43.82/45.08）| 30% | `03_attack_dpfla__run_screen_minmax_DPFLA_20261023_1910.log`（5 轮）|
 | **MNIST** | ① 基线 | 准确率 **95.81%** | 0% | `demo1_mnist_fedavg_noattack_20260902_1113.log` |
 | MNIST | ② 攻击无防御 | 准确率 **4.57%**（被击穿）| **30%** | `run_no_defense_label_flipping_20260515_1020.log` |
 | MNIST | ③ 攻击+DPFLA | 准确率 **95.00%**（防住）| **30%** | `run_dpfla_label_flipping_20260515_1036.log` |
@@ -33,7 +33,7 @@
 | CIFAR10 | ⑧ MinMax · Multi-Krum | **29.19%**（末5均值 29.86%）| 30% | `08_attack_mkrum_minmax__..._1651.log` |
 | CIFAR10 | ⑨ MinMax · Trimmed-Mean | **57.01%**（末5均值 54.32%）| 30% | `09_attack_tmean_minmax__..._1651.log` |
 
-> VisDrone ② 已产出（高斯 σ=0.02）；③ 攻击+DPFLA 防御**待跑**，产出并达标后补入本目录。
+> VisDrone ② 为高斯 σ=0.02 的历史产物；③ 已转为 **MinMax + DPFLA**（5 轮，R5 43.85%）。MinMax 的 FedAvg 无防御臂按用户要求不跑（训练代码未变，25 轮无攻击基线仍可直接对比）。
 
 ## 备注
 
