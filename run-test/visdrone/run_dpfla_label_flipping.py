@@ -78,6 +78,8 @@ os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 os.environ["FL_VISDRONE_LR_SCHEDULE"] = LR_SCHEDULE
 os.environ["FL_GLOBAL_ROUNDS"] = str(GLOBAL_ROUNDS)
 os.environ["FL_LR_MIN"] = str(LR_MIN)
+# 项目口径：标签攻击不放大（client.py 默认 15，会直接打崩）
+os.environ.setdefault("FL_GRADIENT_SCALE", "1")
 torch.set_num_threads(CPU_THREADS)
 torch.set_num_interop_threads(max(1, CPU_THREADS // 2))
 
