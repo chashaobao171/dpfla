@@ -19,7 +19,7 @@
   - **用户口径修正（20:15）**：FedAvg（MinMax 无防御）**保留**；VisDrone 与 CIFAR 对齐 —— **2 攻击（标签反转 + MinMax）× 3 防御（DPFLA/MKrum/TMean）**，FedAvg 为攻击对照臂，**DPFLA mAP 领先两防御 1%** 即达标；**15 轮暂缓，先跑完所有 5 轮**提交老师；研究"能否舍弃高斯、两数据集统一用 MinMax + 标签反转"。
   - **第二攻击改为 SignFlipping（用户 2026-10-23 20:45 决定）**：VisDrone 不用标签反转（太弱，三防御挤一起）；CIFAR 保持"标签反转 + MinMax"不变。
   - **TMean（MinMax）5 轮完成（20:53）**：5.44 / 31.32 / 36.33 / 38.90 / **40.17**；R5 DPFLA（43.85）领先 **+3.68**（≥1 达标）。
-  - **MKrum（MinMax）20:58 手动启动**（自动接力的后台任务被沙箱拦截，未启动）。
+  - **MKrum（MinMax）5 轮完成（21:48）**：0.06 / 7.85 / 20.32 / 26.00 / **29.30**；R5 DPFLA 领先 **+14.55**。
   - 计划：MKrum → FedAvg（均为 MinMax 5 轮）→ **SignFlipping 四臂 5 轮**。5 轮 log 已归档 `log/visdrone/03_attack_dpfla__..._1910.log`。
 - **【16:40–17:03】换攻击范式：MinMax 服务端注入，P3 CIFAR 达标（+2% 三口径全满足）**：
   - 新增 `federated_learning/attack_alg/server_attacks.py`：`minmax`（FLPoison `min.py` 二分 λ）/ `alie`（norm.ppf 推 z_max）/ `signflipping`；`fl_core.py` 聚合前注入并把被替换的恶意端**同步写回 `local_models`**（否则 DPFLA 读到未攻击更新，实测掉到 48.15）。
