@@ -139,10 +139,12 @@
 1. **VisDrone MinMax 线（进行中，2026-10-23）**：与 CIFAR 同口径换 MinMax（服务端注入），目标 mAP@0.5 领先两防御 ≥1%、DPFLA ≥35%。
    - **DPFLA 5 轮已完成**：21.17 / 35.93 / 40.67 / 42.52 / **43.85**（基线 21.21/37.05/41.44/43.82/45.08）→ ≥35 达成。
    - 依次补 TMean（20:03 起）→ MKrum → **FedAvg（MinMax 无防御，保留）**；每条约 65 min，串行，单卡仅容一条 VisDrone。
-   - **验收口径（用户 2026-10-23）**：两种攻击（标签反转 + MinMax）× 三种防御（DPFLA / MKrum / TMean），FedAvg 作攻击对照臂；**DPFLA mAP 比另两防御高 1%** 即达标。
+   - **验收口径（用户 2026-10-23）**：两种攻击（**SignFlipping + MinMax**）× 三种防御（DPFLA / MKrum / TMean），FedAvg 作攻击对照臂；**DPFLA mAP 比另两防御高 1%** 即达标。
    - **节奏**：15 轮暂缓；先把两攻击 × 四臂的 **5 轮**全部跑完，提交老师确认。
-   - **研究项**：MinMax + 标签反转是否已足够、能否舍弃高斯；以 5 轮实测检验标签线是否也能拉开 ≥1%。
-   - **标签攻击档位（用户 2026-10-23）**：VisDrone 用**最强档：多标签全类循环 `{i:(i+1)%10}` + flip_ratio 1.0**，映射不要求与 CIFAR 一致。入口 `run-test/visdrone/run_screen_label_flipping.py`（FL_RULE 控制）。
+   - **高斯已确认舍弃**（用户 2026-10-23）：稳健领先仅 +0.5~0.9，且对 TMean 理论吃亏。
+   - **第二攻击已定 = SignFlipping（符号翻转）**（用户 2026-10-23）：替代标签反转。ALIE 已排除（扰动仅 ≈0.18σ，TMean 裁掉、DPFLA 可能漏检）；标签全翻转在 VisDrone 太弱。CIFAR 仍保持"标签反转 + MinMax"。
+   - **执行顺序**：MinMax 四臂（DPFLA 已完成；TMean 运行中；随后 MKrum、FedAvg）→ **SignFlipping 四臂 × 5 轮**（`FL_SERVER_ATTACK=signflipping`）。
+   - 标签全翻转入口 `run-test/visdrone/run_screen_label_flipping.py` 保留备用，不进入正式对比。
 2. **口径规范**：今后统一以"末 5 轮均值"为主口径，并同时报告 best/R15/last10。
 3. VisDrone 筛选通过后跑 15 轮正式对比（约 2.5h/条）。
 

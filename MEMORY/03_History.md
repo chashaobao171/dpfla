@@ -17,7 +17,8 @@
   - **收尾 deepcopy 异常（R5 后 Last-10 汇总）已修**：`average_weights` 不再 `copy.deepcopy(w[0])`，改 `v.detach().clone()`；5 轮数据不受影响。
   - **TB 整理（20:06）**：VisDrone 只留 5 条 —— 无攻击基线(1421)、高斯 FedAvg(1232)、高斯 DPFLA(1450)、**MinMax DPFLA(1911)**、MinMax TMean(2003，运行中)；失败/中断的 1741/1841/1838/1827/1802 移出到 `/tmp/pruned_visdrone_20261023/`；CIFAR 仍各 9 条（tf-logs 与 tb/ 同步）。
   - **用户口径修正（20:15）**：FedAvg（MinMax 无防御）**保留**；VisDrone 与 CIFAR 对齐 —— **2 攻击（标签反转 + MinMax）× 3 防御（DPFLA/MKrum/TMean）**，FedAvg 为攻击对照臂，**DPFLA mAP 领先两防御 1%** 即达标；**15 轮暂缓，先跑完所有 5 轮**提交老师；研究"能否舍弃高斯、两数据集统一用 MinMax + 标签反转"。
-  - 计划：TMean（20:03 起）→ MKrum → FedAvg（均为 MinMax 5 轮）→ 标签反转线 4 臂 5 轮。5 轮 log 已归档 `log/visdrone/03_attack_dpfla__..._1910.log`。
+  - **第二攻击改为 SignFlipping（用户 2026-10-23 20:45 决定）**：VisDrone 不用标签反转（太弱，三防御挤一起）；CIFAR 保持"标签反转 + MinMax"不变。
+  - 计划：TMean（20:03 起）→ MKrum → FedAvg（均为 MinMax 5 轮）→ **SignFlipping 四臂 5 轮**。5 轮 log 已归档 `log/visdrone/03_attack_dpfla__..._1910.log`。
 - **【16:40–17:03】换攻击范式：MinMax 服务端注入，P3 CIFAR 达标（+2% 三口径全满足）**：
   - 新增 `federated_learning/attack_alg/server_attacks.py`：`minmax`（FLPoison `min.py` 二分 λ）/ `alie`（norm.ppf 推 z_max）/ `signflipping`；`fl_core.py` 聚合前注入并把被替换的恶意端**同步写回 `local_models`**（否则 DPFLA 读到未攻击更新，实测掉到 48.15）。
   - `DPFLA.py` 新增**协同重复检测**：到最近其他端相对距离 <0.01 判重复 → risk=0.98、权重 0.020（MinMax 三个恶意端向量完全相同，相对距离 0.00）。
