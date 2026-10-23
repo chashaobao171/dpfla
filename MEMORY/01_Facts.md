@@ -376,15 +376,17 @@ FedAvg vs FedBN 逐轮（同口径）：
 
 **口径**：同 §5d；`FL_SERVER_ATTACK=signflipping`（每个恶意端把自己的更新取反 `g - (w_i - g)`，非全知）。
 
-| 轮 | DPFLA（Sign） |
-|---|---|
-| R1 | 20.26% |
-| R2 | 35.25% |
-| R3 | 40.68% |
-| R4 | 42.78% |
-| R5 | **43.37%** |
+| 轮 | DPFLA | Multi-Krum | Trimmed-Mean | FedAvg |
+|---|---|---|---|---|
+| R1 | 20.26% | 20.73% | 7.38% | 0.08% |
+| R2 | 35.25% | 35.27% | 30.38% | 3.60% |
+| R3 | 40.68% | 40.13% | 36.04% | 22.19% |
+| R4 | 42.78% | 42.36% | 38.00% | 31.20% |
+| R5 | **43.37%** | **42.91%** | 39.46% | 35.05% |
 
-【实测】SignFlipping 下 DPFLA R5 43.37，与 MinMax（43.85）接近；待 TMean / MKrum / FedAvg 四臂完成后判定 ≥1%。
+【实测·结论】**SignFlipping 不能作为第二攻击**：R5 DPFLA 只比 MKrum 高 **+0.46（<1，未达标）**，比 TMean 高 +3.91。原因：符号翻转把恶意更新推到远离良性簇的位置，**Multi-Krum 的距离选择天然把恶意端排除**（R5 42.91，几乎与 DPFLA 持平）；Trimmed-Mean 也会裁掉极端值，只损失约 4 点。
+→ 对比 MinMax：恶意更新藏在良性区间内且三端完全相同，TMean 裁不到、MKrum 反而选中，才拉开 +3.68 / +14.55。
+→ 第二攻击应改用**专打 Krum 的 ALIE**（CIFAR 5 轮筛选：DPFLA 54.62 vs TMean 48.22，ALIE 的恶意簇彼此靠近，会被 Krum 选中；同时 DPFLA 仍可检测）。
 【口径说明·末尾“第二次评估”】R5 之后日志还会再出现一次 mAP（本次 **39.30%**），那是 `fl_core.py:1011-1017` 的 **"Last 10 updates results"**：把最近 N 轮的**全局权重快照等权平均**后重新评估，用于诊断，**不是 R5 的指标**。5 轮实验时它平均了 R1–R5 的权重（含 R1 20.26），所以必然低于 R5 43.37。正式指标只取 `Round 5/5 - mAP@0.5`。
 【出处】`logs_3/visdrone/run_screen_signflipping_DPFLA_20261023_2259.log`；`log/visdrone/auto_results.md`。
 

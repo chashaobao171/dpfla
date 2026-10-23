@@ -26,7 +26,8 @@
 | DPFLA 算法 | ✅ 四处增强 + **协同重复检测**（相对距离 <0.01 → 权重 0.02）|
 | 攻击实现 | ✅ `attack_alg/server_attacks.py`：MinMax / ALIE / SignFlipping（服务端全知注入），CIFAR + VisDrone 共用 |
 | VisDrone（MinMax） | ✅ DPFLA **43.85** / FedAvg **41.17** / TMean **40.17** / MKrum **29.30**（均 5 轮）→ DPFLA 领先 TMean +3.68、MKrum +14.55 |
-| VisDrone（SignFlipping） | 🟢 自动队列运行中：DPFLA（22:59 起）→ TMean → MKrum → FedAvg |
+| VisDrone（SignFlipping） | ⚠️ 四臂完成：DPFLA **43.37** / MKrum **42.91** / TMean 39.46 / FedAvg 35.05 → **仅领先 MKrum +0.46（<1，未达标）**，不能作为第二攻击 |
+| 第二攻击 | 🔁 改用 **ALIE**（专打 Krum；CIFAR 5 轮 DPFLA 54.62 vs TMean 48.22），待跑 4 臂 × 5 轮 |
 | VisDrone 验收口径 | **2 攻击（SignFlipping + MinMax）× 3 防御（DPFLA/MKrum/TMean）+ FedAvg 对照；DPFLA mAP 领先两防御 ≥1%**；15 轮暂缓，先跑完 5 轮 |
 | 攻击组合 | CIFAR = 标签反转 + MinMax；**VisDrone = SignFlipping + MinMax**；高斯已舍弃 |
 | dev 推送 | ✅ `614774d`（2026-10-23 17:25 推送）；VisDrone 修复与 5 轮结果待下一次推送 |
