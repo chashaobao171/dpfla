@@ -829,6 +829,11 @@ print(json.dumps(res))
                 elif model_name == "CNNCifar10":
                     m = 128
                     n = 10
+                elif model_name in ("ResNet18CIFAR", "ResNet18"):
+                    # p / w 在 SVD+KMeans 主路径中不参与计算（score() 内部用 len(selected_clients)），
+                    # 这里只需给出合法值以通过分支校验
+                    m = 128
+                    n = 10
                 elif model_name == "YOLO":
                     m = 128
                     n = 10

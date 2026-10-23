@@ -6,6 +6,12 @@
 
 ## 2026-10-23
 
+- **CIFAR 代码改造完成（T1–T4）**，推 dev：
+  - 新增 `federated_learning/models/cifar_resnet.py`：CIFAR 专用 ResNet（3×3/s1 stem、无 maxpool、`linear` 头、11.17M），模型名 `ResNet18CIFAR`，支持 `return_features`。
+  - `models/model.py` 注册；`fl_core.py` DPFLA 白名单加 `ResNet18CIFAR / ResNet18`；`DPFLA.py` 新增 `_detect_classifier_weight_key()`（`fc2 → fc → linear`）并清除三处硬编码。
+  - 新增 `run-test/cifar10/cifar_fed_hparams.py` + 5 个实验脚本（基线 / 标签+FedAvg / 标签+DPFLA / 高斯+FedAvg / 高斯+DPFLA），统一 10 客户端 / 15 轮 / 1 epoch / BS64 / lr0.01 / IID / 固定映射 `{5→3}` / `FL_GRADIENT_SCALE=1`。
+  - `sampling.py` 修正 CIFAR 候选路径首项被跳过的问题 → 数据根解析为 `/root/autodl-tmp/data`。
+  - CPU 验证：模型前向、DPFLA 两条键路径、5 脚本参数块均通过；**未跑训练**（无卡 + 2GB 容器上限）。
 - **用户定稿高层路线**（新增 `08_Roadmap.md`，高级别）：CIFAR10 有攻防 ≥65%（ResNet18 / 高斯+标签 / 不放大）、轮数上限改 15、DPFLA vs Multi-Krum / Trimmed-Mean（+2% / +1%）、后续分布式。
 - **删除 CIFAR10 旧攻击日志与 TensorBoard**（用户要求："log 里 cifar 除基线外都删、tsboard 也删"）：
   - `log/cifar10/02_attack_nodefense__..._1214.log`、`03_attack_dpfla__..._1209.log` → 删除；**只留 `01_baseline__..._1128.log`**（60.74%）。

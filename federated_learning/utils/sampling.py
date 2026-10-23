@@ -120,11 +120,17 @@ def get_cifar10():
     data_dir = candidate_roots[-1]
     has_local_cifar = False
     for root in candidate_roots:
-        cifar_batches_dir = os.path.join(root, 'cifar-10-batches-py')
+        # 候选既可能是 CIFAR 根目录，也可能直接是 cifar-10-batches-py 目录本身
+        if os.path.basename(root.rstrip('/')) == 'cifar-10-batches-py':
+            cifar_batches_dir = root
+            cifar_data_dir = os.path.dirname(root.rstrip('/'))
+        else:
+            cifar_batches_dir = os.path.join(root, 'cifar-10-batches-py')
+            cifar_data_dir = root
         if not os.path.isdir(cifar_batches_dir):
             continue
         if all(os.path.exists(os.path.join(cifar_batches_dir, f)) for f in required_files):
-            data_dir = root
+            data_dir = cifar_data_dir
             has_local_cifar = True
             break
 

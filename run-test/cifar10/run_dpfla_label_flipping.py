@@ -1,60 +1,71 @@
 """
-CIFAR10 + CNNCifar10 + 标签翻转攻击 + DPFLA(SVD+KMeans) 防御
+CIFAR10 + ResNet18CIFAR + 标签翻转攻击 + DPFLA 防御（SVD+KMeans 主路径）
+
+口径与 run_no_defense_label_flipping.py 完全一致（仅聚合规则不同，单变量对比）：
+10 客户端 / 15 轮 / 1 local epoch / lr 0.01 / BS 64 / IID；
+30% 恶意、行为率 100%、固定映射 {5(dog)->3(cat)}、**FL_GRADIENT_SCALE=1（不放大）**。
 """
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-import torch
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_CIF = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _ROOT)
+sys.path.insert(0, _CIF)
+
 import time
+import torch
 
-NUM_WORKERS = 7
-MALICIOUS_RATE = 0.30
-GLOBAL_ROUNDS = 8
-LOCAL_EPOCHS = 1
+from cifar_fed_hparams import (
+    DATASET_NAME,
+    MODEL_NAME,
+    NUM_WORKERS,
+    FRAC_WORKERS,
+    GLOBAL_ROUNDS,
+    LOCAL_EPOCHS,
+    MALICIOUS_RATE,
+    MALICIOUS_BEHAVIOR_RATE,
+    FLIP_MAPPING,
+    FLIP_RATIO,
+    apply_arguments_patch,
+    apply_common_env,
+    print_config,
+)
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-from federated_learning import arguments
-original_args_init = arguments.Arguments.__init__
-
-
-def patched_args_init(self, logger):
-    original_args_init(self, logger)
-    if device == 'cpu':
-        self.device = 'cpu'
-
-
-arguments.Arguments.__init__ = patched_args_init
+apply_arguments_patch(device)
+apply_common_env()
 
 from server import run_exp
 
-print("=" * 70)
-print("CIFAR10：标签翻转攻击 + DPFLA(SVD+KMeans)")
-print("=" * 70)
-print(f"- 客户端: {NUM_WORKERS}")
-print(f"- 恶意率: {MALICIOUS_RATE*100:.0f}%")
-print(f"- 轮次: {GLOBAL_ROUNDS} x {LOCAL_EPOCHS}")
-print(f"- 设备: {device}")
-print("=" * 70)
+print_config(
+    "标签翻转攻击",
+    "DPFLA 防御（SVD+KMeans，k=2）",
+    extra_lines=[
+        f"- 设备: {device}",
+        f"- 翻转映射: {FLIP_MAPPING}（flip_ratio={FLIP_RATIO}）",
+        f"- 恶意行为率: {MALICIOUS_BEHAVIOR_RATE:.2f}",
+    ],
+)
 
 start_time = time.time()
 
 try:
     run_exp(
         num_workers=NUM_WORKERS,
-        frac_workers=1.0,
+        frac_workers=FRAC_WORKERS,
         attack_type='label_flipping',
         rule='DPFLA',
-        replace_method={'source_class': 1, 'target_class': 7},
-        dataset={'dataset_name': 'CIFAR10', 'model_name': 'CNNCifar10'},
+        replace_method={'mapping': FLIP_MAPPING, 'flip_ratio': FLIP_RATIO},
+        dataset={'dataset_name': DATASET_NAME, 'model_name': MODEL_NAME},
         malicious_rate=MALICIOUS_RATE,
-        malicious_behavior_rate=1.0,
+        malicious_behavior_rate=MALICIOUS_BEHAVIOR_RATE,
         global_round=GLOBAL_ROUNDS,
         local_epoch=LOCAL_EPOCHS,
-        untarget=True,
-        experiment_tag=os.path.splitext(os.path.basename(__file__))[0]
+        untarget=False,
+        experiment_tag=os.path.splitext(os.path.basename(__file__))[0],
     )
     elapsed = time.time() - start_time
     print(f"\n✓ 测试完成，总耗时: {elapsed / 60:.1f} 分钟")
@@ -63,5 +74,5 @@ except KeyboardInterrupt:
 except Exception as e:
     print(f"\n测试失败: {e}")
     import traceback
-    traceback.print_exc()
 
+    traceback.print_exc()

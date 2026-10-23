@@ -6,6 +6,7 @@ import torchvision as tv
 from loguru import logger
 
 from federated_learning.models.bilstm import BiLSTM
+from federated_learning.models.cifar_resnet import resnet18_cifar
 from federated_learning.models.cnn_cifar_10 import Cifar10CNN
 from federated_learning.models.cnn_mnist import CNNMNIST
 from federated_learning.models.yolo_wrapper import YOLOWrapper
@@ -16,7 +17,8 @@ def setup_model(model_architecture, num_classes=None, tokenizer=None, embedding_
         "CNNMNIST": CNNMNIST,
         "BiLSTM": BiLSTM,
         "CNNCifar10": Cifar10CNN,
-        "ResNet18": tv.models.resnet18,
+        "ResNet18CIFAR": resnet18_cifar,  # CIFAR 专用 stem（3x3/s1，无 maxpool）
+        "ResNet18": tv.models.resnet18,   # torchvision ImageNet 版，32x32 上不推荐
         "VGG16": tv.models.vgg16,
         "DN121": tv.models.densenet121,
         "SHUFFLENET": tv.models.shufflenet_v2_x1_0,
@@ -24,7 +26,9 @@ def setup_model(model_architecture, num_classes=None, tokenizer=None, embedding_
     }
     logger.info('--> Creating {} model.....'.format(model_architecture))
     # variables in pre-trained ImageNet models are model-specific.
-    if "ResNet18" in model_architecture:
+    if "ResNet18CIFAR" in model_architecture:
+        model = available_models[model_architecture](num_classes=num_classes or 10)
+    elif "ResNet18" in model_architecture:
         model = available_models[model_architecture]()
         n_features = model.fc.in_features
         model.fc = nn.Linear(n_features, num_classes)

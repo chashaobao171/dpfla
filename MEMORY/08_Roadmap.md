@@ -92,6 +92,21 @@
 | T8 | 诊断：若 DPFLA 与无防御差距 <2 点，查日志里恶意端 KMeans 标签/聚合权重是否真被压低 | 能定位是"攻击太弱"还是"防御没生效" |
 | T9 | 归档 `log/cifar10/`（标签三件套 + 高斯一套）、更新 `log/README.md`、`01_Facts.md` §5b | 与 `log/README` 收录标准一致 |
 
+### 落地情况（2026-10-23，T1–T4 已完成）
+
+| 项 | 落地 |
+|---|---|
+| CIFAR ResNet | 新增 [cifar_resnet.py](file:///root/chashaobao/DPFLA-master/federated_learning/models/cifar_resnet.py)，模型名 **`ResNet18CIFAR`**（3×3/s1 stem、无 maxpool、`linear` 头、11.17M 参数、支持 `return_features`）|
+| 注册 | [model.py](file:///root/chashaobao/DPFLA-master/federated_learning/models/model.py#L16-L31) 注册 `ResNet18CIFAR`；torchvision `ResNet18` 保留但**不用于 CIFAR** |
+| DPFLA 白名单 | [fl_core.py:832-836](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L832-L836) 已加 `ResNet18CIFAR / ResNet18` |
+| DPFLA 特征键 | [DPFLA.py:16-28](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L16-L28) 新增 `_detect_classifier_weight_key()`，按 `fc2 → fc → linear` 探测；三处硬编码已清除 |
+| CIFAR 统一入口 | 新增 [cifar_fed_hparams.py](file:///root/chashaobao/DPFLA-master/run-test/cifar10/cifar_fed_hparams.py)（10 客户端/15 轮/1 epoch/BS64/lr0.01/IID，`FL_GRADIENT_SCALE` 默认 1）|
+| 实验脚本 | `run-test/cifar10/` 下 5 个：基线、标签+FedAvg、标签+DPFLA、高斯+FedAvg、高斯+DPFLA |
+| 数据路径 | [sampling.py:120-135](file:///root/chashaobao/DPFLA-master/federated_learning/utils/sampling.py#L120-L135) 修正候选表首项被跳过的问题 → 现解析为 **`/root/autodl-tmp/data`**（download=False）|
+
+【实测】CPU 验证已通过：模型前向 `(2,10)/(2,512)`；DPFLA 两条键路径（`linear` / `fc2`）跑通；5 个脚本以 stub `run_exp` 执行，参数块与规划一致（rounds=15 / mr=0.3 / untarget=False / scale=1）。
+⚠️ **尚未跑训练**：本机无卡（2GB 容器内存，10×ResNet18 冒烟会被 OOM 杀）。
+
 ### 验收
 
 - [ ] 标签翻转 + DPFLA：**≥65%**（≤15 轮、`FL_GRADIENT_SCALE=1`）

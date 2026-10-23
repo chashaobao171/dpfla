@@ -1,58 +1,58 @@
 """
-CIFAR10 + CNNCifar10 + 无攻击 + FedAvg 基线
+CIFAR10 + ResNet18CIFAR + 无攻击 + FedAvg 基线（15 轮）
+
+口径见 cifar_fed_hparams.py（10 客户端 / 15 轮 / 1 local epoch / lr 0.01 / BS 64 / IID）。
 """
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-import torch
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_CIF = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _ROOT)
+sys.path.insert(0, _CIF)
+
 import time
+import torch
 
-NUM_WORKERS = 7
-GLOBAL_ROUNDS = 8
-LOCAL_EPOCHS = 1
+from cifar_fed_hparams import (
+    DATASET_NAME,
+    MODEL_NAME,
+    NUM_WORKERS,
+    FRAC_WORKERS,
+    GLOBAL_ROUNDS,
+    LOCAL_EPOCHS,
+    FLIP_MAPPING,
+    apply_arguments_patch,
+    apply_common_env,
+    print_config,
+)
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-from federated_learning import arguments
-original_args_init = arguments.Arguments.__init__
-
-
-def patched_args_init(self, logger):
-    original_args_init(self, logger)
-    if device == 'cpu':
-        self.device = 'cpu'
-
-
-arguments.Arguments.__init__ = patched_args_init
+apply_arguments_patch(device)
+apply_common_env()
 
 from server import run_exp
 
-print("=" * 70)
-print("CIFAR10 基线：无攻击 + FedAvg")
-print("=" * 70)
-print(f"- 客户端: {NUM_WORKERS}")
-print(f"- 轮次: {GLOBAL_ROUNDS} x {LOCAL_EPOCHS}")
-print(f"- 设备: {device}")
-print("=" * 70)
+print_config("无攻击", "FedAvg（基线）", extra_lines=[f"- 设备: {device}"], malicious_rate=0.0)
 
 start_time = time.time()
 
 try:
     run_exp(
         num_workers=NUM_WORKERS,
-        frac_workers=1.0,
+        frac_workers=FRAC_WORKERS,
         attack_type='no_attack',
         rule='fedavg',
-        replace_method={'source_class': 1, 'target_class': 7},
-        dataset={'dataset_name': 'CIFAR10', 'model_name': 'CNNCifar10'},
+        replace_method={'source_class': 5, 'target_class': 3},
+        dataset={'dataset_name': DATASET_NAME, 'model_name': MODEL_NAME},
         malicious_rate=0.0,
         malicious_behavior_rate=0.0,
         global_round=GLOBAL_ROUNDS,
         local_epoch=LOCAL_EPOCHS,
-        untarget=True,
-        experiment_tag=os.path.splitext(os.path.basename(__file__))[0]
+        untarget=False,
+        experiment_tag=os.path.splitext(os.path.basename(__file__))[0],
     )
     elapsed = time.time() - start_time
     print(f"\n✓ 测试完成，总耗时: {elapsed / 60:.1f} 分钟")
@@ -61,5 +61,5 @@ except KeyboardInterrupt:
 except Exception as e:
     print(f"\n测试失败: {e}")
     import traceback
-    traceback.print_exc()
 
+    traceback.print_exc()

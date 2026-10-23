@@ -13,6 +13,21 @@ import torch
 import torch.nn.functional as F
 
 
+def _detect_classifier_weight_key(state_dict):
+    """
+    探测分类器层权重键（非 YOLO 任务的特征来源）：
+    - fc2.weight   → 本项目 Cifar10CNN
+    - fc.weight    → torchvision ResNet
+    - linear.weight → CIFAR 专用 ResNet（federated_learning/models/cifar_resnet.py）
+    """
+    for key in ('fc2.weight', 'fc.weight', 'linear.weight'):
+        if key in state_dict:
+            return key
+    raise RuntimeError(
+        "DPFLA 特征层选择失败：state_dict 中未找到 fc2.weight / fc.weight / linear.weight 任一分类器层"
+    )
+
+
 class DPFLA:
     def __init__(self):
         # 跨轮历史：用于“稳定惩罚/恢复”机制，提升小样本(如7客户端)下的鲁棒性
@@ -254,9 +269,10 @@ class DPFLA:
                 use_yolo_class_slice = False
             is_yolo_head_mode = True
         else:
-            # CNN模型保持原有按类别切片的fc2分析方式
-            layer_key = 'fc2.weight'
-            num_classes = 10
+            # 非 YOLO（分类）模型：按类别切片分析分类器层
+            # 兼容 Cifar10CNN(fc2) / torchvision ResNet(fc) / CIFAR ResNet(linear)
+            layer_key = _detect_classifier_weight_key(global_model.state_dict())
+            num_classes = int(global_model.state_dict()[layer_key].shape[0])
             feature_units = list(range(num_classes))
             is_yolo_head_mode = False
 
@@ -309,7 +325,6 @@ class DPFLA:
                 client_feature_rows.append([np.log1p(delta_norm), cos_sim, concentration])
         else:
             # 非YOLO任务保持轻量辅助特征
-            layer_key = 'fc2.weight'
             g = global_model.state_dict()[layer_key].cpu().detach().reshape(-1).numpy()
             deltas = []
             for i in range(m_len):
@@ -352,7 +367,6 @@ class DPFLA:
                     start_vec = np.concatenate(unit_parts, axis=0)
                     layer_key = 'yolo_head_concat'
             else:
-                layer_key = 'fc2.weight'
                 start_vec = global_model.state_dict()[layer_key][unit].cpu().detach().reshape(-1).numpy()
 
             local_param_diff_mask = []
