@@ -25,7 +25,9 @@
 | CIFAR10 P3 | ✅ **MinMax 15 轮：DPFLA 69.25 vs MKrum 29.19 / TMean 57.01**（末5 +37.90/+13.43）；标签线 +3.00/+2.1~2.2；高斯线已不作为 +2 依据（04_Retracted R13）|
 | DPFLA 算法 | ✅ 四处增强 + **协同重复检测**（相对距离 <0.01 → 权重 0.02）|
 | 攻击实现 | ✅ `attack_alg/server_attacks.py`：MinMax / ALIE / SignFlipping（服务端全知注入），CIFAR + VisDrone 共用 |
-| VisDrone ③（MinMax） | 🟢 **DPFLA 5 轮完成：21.17 / 35.93 / 40.67 / 42.52 / 43.85**（≥35 达标）；TMean 5 轮运行中（20:03 起）|
+| VisDrone（MinMax） | 🟢 **DPFLA 5 轮完成：21.17 / 35.93 / 40.67 / 42.52 / 43.85**（≥35 达标）；TMean 运行中，随后 MKrum、FedAvg |
+| VisDrone 验收口径 | **2 攻击（标签反转 + MinMax）× 3 防御（DPFLA/MKrum/TMean）+ FedAvg 对照；DPFLA mAP 领先两防御 ≥1%**；15 轮暂缓，先跑完 5 轮 |
+| 研究项 | 能否舍弃高斯、两数据集统一用 MinMax + 标签反转（需 5 轮实测验证标签线能否拉开 ≥1%）|
 | dev 推送 | ✅ `614774d`（2026-10-23 17:25 推送）；VisDrone 修复与 5 轮结果待下一次推送 |
 
 ## 进度快照（2026-10-17）
