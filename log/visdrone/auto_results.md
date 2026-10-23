@@ -42,3 +42,7 @@
 `logs_3/visdrone/run_screen_alie_tmean_20261024_0710.log`
 2026-10-24 07:20:48.327 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/1 - 📊 mAP@0.5: 18.59% | 损失: 291.5208
 
+## alie mkrum 探针1轮 2026-10-24 07:32:03
+`logs_3/visdrone/run_screen_alie_mkrum_20261024_0721.log`
+2026-10-24 07:32:00.477 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/1 - 📊 mAP@0.5: 18.10% | 损失: 296.4527
+

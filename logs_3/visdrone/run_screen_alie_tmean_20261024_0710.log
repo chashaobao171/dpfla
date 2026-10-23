@@ -315,3 +315,18 @@ Malicious Behavior Rate: 1.0
 2026-10-24 07:20:49.236 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
 2026-10-24 07:20:49.236 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
 2026-10-24 07:20:49.489 | INFO     | federated_learning.fl_core:test:201 - 评估前释放显存：allocated 0.46G / reserved 1.06G → 释放后 allocated 0.46G / reserved 1.06G
+2026-10-24 07:21:02.484 | INFO     | federated_learning.fl_core:test:303 - 📊 YOLO原生mAP@0.5: 18.59%
+2026-10-24 07:21:02.485 | INFO     | federated_learning.fl_core:test:304 -    mAP@0.5:0.95: 8.58%
+2026-10-24 07:21:02.485 | INFO     | federated_learning.fl_core:test:305 -    Precision: 22.26%
+2026-10-24 07:21:02.485 | INFO     | federated_learning.fl_core:test:306 -    Recall: 29.17%
+2026-10-24 07:21:02.485 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda:0) 被调用
+2026-10-24 07:21:02.523 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda:0
+2026-10-24 07:21:02.523 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda:0
+2026-10-24 07:21:22.709 | INFO     | federated_learning.fl_core:run_experiment:1021 - ***********************************************************************************
+2026-10-24 07:21:22.711 | DEBUG    | federated_learning.fl_core:test_label_predictions:552 - Skipping label predictions for detection task
+2026-10-24 07:21:22.728 | DEBUG    | federated_learning.fl_core:run_experiment:1078 - Global accuracies: [np.float64(18.59), np.float64(18.59)]
+2026-10-24 07:21:22.729 | DEBUG    | federated_learning.fl_core:run_experiment:1079 - Class 0 accuracies: [0.0, 0.0]
+2026-10-24 07:21:22.729 | DEBUG    | federated_learning.fl_core:run_experiment:1080 - Test loss: [np.float64(291.5208), np.float64(291.5208)]
+2026-10-24 07:21:22.729 | DEBUG    | federated_learning.fl_core:run_experiment:1081 - Label-flipping Attack success rate: 0.0
+2026-10-24 07:21:22.729 | DEBUG    | federated_learning.fl_core:run_experiment:1082 - Backdoor attack succes rate: 0.0
+2026-10-24 07:21:22.730 | DEBUG    | federated_learning.fl_core:run_experiment:1083 - Average CPU aggregation runtime: 0.4962117671966553
