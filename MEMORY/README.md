@@ -41,6 +41,7 @@ README.md              ← 先读（规则）
 05_Environment.md      ← 环境 / 路径 / 数据 / 冻结红线
 06_Git_Workflow.md     ← Git 与备份流程
 07_ThirdParty.md       ← 第三方参考工程（客观对照，不承载本项目结论）
+08_Roadmap.md          ← **高级别路线图**：目标 / 验收 / 新约束 / 分布式前置（2026-10-23 用户定稿）
 ```
 
 ## 快速定位
@@ -53,3 +54,4 @@ README.md              ← 先读（规则）
 | 跑实验的命令 / 路径 | `05_Environment.md` |
 | 上次改了什么 | `03_History.md` |
 | 第三方工程到底怎么写的 | `07_ThirdParty.md` |
+| **未来要做什么 / 验收标准** | **`08_Roadmap.md`（高级别）** |

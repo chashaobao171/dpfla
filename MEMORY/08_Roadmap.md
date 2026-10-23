@@ -1,0 +1,207 @@
+# 08_Roadmap.md — 高层路线图（用户 2026-10-23 定稿）
+
+<!-- 最后更新：2026-10-23 -->
+<!-- 级别：**高级别记忆**。与 00_Current_State.md 同级；本文件只记"目标 / 验收 / 约束 / 阻塞"，实测数据仍以 01_Facts.md 为准。 -->
+<!-- 规则：目标与验收来自用户原话；现状标【实测】；推断标【推断·未验证】。用户后续修订指令优先。 -->
+
+## §0 一句话
+
+先在 **CIFAR10 把「有攻击 + 有防御」刷到 ≥65%**（ResNet18、覆盖高斯 + 标签翻转、**不放大梯度**、轮数 ≤15），再把 **DPFLA 与 Multi-Krum / Trimmed-Mean 做同口径对比**（CIFAR10 领先 ≥2%、VisDrone mAP@0.5 领先 ≥1%）；两项全部完成后再启动**分布式改造**（未来工作，当前只做"不挡路"的预防）。
+
+## §1 新硬约束（长期，2026-10-23 用户明确）
+
+| 约束 | 内容 | 说明 |
+|---|---|---|
+| **轮数上限** | **15 轮**（原 25） | 今后所有实验的全局轮数上限 |
+| 恶意率 | 30%（10 客户端 → 3 个恶意） | 沿用，不可调 |
+| **梯度放大** | CIFAR10 新实验**一律 `FL_GRADIENT_SCALE=1`**（纯攻击、不放大） | 代码默认 15 不改，只用 env 覆盖 |
+| 攻击强度 | 只用环境变量调，**不改代码默认值** | 沿用 |
+| 单变量 | 一次只改一个变量 | 沿用 |
+
+## §2 P1 — CIFAR10 有攻防 ≥65%（换 ResNet18）
+
+### 现状【实测】
+
+| 实验 | 准确率 | 口径 |
+|---|---|---|
+| 基线 FedAvg | **60.74%** | 10 客户端 / 15 轮 / 1 local epoch / lr 0.01 / BS 64 / CNNCifar10 / IID |
+| 攻击 + 无防御 | 34.87% | 标签翻转 dog(5)→cat(3) / 30% / **×15 放大** |
+| 攻击 + DPFLA | 61.99% | 同上 |
+
+出处：`log/cifar10/01_baseline__cifar1_fedavg_noattack_20260902_1128.log`；②③ 两份日志**已于 2026-10-23 删除**（数值保留于 `01_Facts.md` §5b）。
+
+⚠️ **②③ 全部带 ×15 梯度放大**（各 45 次 `梯度放大 ×15.0` 日志）→ 与新要求"不放大"**不同口径，不可直接引用 61.99%**，必须重跑。
+
+⚠️ **入口脚本口径分裂**【实测】：
+- `run-test/cifar10/*.py`：7 客户端 / 8 轮 / 未改 lr（默认 1e-4）/ `untarget=True`（目标类随 timestamp 每轮漂移）。
+- 归档日志实际由根目录 `run_demo_cifar.py` 产生：10 客户端 / 15 轮 / lr 0.01 / `untarget=False`。
+
+### 模型选型（关键决策，2026-10-23 核实）【实测】
+
+- **不要直接用 torchvision `resnet18`**：它是 ImageNet 结构（7×7 stride2 stem + maxpool），32×32 输入到 layer4 只剩 1×1，CIFAR 上系统性吃亏。
+- **FLPoison 分支自带 CIFAR 专用 ResNet**（`origin/FLPoison:fl/models/resnet.py`）：**3×3 stride1 stem、无 maxpool、`avg_pool2d(4)`、末层 `linear`** → 正是 CIFAR 口径，可单文件借用（注明出处）。
+- 借用时需适配两点：① 我们的 `client.py` 调 `model(data, return_features=True)` 需要返回 `(logits, features)`；② DPFLA 非 YOLO 特征键要支持 `linear.weight`（FLPoison 用 `linear`，不是 `fc`/`fc2`）。
+- 备选：`VGG16` / `DN121` 已在 `setup_model` 注册，但参数量/通信成本更高，非首选。
+
+### 阻塞项（不解决跑不起来）
+
+1. **模型**：`setup_model` 注册的 `ResNet18` 是 torchvision 版（ImageNet stem）→ **不适合 CIFAR**，需替换/新增 CIFAR 版实现（见上）。
+2. **DPFLA 白名单**：[fl_core.py:826-836](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L826-L836) 只认 `CNNMNIST / CNNCifar10 / YOLO`，其它 `raise` → 需加 `ResNet18` 分支。
+3. **DPFLA 特征键硬编码**：[DPFLA.py:258-261](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L258-L261)、[312](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L312)、[356](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L356) 非 YOLO 路径写死 `fc2.weight` → 改为按 `fc2.weight → fc.weight → linear.weight` 顺序探测。
+4. **CIFAR 高斯入口缺失**：`run-test/` 只有 VisDrone 的 `run_no_defense_gaussian.py`，CIFAR10 **无高斯脚本**（无防御 / DPFLA 两版都缺）。
+5. **入口统一**：新建 `run-test/cifar10/cifar_fed_hparams.py`，把 lr / BS / local epochs / 攻击口径集中，脚本只读 hparams（与 `visdrone_fed_hparams.py` 同构）。
+6. **固定攻击映射**：CIFAR 现有脚本 `untarget=True` 会让目标类每轮变化 → 对比实验必须 `untarget=False` + 固定映射 `{5(dog)→3(cat)}`。
+
+### 隐藏变量（会干扰 65% 目标）【实测】
+
+- CIFAR 走 `PerturbedGradientDescent(lr, mu=0.001)`（FedProx），**不是 SGD**（[client.py:406-407](file:///root/chashaobao/DPFLA-master/federated_learning/client.py#L406-L407)）→ FedProx 的 `mu*(w-w_global)` 项会拖慢 from-scratch 收敛，是 65% 目标的可疑变量。
+- `Cifar10CNN.forward` 末尾 `F.softmax` + `CrossEntropyLoss` → **双 softmax**，梯度被压平，是 60.74% 上限的主要原因之一（[cnn_cifar_10.py:50](file:///root/chashaobao/DPFLA-master/federated_learning/models/cnn_cifar_10.py#L50)）；新 ResNet 返回 logits，可规避。
+- 历史 CIFAR 归档用 `lr=0.01`（靠 `run_demo_cifar.py` 里 patch `Arguments.lr` 实现），脚本本身没有这个覆盖 → 统一入口时必须显式写入 hparams。
+
+### 详细计划（T1–T9，每步单变量）
+
+**阶段 0：工程准备（不跑训练，不涉及算法）**
+
+| # | 任务 | 产出 / 判据 |
+|---|---|---|
+| T1 | 引入 CIFAR 专用 ResNet18（借用 FLPoison `fl/models/resnet.py`，加 `return_features` 适配与 `setup_model` 注册） | 单张 32×32 前向 shape 正确；`return_features=True` 返回 `(logits,features)` |
+| T2 | DPFLA 兼容：`fl_core` 白名单加 `ResNet18`；`DPFLA.py` 三处特征键改为自动探测 | `rule=DPFLA` + ResNet18 能跑通 1 轮不报 KeyError |
+| T3 | 统一入口 `run-test/cifar10/cifar_fed_hparams.py` + 三个脚本改造（基线 / 无防御 / DPFLA），显式 `FL_GRADIENT_SCALE=1`、固定映射、`untarget=False`、`ROUNDS=15` | `python ...` 打印的参数块与规划一致 |
+| T4 | 新增高斯脚本 `run_no_defense_gaussian.py` / `run_dpfla_gaussian.py`（照 VisDrone 版结构） | 与标签线共用 hparams，只差 `attack_type`/`rule` |
+
+**阶段 1：基线（决定 65% 是否有余量）**
+
+| # | 任务 | 判据 |
+|---|---|---|
+| T5 | **A1**：ResNet18 / 10 客户端 / **15 轮** / 1 local epoch / lr 0.01 / BS 64 / IID / 无攻击 | R15 **≥70%** 视为达标（给攻击留 5 点余量）|
+| T5b | 若 A1 < 65%：**单变量**先 `local_epochs=3`；仍不行再 `lr=0.05`；再不行才考虑 `mu=0`（改 SGD） | 每次只动一个，记录曲线 |
+
+**阶段 2：攻击线（不放大梯度）**
+
+| # | 任务 | 判据 |
+|---|---|---|
+| T6 | **A2** 标签翻转 + 无防御：`{5→3}`、30% 恶意、行为率 1.0、`FL_GRADIENT_SCALE=1`、15 轮 | 相对 A1 掉 **≥5 点但不崩**（若掉 <3 点 → 扩覆盖映射，仍不放大）|
+| T6b | **A3** 标签翻转 + DPFLA（同 A2 口径，仅 `rule` 变） | **≥65%**；且 ≥ A2 + 5 点 |
+| T7 | **A4** 高斯 σ 筛选：0.005 / 0.01 / 0.02 / 0.05，先各跑 5 轮看拐点 | 选"明显掉点、不归零"的档；**不能照搬 VisDrone σ=0.02** |
+| T7b | 选定 σ 跑满 15 轮：无防御 + DPFLA 各一次 | **≥65%**；且 DPFLA > 无防御 |
+
+**阶段 3：收尾**
+
+| # | 任务 | 判据 |
+|---|---|---|
+| T8 | 诊断：若 DPFLA 与无防御差距 <2 点，查日志里恶意端 KMeans 标签/聚合权重是否真被压低 | 能定位是"攻击太弱"还是"防御没生效" |
+| T9 | 归档 `log/cifar10/`（标签三件套 + 高斯一套）、更新 `log/README.md`、`01_Facts.md` §5b | 与 `log/README` 收录标准一致 |
+
+### 验收
+
+- [ ] 标签翻转 + DPFLA：**≥65%**（≤15 轮、`FL_GRADIENT_SCALE=1`）
+- [ ] 高斯 + DPFLA：**≥65%**（同口径）
+- [ ] 同攻击下无防御**明显低于** DPFLA（否则"防御有效"不成立）
+- [ ] 所有实验 ≤15 轮，参数块可逐项比对
+
+## §3 P2 — DPFLA 算法审计：是否用 SVD / KMeans，k 是多少
+
+**结论：SVD 与 KMeans 都在用；k = 2（固定，不自适应）**【实测】
+
+| 项 | 事实 | 位置 |
+|---|---|---|
+| SVD | `svd(Z_mask)` → 取 `U_mask`、前 2 个奇异值做二维投影 | [DPFLA.py:393-404](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L393-L404) |
+| `svd()` 实现 | `np.linalg.svd`；m<n 时转置后交换 U/V | [DPFLA.py:645-651](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L645-L651) |
+| KMeans | `batch_detect_outliers_kmeans(detect_res_list)`，`n_clusters=2` | [DPFLA.py:406](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L406)、[584-586](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L584-L586) |
+| **k 值** | **k = 2**，不随恶意率 / 客户端数变化；多数簇=诚实、少数簇=恶意 | 同上 |
+| 聚类门槛 | `max_sc ≥ 0.58` 才采纳聚类；`≥0.72` 高置信；`[0.58,0.72)` 灰区柔罚 | [DPFLA.py:410-436](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L410-L436) |
+| 死代码 | `detect_outliers_kmeans()`（k=2、门槛 0.61）**已定义但无调用** | [DPFLA.py:547-581](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L547-L581) |
+| 软权重 | 基础 bad 权重 `0.20 - 0.12*confidence`；连续 bad 按 `0.72^(streak-1)` 衰减，下限 0.02 | [DPFLA.py:435-500](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L435-L500) |
+| 辅助特征 | MAD z-score（3 维：log1p 更新范数 / 与群体均值余弦 / 层间更新集中度） | [DPFLA.py:265-328](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L265-L328) |
+| 特征层 | YOLO：`model.22.cv3.{0,1,2}.2.weight`(+bias) 按类切片；非 YOLO：`fc2.weight` | [DPFLA.py:211-261](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L211-L261) |
+
+⚠️ **k=2 写死**：恶意方若成为多数（>50%）或只剩 1 个恶意，聚类语义会反转/退化（已有 `minority_count==1` 补救，但 **k 仍固定**）。当前任务用 30% 恶意，k=2 合理；若后续改恶意率需重新评估。
+
+## §4 P3 — DPFLA vs Multi-Krum / Trimmed-Mean
+
+### 目标（用户原话）
+
+| 数据集 | 指标 | 要求 |
+|---|---|---|
+| CIFAR10 | 准确率 | DPFLA **比 Multi-Krum、Trimmed-Mean 都高 ≥2%** |
+| VisDrone | mAP@0.5 | DPFLA **比二者都高 ≥1%** |
+
+### 本项目现有实现（已接进 fl_core）【实测】
+
+- **Multi-Krum**：`Krum(local_models, f=attackers_ratio*N, multi=True)`，`k = n - f - 2`；n=10 / f=3 → **选 5 个**平均，其余权重 0；用 `parameters_to_vector` 在 CPU 上算全参数距离矩阵（[m_krum.py:12-19](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/m_krum.py#L12-L19)、[fl_core.py:736-741](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L736-L741)）。
+- **Trimmed-Mean**：`trim_ratio = attackers_ratio * N / len(selected)` = 0.3 → 每端裁 3 个、保留 4 个；`assert trim_ratio < 0.5`（[t_mean.py:13-14](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/t_mean.py#L13-L14)、[fl_core.py:729-734](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L729-L734)）。
+
+⚠️ 风险【推断·未验证】：
+- `t_mean` **不跳过 BN buffer**（`running_mean/var` 也参与逐坐标裁剪）→ 可能损伤 BN 统计量；CIFAR 影响小、YOLO 影响大。
+- `Krum` 对 YOLO 25M 参数 ×10 客户端做 CPU 距离矩阵 → 内存/耗时可能吃不消。
+- 两者**从未在 VisDrone / YOLO 上跑通验证**。
+
+### FLPoison 参考分支（`origin/FLPoison`）【实测】
+
+- 上游：`https://github.com/vio1etus/FLPoison`（README 徽章），92 个文件，纯 PyTorch，单进程模拟。
+- 防御：`aggregators/multikrum.py`（默认 `avg_percentage=0.2`、`num_adv`）、`aggregators/trimmedmean.py`（默认 `beta=0.1`）、另有 `krum.py` / `median.py` / `rfa.py` / `bulyan.py` / `flame.py` / `foolsgold.py` / `centeredclipping.py` / `normclipping.py` 等。
+- 攻击：`attackers/gaussian.py`、`labelflipping.py`、`modelreplacement.py`、`alie.py`、`mimic.py`、`min.py` 等。
+- 模型含 **resnet18**；`configs/FedSGD_CIFAR10_config.yaml`：resnet18 / lr 0.05 / 20 客户端 / 300 轮 / `num_adv: 0.20` / `defense: Mean`。
+- **口径差异（必须先对齐再比）**：
+  - Multi-Krum 选谁：FLPoison 默认 `m_avg=20%`（2/10）；本项目按标准公式 `n-f-2=5`（5/10）。
+  - TrimmedMean 的 beta：FLPoison 默认 0.1；本项目 0.3（≥恶意率才合理）。
+  - 客户端数 / 轮数 / lr 都不同 → **可借用实现，不可照搬超参**；报告里必须写明取哪个口径，且**三方同口径**。
+
+### 对比矩阵（同 seed / 同划分 / 同攻击 / 同模型 / 同轮数 ≤15）
+
+CIFAR10（ResNet18）：
+1. 标签翻转（`FL_GRADIENT_SCALE=1`）+ {FedAvg, DPFLA, Multi-Krum, Trimmed-Mean}
+2. 高斯（选定 σ）+ {同上}
+
+VisDrone（v8m@1280）：
+3. 高斯 σ=0.02 + {FedAvg, DPFLA, Multi-Krum, Trimmed-Mean}
+   （基线 R15=47.13% 已有；需补 4 条同轮对比）
+
+### 验收
+
+- [ ] CIFAR10：DPFLA ≥ max(Multi-Krum, Trimmed-Mean) + 2%
+- [ ] VisDrone：DPFLA mAP@0.5 ≥ max(二者) + 1%
+- [ ] 三方攻击口径完全一致（日志参数行可逐项比对）
+
+## §5 P4 — 分布式改造（**未来工作，不在当前范围**）
+
+目标形态：多个终端各跑一个客户端，server 端聚合。
+
+### 反向约束（现在的改动不要破坏这些，否则后续要返工）
+
+1. **通信按"整模型"设计**：DPFLA 需要每个客户端的**完整 state_dict**（不是 delta）→ [fl_core.py:841-849](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L841-L849)；带宽预算按整模型算。
+2. **数据划分要落盘可复现**：现在是 server 端 `distribute_dataset()` 后内存分发；分布式下每个客户端需独立加载同一划分 → 需**分区索引 JSON + 固定 seed**。
+3. **进程内状态需外移**：`Client._performed_attacks`（类变量）、`FL._history`（静态）、`self._server_momentum_buf` 都是单进程假设。
+4. **聚合保持纯函数**：`aggregate(list[state_dict], scores)`；评估固定在 server；客户端只负责"本地训练 + 攻击 + 上传"。
+5. **`fl_core` 保留为单机模拟器**：新增传输层（gRPC / HTTP / Ray），两条路径**共用同一聚合实现**，否则结果不可比。
+6. 参数化 GPU / 线程 / DataLoader workers 的分配。
+
+### 参考
+
+- `FedAIoT-main/` 用 **Ray** 做分布式 + ultralytics 原生训练（借鉴进程编排，**不借鉴其聚合**，见 `04_Retracted.md` R1）。
+- FLPoison 也是单进程模拟，**不提供分布式参考**。
+
+## §6 前置条件
+
+- **需要 GPU 主机**：2026-10-23 本机为**无卡模式**（无 `/dev/nvidia*`、`cuda.is_available()=False`、1 核）→ 当前只能改代码/写文档，不能跑实验。
+- CIFAR10 数据：`/root/autodl-tmp/data/cifar-10-batches-py` 存在【实测】；`sampling.py` 优先读该路径。
+
+## §7 风险 / 未决
+
+1. **65% 是否可达未验证**：15 轮 ×1 local epoch 的 ResNet18 可能不够；主杠杆 = local epochs。
+2. **高斯 σ 在 CIFAR 上完全未测**：需重走 σ 阶梯（0.01 / 0.02 / 0.05 / 0.1 量级），不能套 VisDrone 的 0.02。
+3. **Multi-Krum / Trimmed-Mean 在 YOLO 上未验证**：BN 与显存两个坑。
+4. **对比公平性**：Multi-Krum 的 m 比例、TrimmedMean 的 beta 必须三方一致并在报告注明。
+5. **15 轮上限对 VisDrone 对比的影响**：基线 R15=47.13% 可用；③ 与 MKrum/TMean 都必须 ≤15 轮、同轮对比。
+
+## §8 执行顺序总览
+
+```
+P1 修阻塞 → A1 ResNet18 基线 → A2/A3 标签线（不放大）→ A4 高斯线
+   ↓ 达标 ≥65%
+P2 DPFLA 审计（已完成，结论见 §3）
+   ↓
+P3 CIFAR 四方法对比 → VisDrone 四方法对比
+   ↓ 达标 +2% / +1%
+P4 分布式改造（未来）
+```

@@ -1,8 +1,17 @@
 # 03_History.md — 时间线（改动与回退）
 
-<!-- 最后更新：2026-10-20 -->
+<!-- 最后更新：2026-10-23 -->
 <!-- 追加式：新事件加在最上方。回退/证伪的事件保留，不删除。 -->
 <!-- 结论性判断请以 01_Facts.md 为准；本文件只记"做了什么、结果如何"。 -->
+
+## 2026-10-23
+
+- **用户定稿高层路线**（新增 `08_Roadmap.md`，高级别）：CIFAR10 有攻防 ≥65%（ResNet18 / 高斯+标签 / 不放大）、轮数上限改 15、DPFLA vs Multi-Krum / Trimmed-Mean（+2% / +1%）、后续分布式。
+- **删除 CIFAR10 旧攻击日志与 TensorBoard**（用户要求："log 里 cifar 除基线外都删、tsboard 也删"）：
+  - `log/cifar10/02_attack_nodefense__..._1214.log`、`03_attack_dpfla__..._1209.log` → 删除；**只留 `01_baseline__..._1128.log`**（60.74%）。
+  - TB：`runs/CIFAR10_CNNCifar10_{DPFLA,fedavg}_attack-label_flipping_mr-0.3`、`/root/tf-logs/` 同名两目录 → 删除；**保留** `CIFAR10_CNNCifar10_fedavg_attack-no_attack_mr-0`（两处）。
+  - 理由：②③ 均为 **×15 梯度放大**口径，与本轮"不放大"新要求不可比 → 作废重跑。数值保留在 `01_Facts.md` §5b 与 `log/README.md` 索引（已标注"日志已删"）。
+- **CIFAR 计划落库**（`08_Roadmap.md` §2，T1–T9）：确认三条关键事实 —— ① torchvision `resnet18` 是 ImageNet stem，**不适合 32×32**；② FLPoison 分支自带 **CIFAR 专用 ResNet**（3×3/s1 stem、无 maxpool、末层 `linear`），可借用；③ CIFAR 当前用 FedProx（`mu=0.001`）而非 SGD，且 `Cifar10CNN` 有双 softmax。
 
 ## 2026-10-21
 
