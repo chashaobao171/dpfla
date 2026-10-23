@@ -739,7 +739,7 @@ print(json.dumps(res))
 
             # ===== 服务端注入攻击（omniscient，2026-10-23 新增；用于防御方法的攻击范式筛选）=====
             # 攻击者掌握良性端更新，构造恶意更新替换本地端上传结果（FLPoison 的原始设定）
-            if attack_type in ('minmax', 'alie', 'signflipping'):
+            if attack_type in ('minmax', 'alie', 'signflipping', 'ipm'):
                 from federated_learning.attack_alg.server_attacks import apply_server_attack
                 base_state = {k: v.detach().clone() for k, v in simulation_model.state_dict().items()}
                 local_weights, _attacked_idx = apply_server_attack(

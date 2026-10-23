@@ -17,6 +17,8 @@
 用构造出的更新替换恶意端上传的 state_dict。
 """
 
+import os
+
 import numpy as np
 import torch
 from loguru import logger
@@ -75,7 +77,7 @@ def _minmax_update(benign_updates, gamma_init=10.0, stop_threshold=1e-5):
 
 
 def _alie_update(benign_updates, num_clients, num_attackers, z_max=None):
-    """ALIE：mean + z_max * std（z_max 由客户端数/恶意数推得）。"""
+    """ALIE：mean + z_max * std（z_max 由客户端数/恶意数推得；可用 FL_ALIE_ZMAX 覆盖）。"""
     mean = benign_updates.mean(axis=0)
     std = benign_updates.std(axis=0)
     if z_max is None:
@@ -84,6 +86,18 @@ def _alie_update(benign_updates, num_clients, num_attackers, z_max=None):
         z_max = float(norm.ppf(cdf_value))
     logger.info(f'  ALIE：z_max={z_max:.4f}')
     return mean + z_max * std
+
+
+def _ipm_update(benign_updates, scaling_factor=0.1):
+    """IPM（Xie et al., UAI'20）：恶意更新 = -scale × 良性均值。
+
+    FLPoison `attackers/ipm.py` 默认 scaling_factor=0.1：
+    - 恶意端彼此完全相同（协同意图）→ Multi-Krum 会把它们当作最近邻选中；
+    - 更新幅度小、贴近良性均值 → 逐坐标裁剪（Trimmed-Mean）也难以剔除。
+    """
+    mean = benign_updates.mean(axis=0)
+    logger.info(f'  IPM：scaling_factor={scaling_factor:.3f}')
+    return -scaling_factor * mean
 
 
 def apply_server_attack(attack_type, local_weights, clients_types, global_state,
@@ -125,7 +139,14 @@ def apply_server_attack(attack_type, local_weights, clients_types, global_state,
     if attack_type == 'minmax':
         mal_update = _minmax_update(benign_updates)
     elif attack_type == 'alie':
+        if z_max is None:
+            _env_z = (os.environ.get('FL_ALIE_ZMAX') or '').strip()
+            if _env_z:
+                z_max = float(_env_z)
         mal_update = _alie_update(benign_updates, num_clients, num_attackers, z_max=z_max)
+    elif attack_type == 'ipm':
+        _scale = float((os.environ.get('FL_IPM_SCALE') or '0.1').strip())
+        mal_update = _ipm_update(benign_updates, scaling_factor=_scale)
     else:
         raise ValueError(f'未知的 server attack: {attack_type}')
 
