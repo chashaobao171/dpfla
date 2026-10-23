@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from federated_learning.client import Client, detection_collate_fn
 from federated_learning.datasets import CustomDataset
-from federated_learning.fl_algorithm import FoolsGold, average_weights, simple_median, trimmed_mean, Krum, \
+from federated_learning.fl_algorithm import FoolsGold, average_weights, simple_median, trimmed_mean, multi_krum, \
     FedSVD, DPFLA
 from federated_learning.models import setup_model
 from federated_learning.utils import distribute_dataset, contains_class
@@ -728,16 +728,18 @@ print(json.dumps(res))
 
             elif rule == 'tmean':
                 cur_time = time.time()
-                # trim_ratio = self.attackers_ratio * self.num_clients / len(selected_clients)
-                trim_ratio = self.attackers_ratio * self.num_clients / len(selected_clients)
+                # 默认按恶意率裁剪（30% 恶意 → 每端裁 3/10）；可用 FL_TRIM_RATIO 覆盖
+                trim_env = (os.environ.get('FL_TRIM_RATIO') or '').strip()
+                trim_ratio = float(trim_env) if trim_env else (
+                    self.attackers_ratio * self.num_clients / len(selected_clients)
+                )
                 global_weights = trimmed_mean(local_weights, trim_ratio=trim_ratio)
                 cpu_runtimes.append(time.time() - cur_time)
 
             elif rule == 'mkrum':
                 cur_time = time.time()
-                good_updates = Krum(local_models, f=f, multi=True)
-                scores[good_updates] = 1
-                global_weights = average_weights(local_weights, scores)
+                # 标准 Multi-Krum：score = 最近 (n-f-2) 个距离之和，选 m=n-f-2 个等权平均
+                global_weights, scores = multi_krum(local_weights, num_attackers=f)
                 cpu_runtimes.append(time.time() - cur_time)
 
             elif rule == 'foolsgold':

@@ -141,14 +141,17 @@
 | CIFAR10 | 准确率 | DPFLA **比 Multi-Krum、Trimmed-Mean 都高 ≥2%** |
 | VisDrone | mAP@0.5 | DPFLA **比二者都高 ≥1%** |
 
-### 本项目现有实现（已接进 fl_core）【实测】
+### 本项目实现（2026-10-23 已重写并接入）【实测】
 
-- **Multi-Krum**：`Krum(local_models, f=attackers_ratio*N, multi=True)`，`k = n - f - 2`；n=10 / f=3 → **选 5 个**平均，其余权重 0；用 `parameters_to_vector` 在 CPU 上算全参数距离矩阵（[m_krum.py:12-19](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/m_krum.py#L12-L19)、[fl_core.py:736-741](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L736-L741)）。
-- **Trimmed-Mean**：`trim_ratio = attackers_ratio * N / len(selected)` = 0.3 → 每端裁 3 个、保留 4 个；`assert trim_ratio < 0.5`（[t_mean.py:13-14](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/t_mean.py#L13-L14)、[fl_core.py:729-734](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L729-L734)）。
+- **Multi-Krum**：`multi_krum(weights, num_attackers=f)`，输入改为 **state_dict 列表**（与 FedAvg/DPFLA 同接口）。score = 到其余客户端最近 **n-f-2** 个欧氏距离之和，选 **m=n-f-2** 个等权平均；n=10/f=3 → 邻居 5、选 5。覆盖：`FL_MKRUM_NEIGHBORS` / `FL_MKRUM_M`。文件 [multi_krum.py](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/multi_krum.py)、调用 [fl_core.py:739-743](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L739-L743)。
+  - 前提 `n ≥ 2f+3` 不满足时**回退等权 FedAvg 并告警**（不静默硬套）。
+- **Trimmed-Mean**：`trimmed_mean(weights, trim_ratio)`，逐 key、逐坐标排序后两端各裁 `int(trim_ratio*n)` 个；默认 `trim_ratio=恶意率=0.3`（每端 3/10），覆盖 `FL_TRIM_RATIO`；非浮点 buffer 沿用 FedAvg 语义（`num_batches_tracked` 取最大）。文件 [trimmed_mean.py](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/trimmed_mean.py)、调用 [fl_core.py:729-737](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L729-L737)。
+- 旧的 `m_krum.py` / `t_mean.py` 已删除（改名并重写），`fl_algorithm/__init__.py` 统一导出 `multi_krum` / `trimmed_mean`。
+- 入口脚本：CIFAR10 4 个（`run_mkrum/tmean × label/gaussian`）；VisDrone 2 个（`run_mkrum/tmean_gaussian`）。
 
 ⚠️ 风险【推断·未验证】：
-- `t_mean` **不跳过 BN buffer**（`running_mean/var` 也参与逐坐标裁剪）→ 可能损伤 BN 统计量；CIFAR 影响小、YOLO 影响大。
-- `Krum` 对 YOLO 25M 参数 ×10 客户端做 CPU 距离矩阵 → 内存/耗时可能吃不消。
+- `trimmed_mean` **不跳过 BN buffer**（`running_mean/var` 也参与逐坐标裁剪）→ 可能损伤 BN 统计量；CIFAR 影响小、YOLO 影响大。
+- `multi_krum` 对 YOLO 25M 参数 ×10 客户端做 CPU 距离矩阵（约 1GB 展平内存 + cdist）→ 内存/耗时需实测。
 - 两者**从未在 VisDrone / YOLO 上跑通验证**。
 
 ### FLPoison 参考分支（`origin/FLPoison`）【实测】

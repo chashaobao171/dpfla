@@ -6,6 +6,12 @@
 
 ## 2026-10-23
 
+- **接入 Multi-Krum / Trimmed-Mean 两个防御（P3 准备）**：
+  - 旧 `m_krum.py` / `t_mean.py` 删除，新增 `fl_algorithm/multi_krum.py`（state_dict 版，score=最近 n-f-2 距离之和，m=n-f-2，`n<2f+3` 回退 FedAvg）与 `trimmed_mean.py`（逐坐标裁剪，默认 trim_ratio=恶意率 0.3，非浮点 buffer 沿用 FedAvg 语义）。
+  - `fl_algorithm/__init__.py` 统一导出；`fl_core.py` 的 `mkrum` / `tmean` 分支改为调用新接口，支持 `FL_MKRUM_NEIGHBORS` / `FL_MKRUM_M` / `FL_TRIM_RATIO`。
+  - 新增入口：CIFAR10 `run_{mkrum,tmean}_{label_flipping,gaussian}.py`（4 个）、VisDrone `run_{mkrum,tmean}_gaussian.py`（2 个）。
+  - VisDrone 共享超参 `GLOBAL_ROUNDS` 默认 50 → **15**（落实全局上限）。
+  - CPU 合成数据验证：3 恶意端（+100 偏移）下两方法均正确剔除；回退与 trim_ratio=0 分支正常。
 - **CIFAR 代码改造完成（T1–T4）**，推 dev：
   - 新增 `federated_learning/models/cifar_resnet.py`：CIFAR 专用 ResNet（3×3/s1 stem、无 maxpool、`linear` 头、11.17M），模型名 `ResNet18CIFAR`，支持 `return_features`。
   - `models/model.py` 注册；`fl_core.py` DPFLA 白名单加 `ResNet18CIFAR / ResNet18`；`DPFLA.py` 新增 `_detect_classifier_weight_key()`（`fc2 → fc → linear`）并清除三处硬编码。

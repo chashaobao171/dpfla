@@ -62,6 +62,21 @@ w_la[i] = Σ_c ( client_i[cls=c] / global_total[cls=c] )   # 归一化到均值 
 
 **为何对 VisDrone 无效**：VisDrone 的 Non-IID 是**标签分布偏斜**，不是特征偏移。FedBN 对标签偏斜无帮助。【实测】FedBN 全程 ≤ FedAvg（见 01_Facts §1）。
 
+## §Multi-Krum / Trimmed-Mean（2026-10-23 接入）
+
+**Multi-Krum**（Blanchard et al., NeurIPS'17）：按客户端之间参数向量的欧氏距离打分，选"最不孤立"的 m 个等权平均。
+- 本项目实现：`multi_krum(weights, num_attackers=f)`（[multi_krum.py](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/multi_krum.py)）
+- score = 最近 `n-f-2` 个距离之和；默认选中 `m=n-f-2`；可用 `FL_MKRUM_NEIGHBORS` / `FL_MKRUM_M` 覆盖
+- `n < 2f+3` 时回退等权 FedAvg 并告警
+- 与 FLPoison 差异：FLPoison 取 `n-f-1` 个距离、默认 `avg_percentage=0.2` → 对比时要写明口径
+
+**Trimmed-Mean**（Yin et al., ICML'18）：逐坐标排序后裁掉两端各 `trim_num` 个再求均值。
+- 本项目实现：`trimmed_mean(weights, trim_ratio)`（[trimmed_mean.py](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/trimmed_mean.py)）
+- 默认 `trim_ratio = 恶意率 = 0.3`（10 客户端每端裁 3、保留 4）；可用 `FL_TRIM_RATIO` 覆盖；要求 `< 0.5`
+- 非浮点 buffer（`num_batches_tracked`）沿用 FedAvg 语义（取最大），避免 dtype/加载异常
+
+【实测】CPU 合成数据验证（2026-10-23）：3 个恶意端（偏移 +100）下，Multi-Krum 选出 5 个诚实端、Trimmed-Mean 聚合均值 ≈ 诚实均值；`n=8/f=3` 正确回退；`trim_ratio=0` 退化为 FedAvg。
+
 ## §YOLO + 联邦学习集成
 
 ### 架构

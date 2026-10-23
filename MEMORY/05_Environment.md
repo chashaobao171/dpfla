@@ -88,6 +88,21 @@ python run-test/visdrone/run_no_defense_label_flipping.py
 # DPFLA 防御（DPFLA + 标签翻转）—— 核心实验
 python run-test/visdrone/run_dpfla_label_flipping.py
 
+# 防御对比（高斯攻击线，2026-10-23 新增）
+python run-test/visdrone/run_mkrum_gaussian.py
+python run-test/visdrone/run_tmean_gaussian.py
+
+# ---- CIFAR10（ResNet18CIFAR，2026-10-23 新增；15 轮 / 不放大梯度）----
+python run-test/cifar10/run_no_attack_baseline.py          # A1 基线
+python run-test/cifar10/run_no_defense_label_flipping.py   # 标签 + FedAvg
+python run-test/cifar10/run_dpfla_label_flipping.py        # 标签 + DPFLA
+python run-test/cifar10/run_mkrum_label_flipping.py        # 标签 + Multi-Krum
+python run-test/cifar10/run_tmean_label_flipping.py        # 标签 + Trimmed-Mean
+python run-test/cifar10/run_no_defense_gaussian.py         # 高斯 + FedAvg
+python run-test/cifar10/run_dpfla_gaussian.py              # 高斯 + DPFLA
+python run-test/cifar10/run_mkrum_gaussian.py              # 高斯 + Multi-Krum
+python run-test/cifar10/run_tmean_gaussian.py              # 高斯 + Trimmed-Mean
+
 # TensorBoard（曲线目录 tb/，受 git 跟踪，可跨主机）
 tensorboard --logdir tb/ --port 6006
 ```
@@ -98,6 +113,8 @@ tensorboard --logdir tb/ --port 6006
   - ⚠️ 旧命名（`runs/VisDrone_YOLO_<rule>_attack-<attack>_mr-<rate>/`）**不含分辨率/模型/时间戳**，故 10-10 与 10-13 两次运行**同名混在一起**；旧 `runs/` 仍被 gitignore，仅本机可见
 
 **常用环境变量覆盖**：`YOLO_MODEL_SIZE`、`FL_IMG_SIZE`(默认640，训练+评估口径)、`FL_GLOBAL_ROUNDS`、`FL_LOCAL_EPOCHS`、`FL_TRAIN_BATCH_SIZE`、`FL_NUM_WORKERS`、`FL_LOCAL_LR`、`FL_SERVER_MOMENTUM`(默认0)、`FL_GRAD_CLIP`(默认0)、`FL_FLIP_RATIO`(默认0.3，标签翻转的实例比例；1.0=全翻)。
+- 防御相关（2026-10-23 新增）：`FL_MKRUM_NEIGHBORS`（Multi-Krum 邻居数，默认 n-f-2）、`FL_MKRUM_M`（选中客户端数，默认 n-f-2）、`FL_TRIM_RATIO`（Trimmed-Mean 裁剪比例，默认=恶意率 0.3）。
+- CIFAR 专用：`CIFAR_MODEL`（默认 `ResNet18CIFAR`）、`FL_GAUSSIAN_STD`（默认 0.05）、`FL_GRADIENT_SCALE`（脚本 `setdefault` 为 **1=不放大**）。
 
 ## §5 冻结红线（禁止擅改）
 
