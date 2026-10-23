@@ -50,3 +50,7 @@
 `logs_3/visdrone/run_screen_ipm_tmean_20261024_0732.log`
 2026-10-24 07:43:05.145 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/1 - 📊 mAP@0.5: 4.56% | 损失: 340.9853
 
+## ipm mkrum 探针1轮 2026-10-24 07:54:03
+`logs_3/visdrone/run_screen_ipm_mkrum_20261024_0743.log`
+2026-10-24 07:53:52.748 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/1 - 📊 mAP@0.5: 0.05% | 损失: 546.3005
+
