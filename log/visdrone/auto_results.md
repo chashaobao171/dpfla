@@ -38,3 +38,7 @@
 2026-10-24 06:59:55.140 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 4/5 - 📊 mAP@0.5: 42.54% | 损失: 234.4675
 2026-10-24 07:09:38.543 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 5/5 - 📊 mAP@0.5: 43.87% | 损失: 227.8582
 
+## alie tmean 探针1轮 2026-10-24 07:20:53
+`logs_3/visdrone/run_screen_alie_tmean_20261024_0710.log`
+2026-10-24 07:20:48.327 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/1 - 📊 mAP@0.5: 18.59% | 损失: 291.5208
+
