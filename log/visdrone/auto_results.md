@@ -30,3 +30,11 @@
 2026-10-24 02:10:06.156 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 4/5 - 📊 mAP@0.5: 31.20% | 损失: 264.5320
 2026-10-24 02:19:55.138 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 5/5 - 📊 mAP@0.5: 35.05% | 损失: 255.0335
 
+## alie DPFLA 5轮 2026-10-24 07:10:03
+`logs_3/visdrone/run_screen_alie_DPFLA_20261024_0620.log`
+2026-10-24 06:30:46.003 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/5 - 📊 mAP@0.5: 20.32% | 损失: 290.3433
+2026-10-24 06:40:28.834 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 2/5 - 📊 mAP@0.5: 35.56% | 损失: 241.4250
+2026-10-24 06:50:09.735 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 3/5 - 📊 mAP@0.5: 40.57% | 损失: 240.7014
+2026-10-24 06:59:55.140 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 4/5 - 📊 mAP@0.5: 42.54% | 损失: 234.4675
+2026-10-24 07:09:38.543 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 5/5 - 📊 mAP@0.5: 43.87% | 损失: 227.8582
+
