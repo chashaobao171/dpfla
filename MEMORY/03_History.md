@@ -6,6 +6,12 @@
 
 ## 2026-10-23
 
+- **可运行性核验 + 补缺口**（用户要求"确定全都可用"）：
+  - 新增 `run-test/visdrone/run_dpfla_gaussian.py`，补齐 VisDrone 高斯线 {FedAvg, DPFLA, Multi-Krum, Trimmed-Mean} 四方法对比。
+  - `visdrone_fed_hparams.MALICIOUS_RATE` 默认 0.1 → **0.3**（落实固定 30%，避免漏设 env 时只有 1 个恶意端）。
+  - `scripts/run_fl_tmux.sh` 支持 `FL_DATASET`（默认 visdrone）→ CIFAR 可后台跑：`FL_DATASET=cifar10 ./scripts/run_fl_tmux.sh <实验名>`。
+  - 静态核验通过：`compileall` 全绿；`fl_algorithm` 导出与 `fl_core` 引用名全部可解析；无 `Krum/m_krum/t_mean` 残留；CIFAR 9 个 / VisDrone 7 个入口脚本齐全，rule 名称与 `fl_core` 分支一一对应；`bash -n` 通过。
+  - 环境限制：本机无卡且容器内存 2GB（当前已用 ~1.7GB），`import fl_core`（含 ultralytics）会被 OOM 杀 → **所有训练/完整导入只能在有卡主机验证**。
 - **接入 Multi-Krum / Trimmed-Mean 两个防御（P3 准备）**：
   - 旧 `m_krum.py` / `t_mean.py` 删除，新增 `fl_algorithm/multi_krum.py`（state_dict 版，score=最近 n-f-2 距离之和，m=n-f-2，`n<2f+3` 回退 FedAvg）与 `trimmed_mean.py`（逐坐标裁剪，默认 trim_ratio=恶意率 0.3，非浮点 buffer 沿用 FedAvg 语义）。
   - `fl_algorithm/__init__.py` 统一导出；`fl_core.py` 的 `mkrum` / `tmean` 分支改为调用新接口，支持 `FL_MKRUM_NEIGHBORS` / `FL_MKRUM_M` / `FL_TRIM_RATIO`。

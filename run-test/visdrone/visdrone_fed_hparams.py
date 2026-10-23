@@ -33,8 +33,8 @@ LR_MIN = float(os.environ.get("FL_LR_MIN", "5e-6"))
 LR_SCHEDULE = "constant"  # cosine 在 Batch 2 加
 
 NUM_WORKERS = int(os.environ.get("FL_NUM_WORKERS", "10"))
-# 攻击脚本默认 10%（N=10 → 1 人）；若改为 N=5，记得配套把 FL_MALICIOUS_RATE 调到 0.2
-MALICIOUS_RATE = float(os.environ.get("FL_MALICIOUS_RATE", "0.1"))
+# 恶意率固定 30%（项目任务要求，2026-10-21 用户明确；N=10 → 3 人）
+MALICIOUS_RATE = float(os.environ.get("FL_MALICIOUS_RATE", "0.3"))
 
 GLOBAL_ROUNDS = int(os.environ.get("FL_GLOBAL_ROUNDS", "15"))   # 2026-10-23 起全局上限 15（原 50）
 LOCAL_EPOCHS = int(os.environ.get("FL_LOCAL_EPOCHS", "3"))      # 1 → 3（历史好配置）

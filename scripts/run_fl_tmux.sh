@@ -10,7 +10,8 @@
 # 示例:
 #   ./scripts/run_fl_tmux.sh run_no_attack_baseline                   # 基线(默认 640)
 #   ./scripts/run_fl_tmux.sh run_no_attack_baseline FL_IMG_SIZE=1024  # 分辨率单变量实验
-#   ./scripts/run_fl_tmux.sh run_dpfla_label_flipping FL_GLOBAL_ROUNDS=50
+#   ./scripts/run_fl_tmux.sh run_dpfla_label_flipping FL_GLOBAL_ROUNDS=15
+#   FL_DATASET=cifar10 ./scripts/run_fl_tmux.sh run_no_attack_baseline   # CIFAR10 实验
 #
 # 操作:
 #   脱离会话(继续后台跑):  Ctrl-b 然后按 d
@@ -18,7 +19,7 @@
 #   列出会话:              tmux ls
 #   结束实验:              连上后 Ctrl-C
 #
-# 日志文件: logs_3/visdrone/<实验名>_<北京时间>.log
+# 日志文件: logs_3/<数据集>/<实验名>_<北京时间>.log（数据集默认 visdrone，可用 FL_DATASET 覆盖）
 #
 # 注意: 训练需要 GPU，必须能访问 /dev/nvidia*。
 #       用自己的终端直接跑不受沙箱影响；若通过 agent 跑需非沙箱模式。
@@ -34,7 +35,8 @@ fi
 EXPERIMENT="${1:-run_no_attack_baseline}"
 shift || true
 
-SCRIPT_DIR="run-test/visdrone"
+DATASET="${FL_DATASET:-visdrone}"
+SCRIPT_DIR="run-test/${DATASET}"
 SCRIPT="${SCRIPT_DIR}/${EXPERIMENT}.py"
 SESSION="${FL_TMUX_SESSION:-fl}"
 
@@ -59,9 +61,9 @@ for kv in "$@"; do
 done
 
 echo "启动 tmux 会话: $SESSION"
-echo "  实验: ${EXPERIMENT}"
+echo "  实验: ${EXPERIMENT}（数据集: ${DATASET}）"
 echo "  覆盖:${ENVSTR:-（无）}"
-echo "  日志: logs_3/visdrone/${EXPERIMENT}_*.log"
+echo "  日志: logs_3/${DATASET}/${EXPERIMENT}_*.log"
 echo
 
 # FL_ATTACHED=1 → 前台运行(实时刷屏)；由 tmux 保证本地断网不中断

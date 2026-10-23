@@ -89,6 +89,7 @@ python run-test/visdrone/run_no_defense_label_flipping.py
 python run-test/visdrone/run_dpfla_label_flipping.py
 
 # 防御对比（高斯攻击线，2026-10-23 新增）
+python run-test/visdrone/run_dpfla_gaussian.py
 python run-test/visdrone/run_mkrum_gaussian.py
 python run-test/visdrone/run_tmean_gaussian.py
 
@@ -108,6 +109,8 @@ tensorboard --logdir tb/ --port 6006
 ```
 
 - 默认 `nohup` 脱壳（关终端仍跑）；前台实时加 `FL_ATTACHED=1`；**tmux 启动脚本**：`./scripts/run_fl_tmux.sh <实验名> [ENV=VAL...]`（实时日志 + 断网不影响）。
+  - CIFAR：`FL_DATASET=cifar10 ./scripts/run_fl_tmux.sh run_no_attack_baseline`（2026-10-23 起支持，默认仍是 visdrone）
+  - VisDrone 超参默认值 2026-10-23 调整：`MALICIOUS_RATE=0.3`（固定 30%）、`GLOBAL_ROUNDS=15`（上限）
 - 日志：`logs_3/visdrone/<tag>_<北京时间>.log`；**曲线：`tb/<dataset>_<model>_<rule>_attack-<attack>_mr-<rate>_yolov8<size>_img<res>_<运行时间戳>/`**
   - 命名规则（`fl_core.py:636-652`，2026-10-14 起生效）：含 **模型大小 + 分辨率 + 时间戳** → **每次运行独立目录**，TensorBoard 中互不混淆；目录写在 **`tb/`**（纳 git）与 `/root/tf-logs/`（本机镜像）
   - ⚠️ 旧命名（`runs/VisDrone_YOLO_<rule>_attack-<attack>_mr-<rate>/`）**不含分辨率/模型/时间戳**，故 10-10 与 10-13 两次运行**同名混在一起**；旧 `runs/` 仍被 gitignore，仅本机可见

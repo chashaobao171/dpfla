@@ -147,7 +147,7 @@
   - 前提 `n ≥ 2f+3` 不满足时**回退等权 FedAvg 并告警**（不静默硬套）。
 - **Trimmed-Mean**：`trimmed_mean(weights, trim_ratio)`，逐 key、逐坐标排序后两端各裁 `int(trim_ratio*n)` 个；默认 `trim_ratio=恶意率=0.3`（每端 3/10），覆盖 `FL_TRIM_RATIO`；非浮点 buffer 沿用 FedAvg 语义（`num_batches_tracked` 取最大）。文件 [trimmed_mean.py](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/trimmed_mean.py)、调用 [fl_core.py:729-737](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L729-L737)。
 - 旧的 `m_krum.py` / `t_mean.py` 已删除（改名并重写），`fl_algorithm/__init__.py` 统一导出 `multi_krum` / `trimmed_mean`。
-- 入口脚本：CIFAR10 4 个（`run_mkrum/tmean × label/gaussian`）；VisDrone 2 个（`run_mkrum/tmean_gaussian`）。
+- 入口脚本：CIFAR10 共 9 个（基线 1 + {FedAvg, DPFLA, MKrum, TMean} × {标签, 高斯} 8）；VisDrone 共 7 个（基线 1 + 高斯 {FedAvg, DPFLA, MKrum, TMean} 4 + 标签 {FedAvg, DPFLA} 2）。
 
 ⚠️ 风险【推断·未验证】：
 - `trimmed_mean` **不跳过 BN buffer**（`running_mean/var` 也参与逐坐标裁剪）→ 可能损伤 BN 统计量；CIFAR 影响小、YOLO 影响大。
