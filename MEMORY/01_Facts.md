@@ -365,6 +365,10 @@ FedAvg vs FedBN 逐轮（同口径）：
 
 **同攻击 Multi-Krum 5 轮（2026-10-23 21:48 完成）**：0.06 / 7.85 / 20.32 / 26.00 / **29.30**。
 → R5 DPFLA **+14.55**；MKrum 被协同重复向量彻底带偏（与 CIFAR 29.19 一致）。
+
+**同攻击 FedAvg（无防御，5 轮，22:49 完成）**：3.27 / 31.74 / 36.97 / 39.85 / **41.17**。
+→ **FedAvg 41.17 > TMean 40.17 > MKrum 29.30**，但仍低于 DPFLA 43.85（+2.68）。
+→ 注意：FedAvg 高于两个"防御"说明 MinMax 下 MKrum/TMean 反而帮倒忙（协同攻击对它们的结构性弱点），DPFLA 是唯一净收益的防御。
 【实测·R1 误杀】R1 另有 1 个诚实端 aux=0.908 → 权重 0.020（6 个诚实端仍满权重，R1 未掉点）；R2 起不再出现。
 【出处】`logs_3/visdrone/run_screen_minmax_DPFLA_20261023_1910.log`；TB `VisDrone_YOLO_DPFLA_attack-minmax_..._1911`。
 
