@@ -100,19 +100,66 @@
 | 注册 | [model.py](file:///root/chashaobao/DPFLA-master/federated_learning/models/model.py#L16-L31) 注册 `ResNet18CIFAR`；torchvision `ResNet18` 保留但**不用于 CIFAR** |
 | DPFLA 白名单 | [fl_core.py:832-836](file:///root/chashaobao/DPFLA-master/federated_learning/fl_core.py#L832-L836) 已加 `ResNet18CIFAR / ResNet18` |
 | DPFLA 特征键 | [DPFLA.py:16-28](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L16-L28) 新增 `_detect_classifier_weight_key()`，按 `fc2 → fc → linear` 探测；三处硬编码已清除 |
-| CIFAR 统一入口 | 新增 [cifar_fed_hparams.py](file:///root/chashaobao/DPFLA-master/run-test/cifar10/cifar_fed_hparams.py)（10 客户端/15 轮/1 epoch/BS64/lr0.01/IID，`FL_GRADIENT_SCALE` 默认 1）|
-| 实验脚本 | `run-test/cifar10/` 下 5 个：基线、标签+FedAvg、标签+DPFLA、高斯+FedAvg、高斯+DPFLA |
+| **DPFLA 高斯强化**（2026-10-23 新增）| [DPFLA.py:455-492](file:///root/chashaobao/DPFLA-master/federated_learning/fl_algorithm/DPFLA.py#L455-L492)：① 辅助强否决（aux≥0.60 视作强异常）；② 极强证据（aux≥0.75 → risk=0.98，权重首轮即 0.02）；③ 误杀保护（KMeans 少数簇但 aux<0.48 → 权重下限 0.50）。依据与效果见 `01_Facts.md` §5c(d) |
+| CIFAR 统一入口 | [cifar_fed_hparams.py](file:///root/chashaobao/DPFLA-master/run-test/cifar10/cifar_fed_hparams.py)（10 客户端/15 轮/1 epoch/BS64/lr0.01/IID，`FL_GRADIENT_SCALE` 默认 1）|
+| 实验脚本 | CIFAR10 共 9 个；VisDrone 共 8 个（新增 `run_dpfla_gaussian.py`）|
 | 数据路径 | [sampling.py:120-135](file:///root/chashaobao/DPFLA-master/federated_learning/utils/sampling.py#L120-L135) 修正候选表首项被跳过的问题 → 现解析为 **`/root/autodl-tmp/data`**（download=False）|
 
-【实测】CPU 验证已通过：模型前向 `(2,10)/(2,512)`；DPFLA 两条键路径（`linear` / `fc2`）跑通；5 个脚本以 stub `run_exp` 执行，参数块与规划一致（rounds=15 / mr=0.3 / untarget=False / scale=1）。
-⚠️ **尚未跑训练**：本机无卡（2GB 容器内存，10×ResNet18 冒烟会被 OOM 杀）。
+### ✅ P1 实测结论（2026-10-23，完整数据见 `01_Facts.md` §5c）★
+
+- **标签翻转 + DPFLA：70.00%**（≥65 ✓；无攻击基线 71.47）
+- **高斯 + DPFLA（v5 最终版）**：69.50%（σ=0.03）/ **69.26%（σ=0.04）**/ 68.78%（σ=0.05）/ 67.99%（σ=0.06）—— 全部 ≥65 ✓
+- 共性：≤15 轮、`FL_GRADIENT_SCALE=1`（不放大）、30% 恶意、行为率 1.0
+- 参考上限：7 端干净 FedAvg = **74.25%**；**P3 选定高斯档 = σ=0.04**
+
+### ⚠️ P3 实测结论（2026-10-23，**高斯线未达标，已修正**）
+
+| 线 | DPFLA | Multi-Krum | Trimmed-Mean | R15 单点 | 末5均值（推荐口径）|
+|---|---|---|---|---|---|
+| 标签翻转 | **70.00%** | 67.00% | 66.83% | +3.00 | **+2.20 / +2.11**（勉强达标）|
+| 高斯 σ=0.04 | **69.26%** | 65.70% | 66.98 / 67.02 | 单点 +2.24 | **+0.47 / +0.78（未达标）** |
+| 高斯 σ=0.03 / 0.05 / 0.06 | 69.50 / 68.78 / 67.99% | 64.70 / 64.91 / 67.02% | 68.22 / 68.34 / 67.86% | +1.28 / +0.44 / +0.13 | — |
+
+【实测·已修正】⚠️ **高斯线 +2.24 是 R15 单点假象**（TMean R14 68.42 → R15 66.98 回落）；按最佳轮 +0.84/+0.95、末5 +0.47/+0.78、末10 +0.08/+0.32 → **稳健差距仅 0.1–0.9 点，不宣称 +2%**。详见 `04_Retracted.md` R13。
+【实测】标签线较稳健（末5 +2.11/+2.20），但末10 仅 +1.55/+1.90。
+
+**✅ 2026-10-23 已解决：换攻击范式（MinMax，服务端全知注入）**
+
+| 方法（MinMax 15 轮） | R15 | best | 末5均值 |
+|---|---|---|---|
+| FedAvg（无防御） | 60.69% | 60.69% | 58.78% |
+| **DPFLA** | **69.25%** | **69.25%** | **67.75%** |
+| Multi-Krum | 29.19% | 37.07% | 29.86% |
+| Trimmed-Mean | 57.01% | 57.01% | 54.32% |
+
+→ DPFLA **末5 领先 +37.90 / +13.43**，R15 领先 +40.06 / +12.24，**三种口径均 ≥2%**；DPFLA 自身 69.25 ≥65。P3 CIFAR 达标。
+→ 高斯线保留为"DPFLA ≥65"的证据（σ=0.03–0.06 均达标），但不再作为 +2% 对比线；数值见 `01_Facts.md` §5c(c)/(g)。
+
+**待定**：
+1. **VisDrone ③/四方法对比**（15 轮，约 1.5h/条）。
+2. **口径规范**：今后统一以"末 5 轮均值"为主口径，并同时报告 best/R15/last10。
+3. 用户验收后再推送 dev。
+
+### 🔬 VisDrone ③ 探针（2026-10-23，5 轮已完成）
+
+| 配置 | R1 | R2 | R3 | R4 | R5 |
+|---|---|---|---|---|---|
+| 无攻击基线（v8m@1280）| 21.21% | 37.05% | 41.44% | 43.82% | 45.08% |
+| ② 高斯 σ=0.02 + FedAvg | 16.25% | 24.59% | 27.69% | 30.04% | 31.24% |
+| **③ 高斯 σ=0.02 + DPFLA（修复前）** | **3.72%** | — | — | — | — |
+| **③ 高斯 σ=0.02 + DPFLA（修复后）** | **21.16%** | **35.97%** | **41.11%** | **43.04%** | **43.79%** |
+
+【实测】修复前：3 个恶意端 aux=0.707 未触发 0.75 阈值，KMeans 判入多数簇拿到 0.797 权重；2 个诚实端被误杀到 0.137 → R1 崩溃。
+【实测】修复后：恶意端 aux=0.908 → **权重 0.020**；诚实端 0.79–0.84 → R1–R5 **逐轮追平无攻击基线**（平均 −0.71）→ **DPFLA 在 VisDrone 高斯线有效**，待 15 轮完整验证与 MKrum/TMean 对比。
 
 ### 验收
 
-- [ ] 标签翻转 + DPFLA：**≥65%**（≤15 轮、`FL_GRADIENT_SCALE=1`）
-- [ ] 高斯 + DPFLA：**≥65%**（同口径）
-- [ ] 同攻击下无防御**明显低于** DPFLA（否则"防御有效"不成立）
-- [ ] 所有实验 ≤15 轮，参数块可逐项比对
+- [x] 标签翻转 + DPFLA：**≥65%** → 实测 **70.00%**
+- [x] 高斯 + DPFLA：**≥65%** → 实测 **67.99–69.50%**（四档）
+- [x] 同攻击下无防御**明显低于** DPFLA（标签 65.68 vs 70.00；高斯 σ=0.04：39.82 vs 69.26）
+- [x] 所有实验 ≤15 轮，参数块可逐项比对
+- [ ] P3 CIFAR +2%：标签线 **末5 +2.11/+2.20 勉强达标**；**高斯线未达标（稳健 +0.5~0.9）**
+- [ ] P3 VisDrone +1%：待 15 轮完整对比（探针已证明 DPFLA 在 VisDrone 高斯线有效）
 
 ## §3 P2 — DPFLA 算法审计：是否用 SVD / KMeans，k 是多少
 

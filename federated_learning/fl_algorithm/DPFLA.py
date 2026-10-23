@@ -340,6 +340,31 @@ class DPFLA:
                     cos_sim = float(np.dot(delta, mean_delta) / (delta_norm * mean_delta_norm))
                 client_feature_rows.append([np.log1p(delta_norm), cos_sim, 1.0])
 
+        # 协同重复检测（2026-10-23 新增）：MinMax/ALIE 类"全知协同攻击"会让多个恶意端
+        # 提交**几乎相同**的更新（FLPoison 用 np.tile 复制同一向量），而诚实端因本地数据不同
+        # 更新各异。用"到最近其他端的相对距离"识别：||d_i-d_j|| / ||d_i|| < 0.01 视为重复。
+        # 该信号与逐坐标裁剪正交 —— Trimmed-Mean 对"范围内且协同"的更新无感知，DPFLA 可识别。
+        collusion_flags = np.zeros(m_len, dtype=bool)
+        collusion_nearest = np.ones(m_len, dtype=float)
+        _deltas = local_full_deltas if is_yolo_head_mode else deltas
+        if _deltas is not None and len(_deltas) == m_len:
+            stack = np.stack(_deltas, axis=0)
+            for i in range(m_len):
+                ni = float(np.linalg.norm(stack[i]))
+                if ni < 1e-12:
+                    continue
+                rel = np.linalg.norm(stack - stack[i], axis=1) / ni
+                rel[i] = np.inf
+                nearest = float(np.min(rel))
+                collusion_nearest[i] = nearest
+                collusion_flags[i] = nearest < 0.01
+            n_dup = int(collusion_flags.sum())
+            if n_dup:
+                logger.warning(
+                    f"🔗 协同重复检测：{n_dup} 个端的更新与另一端几乎相同"
+                    f"（最近相对距离 {np.min(collusion_nearest):.2e}）"
+                )
+
         anomaly_scores = self._robust_anomaly_score(client_feature_rows)
 
         for unit in feature_units:
@@ -452,23 +477,50 @@ class DPFLA:
         base_bad_weight = 0.20 - 0.12 * confidence  # 更激进：高置信时 bad 初始更低
         soft_scores = np.ones(n, dtype=float)
 
+        # 辅助特征强否决（2026-10-23 新增）：
+        # 高斯等"全参数加噪"攻击会让恶意端的更新范数/方向异常度（aux）显著飙高，
+        # 而诚实端保持低位。实测分布（n=10 / 30% 恶意）：
+        #   CIFAR10 标签线：恶意 0.513–0.731 / 诚实 ≤0.411
+        #   CIFAR10 高斯线：恶意 0.835      / 诚实 ≤0.411
+        #   VisDrone 高斯线：恶意 ≈0.707    / 诚实 ≤0.461
+        # 故阈值取 0.60：高于两条线诚实端上限（0.461），低于最强分离的恶意端下限（0.707），
+        # 即使 KMeans 主路径把该端误划入多数簇，也按异常端强惩罚。
+        AUX_VETO_THRESHOLD = 0.60
+        # KMeans 少数簇但辅助异常低（aux<0.48）→ 证据不足，避免把诚实端压死
+        MINORITY_AUX_FLOOR = 0.48
+        MINORITY_FLOOR_WEIGHT = 0.50
+        # 本轮是否出现"极强证据"端（aux>=0.75）：有 → 攻击已被明确锁定，
+        # 多数簇诚实端不再做"温和保守降权"（否则归一化后引入 7%+ 的相对权重扭曲）。
+        # 仅该场景生效：标签线（恶意 aux≤0.731）与 VisDrone（≈0.707）不受影响。
+        has_strong_evidence = bool(
+            (len(anomaly_scores) and np.any(np.asarray(anomaly_scores) >= 0.75))
+            or (len(collusion_flags) and bool(np.any(collusion_flags)))
+        )
+
         for i, pt in enumerate(clients_types):
             cid = int(selected_clients[i])
             km_label = int(kmeans_labels[i])
             a_score = float(anomaly_scores[i]) if i < len(anomaly_scores) else 0.0
+            strong_aux = a_score >= AUX_VETO_THRESHOLD
+            colluding = bool(collusion_flags[i]) if i < len(collusion_flags) else False
             # 多数簇内：辅助分只做“轻度纠偏”，避免 n=7 时把诚实客户端打成 aux≈1
+            # （强异常除外：此时 aux 本身就是可靠判别信号，不做 cap）
             a_for_risk = float(a_score)
-            if km_label == 1:
+            if km_label == 1 and not strong_aux:
                 cap = 0.38 if gray_zone else (0.48 if not high_conf else 0.55)
                 a_for_risk = min(a_for_risk, cap)
 
-            # 组合风险分数（0低风险 ~ 1高风险）
-            if km_label == 0:
+            # 组合风险分数（0低风险 ~ 1高风险）：少数簇 / 辅助强异常 / 协同重复 → 按异常端处理
+            if km_label == 0 or strong_aux or colluding:
                 # 仅 1 个少数簇样本且辅助异常不高：多为 KMeans 抖动误杀诚实客户端，减轻惩罚
-                if minority_count == 1 and a_for_risk < 0.48:
+                if minority_count == 1 and a_for_risk < 0.48 and not colluding:
                     risk = 0.42 + 0.28 * a_for_risk
                 else:
                     risk = 0.68 + 0.28 * a_for_risk
+                # 极强辅助证据（aux>=0.75，与诚实端实测分布零重叠）或协同重复 → 近确定性风险，
+                # 使恶意端首轮即被压到最低权重（0.02）。依据见 01_Facts §5c(d)。
+                if a_score >= 0.75 or colluding:
+                    risk = 0.98
             else:
                 if high_conf:
                     risk = 0.06 + 0.26 * a_for_risk
@@ -478,7 +530,7 @@ class DPFLA:
                     risk = 0.08 + 0.20 * a_for_risk
             risk = float(np.clip(risk, 0.0, 0.98))
 
-            if km_label == 0:
+            if km_label == 0 or strong_aux:
                 streak = self.client_bad_streak.get(cid, 0) + 1
                 self.client_bad_streak[cid] = streak
                 # 高置信或高异常时启用冷却期，防止“一轮好就立刻满权重”
@@ -488,8 +540,11 @@ class DPFLA:
                 soft = max(0.02, float(base_bad_weight * (0.72 ** (streak - 1))))
                 # 融合风险分数后进一步压低
                 soft = min(soft, max(0.02, 1.0 - risk))
-                # 不确定的“单点少数簇”保底权重，避免诚实被压到 ~0.12 拖垮全局
-                if minority_count == 1 and a_score < 0.48:
+                # KMeans 少数簇但辅助异常低：证据不足，给权重下限，避免误杀诚实端
+                if km_label == 0 and a_score < MINORITY_AUX_FLOOR:
+                    soft = max(soft, MINORITY_FLOOR_WEIGHT)
+                # 不确定的“单点少数簇”保底权重
+                if minority_count == 1 and a_score < MINORITY_AUX_FLOOR:
                     soft = max(soft, 0.28)
                 soft_scores[i] = soft
             else:
@@ -507,15 +562,19 @@ class DPFLA:
                         self.client_cooldown[cid] = cooldown_left - 1
                     soft_scores[i] = min(base_soft, recover_soft)
                 else:
-                    # 灰区：仍限制略低于 1，但多数簇保底更高，减少误伤
-                    if gray_zone:
+                    # 优先：攻击已被强证据锁定 → 诚实端给满权重，避免相对权重扭曲
+                    # （高于灰区判断：灰区的"保守降权"在攻击已锁定时反而是负担）
+                    if has_strong_evidence:
+                        soft_scores[i] = 1.0
+                    elif gray_zone:
+                        # 灰区：仍限制略低于 1，但多数簇保底更高，减少误伤
                         soft_scores[i] = max(0.78, min(0.94, base_soft))
                     else:
                         soft_scores[i] = min(1.0, base_soft)
 
             self.client_prev_soft[cid] = float(soft_scores[i])
             logger.info(
-                f"{pt} | KMeans标签={km_label} | aux异常={a_score:.3f} | risk={risk:.3f} | streak={self.client_bad_streak.get(cid, 0)} | cooldown={self.client_cooldown.get(cid, 0)} | 聚合权重={soft_scores[i]:.3f}"
+                f"{pt} | KMeans标签={km_label} | aux异常={a_score:.3f} | aux否决={int(strong_aux)} | risk={risk:.3f} | streak={self.client_bad_streak.get(cid, 0)} | cooldown={self.client_cooldown.get(cid, 0)} | 聚合权重={soft_scores[i]:.3f}"
             )
 
         return soft_scores

@@ -45,7 +45,9 @@ nvidia-smi
 | 历史日志 | 项目根 `logs_3/`（含 `demo_out.log`、`visdrone_all.log`、`oracle_1ep_*.log`） |
 | **TensorBoard 曲线** | 项目根 **`tb/`**（**受 git 跟踪 → 跨主机留存**）；本机镜像 `/root/tf-logs/`（仓库外，不跨机）|
 | **TensorBoard 服务实际 logdir** | **`/root/tf-logs`**（AutoPanel 后台进程 PID 907，端口 6007，`--reload=5`）——**界面上能看到的是这个目录，不是仓库 `tb/`**；清理时必须两边都删 |
-| **当前保留（2026-10-21）** | `/root/tf-logs` 仅 6 个：刚跑的 `..._20261021_1140` + `log/` 对应的 5 个（VisDrone 基线、CIFAR10 三份、MNIST 基线）；`/root/tf-logs-archive` 已删除 |
+| **当前保留（2026-10-23，用户确认后清理）** | **`/root/tf-logs` 14 个 / `tb/` 13 个 / `runs/` 4 个** —— 只留"最终结论"实验：CIFAR 10（基线·标签四方法·**高斯仅 σ=0.04** 四方法+复现）+ VisDrone 3（基线·②·③探针）+ 旧归档 1（MNIST 基线）；`runs/` 只留与 `log/` 对应 4 个 |
+| 已删的诊断曲线 | CIFAR **7 端无攻击对照（74.25%）TB 曲线已删**；数值保留在 `01_Facts.md` §5c(a)，原始日志 `logs_3/cifar10/run_no_attack_baseline_20261023_1417.log` 保留 |
+| 保留原则 | ① 最终结论实验（进 `01_Facts.md` 的）；② 与 `log/` 归档一一对应；③ **探索性数据（σ 阶梯筛选、算法中间版本、冒烟）一律不留**（数值在记忆里，`logs_3/` 原始日志不动） |
 
 **实测数量**：train 图 6471 张 / val 图 548 张（均含 10 类原始标注）。
 
@@ -142,3 +144,4 @@ tensorboard --logdir tb/ --port 6006
 | Round 0/1 mAP=0 | 换头后检测头随机初始化（冷启动） | 正常；R1 起 >0 即链路正常 |
 | 训练看起来慢，GPU 未利用 | 前期在 CPU 做标注缓存 + Dirichlet 划分 | 等缓存生成完再观察 |
 | 换聚合/改超参后 mAP 更差 | 一次改了多个变量，无法归因 | 回退，改单变量重跑 |
+| IDE 里出现"永不结束的命令行" | 等待脚本用 `while pgrep -f "<实验名>"` 监控，**pgrep 会匹配到脚本自身命令行** → 死循环（仅 sleep，不占 GPU） | 改用**日志完成标记** + 有限次 `seq` 循环；已残留的用 `ps -eo pid,ppid,etime,cmd` 定位后 `kill` |

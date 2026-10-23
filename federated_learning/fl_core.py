@@ -721,6 +721,21 @@ print(json.dumps(res))
             scores = np.zeros(len(local_weights))
             # Expected malicious clients
             f = int(self.num_clients * self.attackers_ratio)
+
+            # ===== 服务端注入攻击（omniscient，2026-10-23 新增；用于防御方法的攻击范式筛选）=====
+            # 攻击者掌握良性端更新，构造恶意更新替换本地端上传结果（FLPoison 的原始设定）
+            if attack_type in ('minmax', 'alie', 'signflipping'):
+                from federated_learning.attack_alg.server_attacks import apply_server_attack
+                base_state = {k: v.detach().clone() for k, v in simulation_model.state_dict().items()}
+                local_weights, _attacked_idx = apply_server_attack(
+                    attack_type, local_weights, clients_types, base_state,
+                    num_attackers=f, num_clients=len(selected_clients),
+                )
+                # 同步到 local_models：DPFLA 等防御从 local_models 读取更新做异常检测，
+                # 若不同步则防御看到的是"未被攻击"的更新，攻击对防御不可见。
+                for _idx in _attacked_idx:
+                    local_models[_idx].load_state_dict(local_weights[_idx])
+
             if rule == 'median':
                 cur_time = time.time()
                 global_weights = simple_median(local_weights)

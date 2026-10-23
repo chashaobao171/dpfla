@@ -1,0 +1,221 @@
+2026-10-23 12:56:35.425 | DEBUG    | federated_learning.arguments:log:257 - Arguments: 
+Batch Size: 64
+Test Batch Size: 1000
+Global Rounds: 1
+Local Epochs: 1
+Learning Rate: 0.01
+Momentum: 0.9
+Device: cuda
+Log Interval: 100
+Number of Clients: 10
+Dataset: CIFAR10
+Model Name: ResNet18CIFAR
+Data distribution: IID
+Aggregation rule: mkrum
+Attack Type: label_flipping
+Malicious Rate: 30.0%
+Malicious Behavior Rate: 1.0
+
+2026-10-23 12:56:35.427 | INFO     | federated_learning.utils.sampling:distribute_dataset:20 - --> Loading of CIFAR10 dataset
+2026-10-23 12:56:35.428 | INFO     | federated_learning.utils.sampling:get_cifar10:138 - --> CIFAR10 data root: /root/autodl-tmp/data, local cache found: True, download=False
+2026-10-23 12:56:36.307 | INFO     | federated_learning.utils.sampling:sample_dirichlet:235 - 从缓存加载标签: cache_CIFAR10_50000_labels.pkl
+2026-10-23 12:56:36.320 | INFO     | federated_learning.utils.sampling:distribute_dataset:50 - --> Dataset has been loaded!
+2026-10-23 12:56:36.321 | INFO     | federated_learning.models.model:setup_model:27 - --> Creating ResNet18CIFAR model.....
+2026-10-23 12:56:36.397 | INFO     | federated_learning.models.model:setup_model:70 - --> Model has been created!
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:115 - --> Distributing training data among clients
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:123 - --> Training data have been distributed among clients
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:126 - --> Creating peets instances
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:139 - --> Creating 10 client instances...
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 1/10 (ID: 5)
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:151 -   ✓ Client 1 created as ATTACKER
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 2/10 (ID: 8)
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:151 -   ✓ Client 2 created as ATTACKER
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 3/10 (ID: 2)
+2026-10-23 12:56:36.588 | INFO     | federated_learning.fl_core:__init__:151 -   ✓ Client 3 created as ATTACKER
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 4/10 (ID: 1)
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 4 created as HONEST
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 5/10 (ID: 0)
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 5 created as HONEST
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 6/10 (ID: 4)
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 6 created as HONEST
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 7/10 (ID: 9)
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 7 created as HONEST
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 8/10 (ID: 6)
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 8 created as HONEST
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 9/10 (ID: 3)
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 9 created as HONEST
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:141 -   Creating client 10/10 (ID: 7)
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:157 -   ✓ Client 10 created as HONEST
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:159 - --> All 10 clients created successfully!
+2026-10-23 12:56:36.589 | INFO     | federated_learning.fl_core:__init__:160 -   Total ATTACKERS: 3
+2026-10-23 12:56:36.590 | INFO     | federated_learning.fl_core:__init__:161 -   Total HONEST: 7
+2026-10-23 12:56:36.600 | INFO     | federated_learning.fl_core:run_experiment:587 - ===>Simulation started...
+2026-10-23 12:56:36.600 | INFO     | federated_learning.fl_core:run_experiment:590 - ====>Testing initial pretrained model...
+2026-10-23 12:56:38.124 | DEBUG    | federated_learning.fl_core:test:521 - Average test loss: 2.3015, Test accuracy: 998/10000 (9.98%)
+2026-10-23 12:56:38.124 | INFO     | federated_learning.fl_core:run_experiment:617 - ✓ 初始模型 - 准确率: 9.98% | 损失: 2.3015
+2026-10-23 12:56:38.127 | INFO     | federated_learning.fl_core:run_experiment:674 - ====>Global model training started...
+2026-10-23 12:56:38.234 | DEBUG    | federated_learning.fl_core:run_experiment:681 - | Global training round : 1/1 |
+2026-10-23 12:56:38.234 | INFO     | federated_learning.fl_core:run_experiment:683 - 选中 10 个客户端进行训练
+2026-10-23 12:56:38.234 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 1/10: Client 1 开始训练...
+2026-10-23 12:56:38.251 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 6: type=attacker, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:38.251 | INFO     | federated_learning.client:participant_update:281 -   → Client Client 6 is attacker, checking malicious_behavior_rate...
+2026-10-23 12:56:38.251 | INFO     | federated_learning.client:participant_update:283 -   → Random value: 0.3150, threshold: 1.0
+2026-10-23 12:56:38.251 | INFO     | federated_learning.client:participant_update:302 -   → Applying label flipping mapping (size=1, flip_ratio=1.0): {5: 3}
+2026-10-23 12:56:38.254 | INFO     | federated_learning.client:participant_update:334 -   → Verify label flip summary (first 5 samples): class_hist={0: 5}
+2026-10-23 12:56:38.254 | INFO     | federated_learning.client:participant_update:359 - ✅ Label flipping attack launched by Client 6 with mapping(size=1)
+2026-10-23 12:56:38.261 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 6 开始训练: 79 batches, 1 epoch(s)
+2026-10-23 12:56:38.281 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 1/1 - 1% (1/79)
+2026-10-23 12:56:39.956 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 1/1 - 65% (51/79)
+2026-10-23 12:56:40.843 | INFO     | federated_learning.client:participant_update:429 -    Client 6 - Epoch 1/1 - 100% (79/79)
+2026-10-23 12:56:40.901 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 6 - Epoch 1/1 完成 - 平均损失: 1.7721
+2026-10-23 12:56:40.901 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 6 训练完成！总损失: 1.7721
+2026-10-23 12:56:40.907 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 79 个总步数）
+2026-10-23 12:56:40.943 | WARNING  | federated_learning.client:participant_update:541 - ⚠️  Client 6 强化攻击：梯度放大 ×1.0 已执行
+2026-10-23 12:56:40.969 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 1/10: Client 1 训练完成 (损失: 1.7721)
+2026-10-23 12:56:40.969 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 2/10: Client 5 开始训练...
+2026-10-23 12:56:40.980 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 1: type=honest, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:40.980 | DEBUG    | federated_learning.client:participant_update:365 -   → Client Client 1 is not attacker, skipping label flip
+2026-10-23 12:56:40.986 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 1 开始训练: 78 batches, 1 epoch(s)
+2026-10-23 12:56:41.042 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 1/1 - 1% (1/78)
+2026-10-23 12:56:41.669 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 1/1 - 65% (51/78)
+2026-10-23 12:56:41.985 | INFO     | federated_learning.client:participant_update:429 -    Client 1 - Epoch 1/1 - 100% (78/78)
+2026-10-23 12:56:41.996 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 1 - Epoch 1/1 完成 - 平均损失: 1.8913
+2026-10-23 12:56:41.997 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 1 训练完成！总损失: 1.8913
+2026-10-23 12:56:41.997 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 78 个总步数）
+2026-10-23 12:56:42.068 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 2/10: Client 5 训练完成 (损失: 1.8913)
+2026-10-23 12:56:42.068 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 3/10: Client 2 开始训练...
+2026-10-23 12:56:42.079 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 9: type=attacker, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:42.079 | INFO     | federated_learning.client:participant_update:281 -   → Client Client 9 is attacker, checking malicious_behavior_rate...
+2026-10-23 12:56:42.079 | INFO     | federated_learning.client:participant_update:283 -   → Random value: 0.0380, threshold: 1.0
+2026-10-23 12:56:42.079 | INFO     | federated_learning.client:participant_update:302 -   → Applying label flipping mapping (size=1, flip_ratio=1.0): {5: 3}
+2026-10-23 12:56:42.082 | INFO     | federated_learning.client:participant_update:334 -   → Verify label flip summary (first 5 samples): class_hist={0: 5}
+2026-10-23 12:56:42.082 | INFO     | federated_learning.client:participant_update:359 - ✅ Label flipping attack launched by Client 9 with mapping(size=1)
+2026-10-23 12:56:42.088 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 9 开始训练: 79 batches, 1 epoch(s)
+2026-10-23 12:56:42.110 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 1/1 - 1% (1/79)
+2026-10-23 12:56:43.695 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 1/1 - 65% (51/79)
+2026-10-23 12:56:44.560 | INFO     | federated_learning.client:participant_update:429 -    Client 9 - Epoch 1/1 - 100% (79/79)
+2026-10-23 12:56:44.609 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 9 - Epoch 1/1 完成 - 平均损失: 1.7636
+2026-10-23 12:56:44.609 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 9 训练完成！总损失: 1.7636
+2026-10-23 12:56:44.610 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 79 个总步数）
+2026-10-23 12:56:44.646 | WARNING  | federated_learning.client:participant_update:541 - ⚠️  Client 9 强化攻击：梯度放大 ×1.0 已执行
+2026-10-23 12:56:44.671 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 3/10: Client 2 训练完成 (损失: 1.7636)
+2026-10-23 12:56:44.671 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 4/10: Client 9 开始训练...
+2026-10-23 12:56:44.682 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 4: type=honest, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:44.683 | DEBUG    | federated_learning.client:participant_update:365 -   → Client Client 4 is not attacker, skipping label flip
+2026-10-23 12:56:44.688 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 4 开始训练: 78 batches, 1 epoch(s)
+2026-10-23 12:56:44.742 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 1/1 - 1% (1/78)
+2026-10-23 12:56:45.320 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 1/1 - 65% (51/78)
+2026-10-23 12:56:45.623 | INFO     | federated_learning.client:participant_update:429 -    Client 4 - Epoch 1/1 - 100% (78/78)
+2026-10-23 12:56:45.634 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 4 - Epoch 1/1 完成 - 平均损失: 1.9170
+2026-10-23 12:56:45.634 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 4 训练完成！总损失: 1.9170
+2026-10-23 12:56:45.635 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 78 个总步数）
+2026-10-23 12:56:45.704 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 4/10: Client 9 训练完成 (损失: 1.9170)
+2026-10-23 12:56:45.704 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 5/10: Client 10 开始训练...
+2026-10-23 12:56:45.715 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 8: type=honest, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:45.716 | DEBUG    | federated_learning.client:participant_update:365 -   → Client Client 8 is not attacker, skipping label flip
+2026-10-23 12:56:45.722 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 8 开始训练: 78 batches, 1 epoch(s)
+2026-10-23 12:56:45.771 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 1/1 - 1% (1/78)
+2026-10-23 12:56:46.346 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 1/1 - 65% (51/78)
+2026-10-23 12:56:46.666 | INFO     | federated_learning.client:participant_update:429 -    Client 8 - Epoch 1/1 - 100% (78/78)
+2026-10-23 12:56:46.677 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 8 - Epoch 1/1 完成 - 平均损失: 1.9173
+2026-10-23 12:56:46.677 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 8 训练完成！总损失: 1.9173
+2026-10-23 12:56:46.678 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 78 个总步数）
+2026-10-23 12:56:46.731 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 5/10: Client 10 训练完成 (损失: 1.9173)
+2026-10-23 12:56:46.731 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 6/10: Client 3 开始训练...
+2026-10-23 12:56:46.744 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 3: type=attacker, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:46.744 | INFO     | federated_learning.client:participant_update:281 -   → Client Client 3 is attacker, checking malicious_behavior_rate...
+2026-10-23 12:56:46.744 | INFO     | federated_learning.client:participant_update:283 -   → Random value: 0.5689, threshold: 1.0
+2026-10-23 12:56:46.744 | INFO     | federated_learning.client:participant_update:302 -   → Applying label flipping mapping (size=1, flip_ratio=1.0): {5: 3}
+2026-10-23 12:56:46.747 | INFO     | federated_learning.client:participant_update:334 -   → Verify label flip summary (first 5 samples): class_hist={0: 5}
+2026-10-23 12:56:46.747 | INFO     | federated_learning.client:participant_update:359 - ✅ Label flipping attack launched by Client 3 with mapping(size=1)
+2026-10-23 12:56:46.753 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 3 开始训练: 79 batches, 1 epoch(s)
+2026-10-23 12:56:46.775 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 1/1 - 1% (1/79)
+2026-10-23 12:56:48.367 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 1/1 - 65% (51/79)
+2026-10-23 12:56:49.237 | INFO     | federated_learning.client:participant_update:429 -    Client 3 - Epoch 1/1 - 100% (79/79)
+2026-10-23 12:56:49.286 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 3 - Epoch 1/1 完成 - 平均损失: 1.7557
+2026-10-23 12:56:49.286 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 3 训练完成！总损失: 1.7557
+2026-10-23 12:56:49.287 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 79 个总步数）
+2026-10-23 12:56:49.322 | WARNING  | federated_learning.client:participant_update:541 - ⚠️  Client 3 强化攻击：梯度放大 ×1.0 已执行
+2026-10-23 12:56:49.348 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 6/10: Client 3 训练完成 (损失: 1.7557)
+2026-10-23 12:56:49.348 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 7/10: Client 6 开始训练...
+2026-10-23 12:56:49.359 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 5: type=honest, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:49.359 | DEBUG    | federated_learning.client:participant_update:365 -   → Client Client 5 is not attacker, skipping label flip
+2026-10-23 12:56:49.365 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 5 开始训练: 78 batches, 1 epoch(s)
+2026-10-23 12:56:49.418 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 1/1 - 1% (1/78)
+2026-10-23 12:56:50.001 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 1/1 - 65% (51/78)
+2026-10-23 12:56:50.301 | INFO     | federated_learning.client:participant_update:429 -    Client 5 - Epoch 1/1 - 100% (78/78)
+2026-10-23 12:56:50.313 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 5 - Epoch 1/1 完成 - 平均损失: 1.9119
+2026-10-23 12:56:50.313 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 5 训练完成！总损失: 1.9119
+2026-10-23 12:56:50.314 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 78 个总步数）
+2026-10-23 12:56:50.398 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 7/10: Client 6 训练完成 (损失: 1.9119)
+2026-10-23 12:56:50.398 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 8/10: Client 7 开始训练...
+2026-10-23 12:56:50.410 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 10: type=honest, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:50.410 | DEBUG    | federated_learning.client:participant_update:365 -   → Client Client 10 is not attacker, skipping label flip
+2026-10-23 12:56:50.416 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 10 开始训练: 78 batches, 1 epoch(s)
+2026-10-23 12:56:50.462 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 1/1 - 1% (1/78)
+2026-10-23 12:56:51.040 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 1/1 - 65% (51/78)
+2026-10-23 12:56:51.359 | INFO     | federated_learning.client:participant_update:429 -    Client 10 - Epoch 1/1 - 100% (78/78)
+2026-10-23 12:56:51.370 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 10 - Epoch 1/1 完成 - 平均损失: 1.9068
+2026-10-23 12:56:51.370 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 10 训练完成！总损失: 1.9068
+2026-10-23 12:56:51.371 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 78 个总步数）
+2026-10-23 12:56:51.441 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 8/10: Client 7 训练完成 (损失: 1.9068)
+2026-10-23 12:56:51.442 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 9/10: Client 8 开始训练...
+2026-10-23 12:56:51.458 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 7: type=honest, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:51.458 | DEBUG    | federated_learning.client:participant_update:365 -   → Client Client 7 is not attacker, skipping label flip
+2026-10-23 12:56:51.464 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 7 开始训练: 78 batches, 1 epoch(s)
+2026-10-23 12:56:51.513 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 1/1 - 1% (1/78)
+2026-10-23 12:56:52.098 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 1/1 - 65% (51/78)
+2026-10-23 12:56:52.406 | INFO     | federated_learning.client:participant_update:429 -    Client 7 - Epoch 1/1 - 100% (78/78)
+2026-10-23 12:56:52.417 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 7 - Epoch 1/1 完成 - 平均损失: 1.8957
+2026-10-23 12:56:52.417 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 7 训练完成！总损失: 1.8957
+2026-10-23 12:56:52.418 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 78 个总步数）
+2026-10-23 12:56:52.478 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 9/10: Client 8 训练完成 (损失: 1.8957)
+2026-10-23 12:56:52.478 | INFO     | federated_learning.fl_core:run_experiment:693 - >>> 客户端 10/10: Client 4 开始训练...
+2026-10-23 12:56:52.492 | INFO     | federated_learning.client:participant_update:277 - 🔍 Client Client 2: type=honest, attack_type=label_flipping, malicious_behavior_rate=1.0
+2026-10-23 12:56:52.492 | DEBUG    | federated_learning.client:participant_update:365 -   → Client Client 2 is not attacker, skipping label flip
+2026-10-23 12:56:52.498 | INFO     | federated_learning.client:participant_update:422 - 🔄 Client 2 开始训练: 78 batches, 1 epoch(s)
+2026-10-23 12:56:52.546 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 1/1 - 1% (1/78)
+2026-10-23 12:56:53.119 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 1/1 - 65% (51/78)
+2026-10-23 12:56:53.421 | INFO     | federated_learning.client:participant_update:429 -    Client 2 - Epoch 1/1 - 100% (78/78)
+2026-10-23 12:56:53.432 | INFO     | federated_learning.client:participant_update:510 -    ✓ Client 2 - Epoch 1/1 完成 - 平均损失: 1.8941
+2026-10-23 12:56:53.432 | INFO     | federated_learning.client:participant_update:513 - ✅ Client 2 训练完成！总损失: 1.8941
+2026-10-23 12:56:53.433 | DEBUG    | federated_learning.client:participant_update:520 -   → 梯度已平均化（除以 78 个总步数）
+2026-10-23 12:56:53.507 | INFO     | federated_learning.fl_core:run_experiment:704 - <<< 客户端 10/10: Client 4 训练完成 (损失: 1.8941)
+2026-10-23 12:56:53.507 | INFO     | federated_learning.fl_core:run_experiment:715 - ✓ 所有客户端训练完成！平均损失: 1.8626
+2026-10-23 12:56:53.507 | INFO     | federated_learning.fl_core:run_experiment:716 - 开始聚合参数...
+2026-10-23 12:56:53.703 | INFO     | federated_learning.fl_algorithm.multi_krum:multi_krum:90 - Multi-Krum: n=10, f=3, 邻居数=5, 选中 m=5 → [4, 7, 6, 8, 3]
+2026-10-23 12:56:53.762 | INFO     | federated_learning.fl_core:run_experiment:870 - 开始测试全局模型（Round 1/1）...
+2026-10-23 12:56:54.907 | DEBUG    | federated_learning.fl_core:test:521 - Average test loss: 1.7669, Test accuracy: 3465/10000 (34.65%)
+2026-10-23 12:56:54.907 | INFO     | federated_learning.fl_core:run_experiment:876 - ✓ Round 1/1 - 准确率: 34.65%, 损失: 1.7669
+2026-10-23 12:56:54.908 | INFO     | federated_learning.fl_core:run_experiment:938 - Backdoor ASR 0.0
+2026-10-23 12:56:56.145 | DEBUG    | federated_learning.fl_core:run_experiment:966 - Class      - Accuracy
+2026-10-23 12:56:56.149 | INFO     | federated_learning.fl_core:run_experiment:970 - airplane   - 37.5
+2026-10-23 12:56:56.149 | INFO     | federated_learning.fl_core:run_experiment:970 - automobile - 22.6
+2026-10-23 12:56:56.149 | INFO     | federated_learning.fl_core:run_experiment:970 - bird       - 10.4
+2026-10-23 12:56:56.149 | INFO     | federated_learning.fl_core:run_experiment:970 - cat        - 6.2
+2026-10-23 12:56:56.150 | INFO     | federated_learning.fl_core:run_experiment:970 - deer       - 60.1
+2026-10-23 12:56:56.150 | INFO     | federated_learning.fl_core:run_experiment:970 - dog        - 36.8
+2026-10-23 12:56:56.150 | INFO     | federated_learning.fl_core:run_experiment:970 - frog       - 42.1
+2026-10-23 12:56:56.150 | INFO     | federated_learning.fl_core:run_experiment:970 - horse      - 29.9
+2026-10-23 12:56:56.150 | INFO     | federated_learning.fl_core:run_experiment:970 - ship       - 65.6
+2026-10-23 12:56:56.150 | INFO     | federated_learning.fl_core:run_experiment:970 - truck      - 35.3
+2026-10-23 12:56:56.150 | INFO     | federated_learning.fl_core:run_experiment:982 - Last 10 updates results
+2026-10-23 12:56:57.308 | DEBUG    | federated_learning.fl_core:test:521 - Average test loss: 1.7669, Test accuracy: 3465/10000 (34.65%)
+2026-10-23 12:56:57.309 | INFO     | federated_learning.fl_core:run_experiment:991 - ***********************************************************************************
+2026-10-23 12:56:58.289 | INFO     | federated_learning.fl_core:run_experiment:1000 - Class      - Accuracy
+2026-10-23 12:56:58.292 | INFO     | federated_learning.fl_core:run_experiment:1002 - airplane   - 37.5
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - automobile - 22.6
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - bird       - 10.4
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - cat        - 6.2
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - deer       - 60.1
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - dog        - 36.8
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - frog       - 42.1
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - horse      - 29.9
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - ship       - 65.6
+2026-10-23 12:56:58.293 | INFO     | federated_learning.fl_core:run_experiment:1002 - truck      - 35.3
+2026-10-23 12:56:58.296 | DEBUG    | federated_learning.fl_core:run_experiment:1048 - Global accuracies: [np.float64(34.65), np.float64(34.65)]
+2026-10-23 12:56:58.297 | DEBUG    | federated_learning.fl_core:run_experiment:1049 - Class 5 accuracies: [np.float64(36.8), np.float64(36.8)]
+2026-10-23 12:56:58.297 | DEBUG    | federated_learning.fl_core:run_experiment:1050 - Test loss: [np.float64(1.7669), np.float64(1.7669)]
+2026-10-23 12:56:58.297 | DEBUG    | federated_learning.fl_core:run_experiment:1051 - Label-flipping Attack success rate: 3.5
+2026-10-23 12:56:58.297 | DEBUG    | federated_learning.fl_core:run_experiment:1052 - Backdoor attack succes rate: 0.0
+2026-10-23 12:56:58.297 | DEBUG    | federated_learning.fl_core:run_experiment:1053 - Average CPU aggregation runtime: 0.2413482666015625
