@@ -25,7 +25,10 @@
   - **SignFlipping + DPFLA 5 轮完成（23:49）**：20.26 / 35.25 / 40.68 / 42.78 / **43.37**；supervisor 已自动记录并推送，随后自动启动 TMean（23:49:58）。
   - 末尾第二次 eval（39.30）为 `Last 10 updates results` 诊断项（最近 N 轮权重快照等权平均），**不是 R5 指标**；5 轮时会混入 R1（20.26），必然偏低。
   - **SignFlipping 四臂全部完成（02:20）**：DPFLA 43.37 / MKrum **42.91** / TMean 39.46 / FedAvg 35.05。
-  - ⚠️ **SignFlipping 未达到验收线**：DPFLA 仅领先 MKrum **+0.46（<1）**。机理：符号翻转把恶意更新推到远离良性簇处，Krum 天然排除；TMean 也裁掉极端值。→ 第二攻击改用 **ALIE**（专打 Krum 的近距离簇），待用户确认后跑 4 臂 × 5 轮。
+  - ⚠️ **SignFlipping 未达到验收线**：DPFLA 仅领先 MKrum **+0.46（<1）**。机理：符号翻转把恶意更新推到远离良性簇处，Krum 天然排除；TMean 也裁掉极端值。
+  - **ALIE+DPFLA 5 轮完成（07:10）**：20.32 / 35.56 / 40.57 / 42.54 / **43.87**。
+  - **1 轮探针（07:54）**：ALIE→TMean 18.59 / MKrum 18.10（仅约 2 点伤害，力度偏低）；**IPM→TMean 4.56 / MKrum 0.05**（与 MinMax 同级）→ **选 IPM 为第二攻击**。
+  - **IPM 四臂 × 5 轮 07:55 自动启动**（supervisor + watchdog）：DPFLA → TMean → MKrum → FedAvg，预计 ~11:15 完成。
 - **【16:40–17:03】换攻击范式：MinMax 服务端注入，P3 CIFAR 达标（+2% 三口径全满足）**：
   - 新增 `federated_learning/attack_alg/server_attacks.py`：`minmax`（FLPoison `min.py` 二分 λ）/ `alie`（norm.ppf 推 z_max）/ `signflipping`；`fl_core.py` 聚合前注入并把被替换的恶意端**同步写回 `local_models`**（否则 DPFLA 读到未攻击更新，实测掉到 48.15）。
   - `DPFLA.py` 新增**协同重复检测**：到最近其他端相对距离 <0.01 判重复 → risk=0.98、权重 0.020（MinMax 三个恶意端向量完全相同，相对距离 0.00）。

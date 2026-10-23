@@ -144,7 +144,8 @@
    - **高斯已确认舍弃**（用户 2026-10-23）：稳健领先仅 +0.5~0.9，且对 TMean 理论吃亏。
    - **SignFlipping 四臂已完成（2026-10-24 02:20）但未达标**：DPFLA 43.37 / MKrum 42.91 / TMean 39.46 / FedAvg 35.05 → DPFLA 仅领先 MKrum **+0.46（<1）**。原因：符号翻转的恶意更新远离良性簇，Krum 天然排除。
    - **ALIE / IPM 选型（2026-10-24 调研）**：SignFlipping 失败是**结构性**（远离簇被 Krum 排除），不是力度问题；ALIE 力度偏低（n=10/f=3 → z_max≈0.18σ），且与 Krum 的协同簇特性对 TMean 杀伤不确定。已实现 **IPM**（`-scale×良性均值`，FLPoison `attackers/ipm.py`，默认 scale=0.1，端间完全相同 → Krum 会选中）。
-   - **当前执行**：先等 ALIE+DPFLA 5 轮跑完，再跑 **4 条 1 轮探针**（ALIE×TMean/MKrum、IPM×TMean/MKrum），按 R1 差距选型；胜者再跑 4 臂 × 5 轮。`scripts/run_vd_probe.sh`。
+   - **探针结果（2026-10-24 07:54）**：IPM→TMean 4.56 / MKrum 0.05；ALIE→TMean 18.59 / MKrum 18.10（力度偏低）。→ **选定 IPM**。
+   - **IPM 四臂 × 5 轮**已于 07:55 自动启动（`scripts/run_vd_ipm_supervisor.sh`），预计 ~11:15 完成；若达标则最终矩阵 = 两条攻击（MinMax / IPM）× 四臂。
    - 标签全翻转入口 `run-test/visdrone/run_screen_label_flipping.py` 保留备用，不进入正式对比。
 2. **口径规范**：今后统一以"末 5 轮均值"为主口径，并同时报告 best/R15/last10。
 3. VisDrone 筛选通过后跑 15 轮正式对比（约 2.5h/条）。

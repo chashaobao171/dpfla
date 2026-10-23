@@ -24,12 +24,13 @@
 | CIFAR10 P1 | ✅ 标签 70.00 / 高斯 67.99–69.50（≥65）|
 | CIFAR10 P3 | ✅ **MinMax 15 轮：DPFLA 69.25 vs MKrum 29.19 / TMean 57.01**（末5 +37.90/+13.43）；标签线 +3.00/+2.1~2.2；高斯线已不作为 +2 依据（04_Retracted R13）|
 | DPFLA 算法 | ✅ 四处增强 + **协同重复检测**（相对距离 <0.01 → 权重 0.02）|
-| 攻击实现 | ✅ `attack_alg/server_attacks.py`：MinMax / ALIE / SignFlipping（服务端全知注入），CIFAR + VisDrone 共用 |
+| 攻击实现 | ✅ `attack_alg/server_attacks.py`：MinMax / IPM / ALIE / SignFlipping（服务端注入），CIFAR + VisDrone 共用；`FL_IPM_SCALE` / `FL_ALIE_ZMAX` 可调 |
 | VisDrone（MinMax） | ✅ DPFLA **43.85** / FedAvg **41.17** / TMean **40.17** / MKrum **29.30**（均 5 轮）→ DPFLA 领先 TMean +3.68、MKrum +14.55 |
 | VisDrone（SignFlipping） | ⚠️ 四臂完成：DPFLA **43.37** / MKrum **42.91** / TMean 39.46 / FedAvg 35.05 → **仅领先 MKrum +0.46（<1，未达标）**，不能作为第二攻击 |
-| 第二攻击 | 🔁 改用 **ALIE**（专打 Krum；CIFAR 5 轮 DPFLA 54.62 vs TMean 48.22），待跑 4 臂 × 5 轮 |
-| VisDrone 验收口径 | **2 攻击（SignFlipping + MinMax）× 3 防御（DPFLA/MKrum/TMean）+ FedAvg 对照；DPFLA mAP 领先两防御 ≥1%**；15 轮暂缓，先跑完 5 轮 |
-| 攻击组合 | CIFAR = 标签反转 + MinMax；**VisDrone = SignFlipping + MinMax**；高斯已舍弃 |
+| 第二攻击 | ✅ 选定 **IPM**（探针 R1：TMean 4.56 / MKrum 0.05 vs DPFLA 待测）；4 臂 × 5 轮 07:55 启动 |
+| ALIE（备选） | DPFLA 5 轮 43.87；探针 TMean 18.59 / MKrum 18.10（伤害仅约 2 点，力度偏低）|
+| VisDrone 验收口径 | **2 攻击（MinMax + IPM）× 3 防御（DPFLA/MKrum/TMean）+ FedAvg 对照；DPFLA mAP 领先两防御 ≥1%**；15 轮暂缓，先跑完 5 轮 |
+| 攻击组合 | CIFAR = 标签反转 + MinMax；**VisDrone = MinMax + IPM（待 5 轮确认）**；高斯、SignFlipping 已排除 |
 | dev 推送 | ✅ `614774d`（2026-10-23 17:25 推送）；VisDrone 修复与 5 轮结果待下一次推送 |
 
 ## 进度快照（2026-10-17）
