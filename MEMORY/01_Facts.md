@@ -388,7 +388,7 @@ FedAvg vs FedBN 逐轮（同口径）：
 → 对比 MinMax：恶意更新藏在良性区间内且三端完全相同，TMean 裁不到、MKrum 反而选中，才拉开 +3.68 / +14.55。
 → 第二攻击应改用**专打 Krum 的 ALIE**（CIFAR 5 轮筛选：DPFLA 54.62 vs TMean 48.22，ALIE 的恶意簇彼此靠近，会被 Krum 选中；同时 DPFLA 仍可检测）。
 【口径说明·末尾“第二次评估”】R5 之后日志还会再出现一次 mAP（本次 **39.30%**），那是 `fl_core.py:1011-1017` 的 **"Last 10 updates results"**：把最近 N 轮的**全局权重快照等权平均**后重新评估，用于诊断，**不是 R5 的指标**。5 轮实验时它平均了 R1–R5 的权重（含 R1 20.26），所以必然低于 R5 43.37。正式指标只取 `Round 5/5 - mAP@0.5`。
-【出处】`logs_3/visdrone/run_screen_signflipping_DPFLA_20261023_2259.log`；`log/visdrone/auto_results.md`。
+【出处】`logs_3/visdrone/run_screen_signflipping_DPFLA_20261023_2259.log`（Sign 线已淘汰，未入 `log/visdrone/` 最终 9 条）。
 
 ### 攻击选型探针（2026-10-24，1 轮，R1 mAP）
 
@@ -417,7 +417,7 @@ FedAvg vs FedBN 逐轮（同口径）：
 【实测·达标】**DPFLA 领先 TMean +2.47、MKrum +9.05（均 ≥1）**；DPFLA 43.93 ≥35。
 【对比 MinMax】DPFLA 43.85 / FedAvg 41.17 / TMean 40.17 / MKrum 29.30 → +3.68 / +14.55。
 【结论】**VisDrone 两条攻击线（MinMax、IPM）均满足"DPFLA 比两防御高 1%"，且 DPFLA ≥35 目标**。
-【出处】`logs_3/visdrone/run_screen_ipm_{DPFLA,tmean,mkrum,fedavg}_*.log`；`log/visdrone/auto_results.md`。
+【出处】`logs_3/visdrone/run_screen_ipm_{DPFLA,tmean,mkrum,fedavg}_*.log`；归档 `log/visdrone/06–09_*_ipm_*`。
 
 ### 两个必修 bug（2026-10-23 定位）
 1. **`KeyError: 'fc2.weight'`（R2 必崩）**：`YOLOWrapper.load_state_dict()` 直接 `pop('fc2.weight/bias')`，**改写了调用方传入的 state_dict**；服务端注入后同步 `local_models` 时把恶意端的 fc2 键删掉 → `average_weights` 在 `w[0]`（诚实端）与 `w[i]`（恶意端）键集不一致时崩溃。R1 因 0 号恰为恶意端而未暴露。**修复**：`load_state_dict` 入口先 `dict(state_dict)` 浅拷贝。`yolo_wrapper.py:669-680`。
