@@ -27,10 +27,10 @@
 | 攻击实现 | ✅ `attack_alg/server_attacks.py`：MinMax / IPM / ALIE / SignFlipping（服务端注入），CIFAR + VisDrone 共用；`FL_IPM_SCALE` / `FL_ALIE_ZMAX` 可调 |
 | VisDrone（MinMax） | ✅ DPFLA **43.85** / FedAvg **41.17** / TMean **40.17** / MKrum **29.30**（均 5 轮）→ DPFLA 领先 TMean +3.68、MKrum +14.55 |
 | VisDrone（SignFlipping） | ⚠️ 四臂完成：DPFLA **43.37** / MKrum **42.91** / TMean 39.46 / FedAvg 35.05 → **仅领先 MKrum +0.46（<1，未达标）**，不能作为第二攻击 |
-| 第二攻击 | ✅ 选定 **IPM**（探针 R1：TMean 4.56 / MKrum 0.05 vs DPFLA 待测）；4 臂 × 5 轮 07:55 启动 |
+| VisDrone（IPM） | ✅ 四臂完成：DPFLA **43.93** / TMean **41.46** / MKrum **34.88** / FedAvg 42.85 → 领先 **+2.47 / +9.05**，达标 |
 | ALIE（备选） | DPFLA 5 轮 43.87；探针 TMean 18.59 / MKrum 18.10（伤害仅约 2 点，力度偏低）|
-| VisDrone 验收口径 | **2 攻击（MinMax + IPM）× 3 防御（DPFLA/MKrum/TMean）+ FedAvg 对照；DPFLA mAP 领先两防御 ≥1%**；15 轮暂缓，先跑完 5 轮 |
-| 攻击组合 | CIFAR = 标签反转 + MinMax；**VisDrone = MinMax + IPM（待 5 轮确认）**；高斯、SignFlipping 已排除 |
+| VisDrone 验收 | ✅ **MinMax 与 IPM 两条攻击线均满足：DPFLA 领先 TMean/MKrum ≥1%，且 DPFLA ≥35%** |
+| 攻击组合 | CIFAR = 标签反转 + MinMax；**VisDrone = MinMax + IPM**；高斯、SignFlipping 已排除 |
 | dev 推送 | ✅ `614774d`（2026-10-23 17:25 推送）；VisDrone 修复与 5 轮结果待下一次推送 |
 
 ## 进度快照（2026-10-17）

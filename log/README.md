@@ -20,6 +20,13 @@
 | **VisDrone** | ① 基线 | **mAP@0.5 = 47.64%**（R13 峰值；25 轮平台 ≈47%，R25 45.73%）| 0% | `run_no_attack_baseline_20261021_1421.log` |
 | VisDrone | ② 攻击无防御 | **mAP@0.5 = 32.37%**（R10；基线 45.08%，−12.7）| **30%** | `run_no_defense_gaussian_20261021_1231.log`（高斯 σ=0.02）|
 | VisDrone | ③ MinMax+DPFLA | **R5 43.85%**（R1 21.17 / R2 35.93 / R3 40.67 / R4 42.52；基线同期 21.21/37.05/41.44/43.82/45.08）| 30% | `03_attack_dpfla__run_screen_minmax_DPFLA_20261023_1910.log`（5 轮）|
+| VisDrone | ④ MinMax+TMean | **R5 40.17%**（DPFLA +3.68）| 30% | `04_attack_tmean__run_screen_minmax_tmean_20261023_2003.log` |
+| VisDrone | ⑤ MinMax+MKrum | **R5 29.30%**（DPFLA +14.55）| 30% | `05_attack_mkrum__run_screen_minmax_mkrum_20261023_2057.log` |
+| VisDrone | ⑥ MinMax+FedAvg | **R5 41.17%** | 30% | `06_attack_nodefense__run_screen_minmax_fedavg_20261023_2158.log` |
+| VisDrone | ⑦ IPM+DPFLA | **R5 43.93%**（R1 21.17）| 30% | `07_attack_dpfla__run_screen_ipm_DPFLA_20261024_0755.log` |
+| VisDrone | ⑧ IPM+TMean | **R5 41.46%**（DPFLA +2.47）| 30% | `08_attack_tmean__run_screen_ipm_tmean_20261024_0845.log` |
+| VisDrone | ⑨ IPM+MKrum | **R5 34.88%**（DPFLA +9.05）| 30% | `09_attack_mkrum__run_screen_ipm_mkrum_20261024_0935.log` |
+| VisDrone | ⑩ IPM+FedAvg | **R5 42.85%** | 30% | `10_attack_nodefense__run_screen_ipm_fedavg_20261024_1025.log` |
 | **MNIST** | ① 基线 | 准确率 **95.81%** | 0% | `demo1_mnist_fedavg_noattack_20260902_1113.log` |
 | MNIST | ② 攻击无防御 | 准确率 **4.57%**（被击穿）| **30%** | `run_no_defense_label_flipping_20260515_1020.log` |
 | MNIST | ③ 攻击+DPFLA | 准确率 **95.00%**（防住）| **30%** | `run_dpfla_label_flipping_20260515_1036.log` |
@@ -33,7 +40,7 @@
 | CIFAR10 | ⑧ MinMax · Multi-Krum | **29.19%**（末5均值 29.86%）| 30% | `08_attack_mkrum_minmax__..._1651.log` |
 | CIFAR10 | ⑨ MinMax · Trimmed-Mean | **57.01%**（末5均值 54.32%）| 30% | `09_attack_tmean_minmax__..._1651.log` |
 
-> VisDrone ② 为高斯 σ=0.02 的历史产物；③ 已转为 **MinMax + DPFLA**（5 轮，R5 43.85%）。MinMax 的 FedAvg 无防御臂按用户要求不跑（训练代码未变，25 轮无攻击基线仍可直接对比）。
+> VisDrone 最终矩阵（2026-10-24）：**MinMax 与 IPM 两条攻击 × {DPFLA, TMean, MKrum, FedAvg} 四臂，均 5 轮**。两条攻击均满足验收：DPFLA 分别领先 TMean **+3.68 / +2.47**、MKrum **+14.55 / +9.05**，且 DPFLA R5 **43.85 / 43.93 ≥ 35%**。高斯、SignFlipping、ALIE 均已被淘汰（原因见 `MEMORY/01_Facts.md` §5e/§5f 与 `03_History.md`）。
 
 ## 备注
 

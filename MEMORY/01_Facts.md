@@ -402,6 +402,23 @@ FedAvg vs FedBN 逐轮（同口径）：
 【补充】ALIE + DPFLA 5 轮已完成：20.32 / 35.56 / 40.57 / 42.54 / **43.87**（仅 DPFLA 臂；其余为 1 轮探针）。
 【决策】第二攻击 = **IPM**，2026-10-24 07:55 已启动 4 臂 × 5 轮（`scripts/run_vd_ipm_supervisor.sh`）。
 
+## §5f VisDrone IPM 线（2026-10-24，服务端注入 / v8m@1280 / 5 轮）★
+
+**口径**：`FL_SERVER_ATTACK=ipm`，恶意更新 = `-0.1 × 良性均值`（FLPoison `attackers/ipm.py`，三端完全相同）。
+
+| 轮 | DPFLA | TMean | MKrum | FedAvg |
+|---|---|---|---|---|
+| R1 | 21.17 | 4.56 | 0.05 | 0.51 |
+| R2 | 36.02 | 31.62 | 0.29 | 31.53 |
+| R3 | 40.67 | 36.78 | 11.84 | 38.20 |
+| R4 | 42.69 | 39.91 | 29.25 | 41.22 |
+| R5 | **43.93** | **41.46** | **34.88** | 42.85 |
+
+【实测·达标】**DPFLA 领先 TMean +2.47、MKrum +9.05（均 ≥1）**；DPFLA 43.93 ≥35。
+【对比 MinMax】DPFLA 43.85 / FedAvg 41.17 / TMean 40.17 / MKrum 29.30 → +3.68 / +14.55。
+【结论】**VisDrone 两条攻击线（MinMax、IPM）均满足"DPFLA 比两防御高 1%"，且 DPFLA ≥35 目标**。
+【出处】`logs_3/visdrone/run_screen_ipm_{DPFLA,tmean,mkrum,fedavg}_*.log`；`log/visdrone/auto_results.md`。
+
 ### 两个必修 bug（2026-10-23 定位）
 1. **`KeyError: 'fc2.weight'`（R2 必崩）**：`YOLOWrapper.load_state_dict()` 直接 `pop('fc2.weight/bias')`，**改写了调用方传入的 state_dict**；服务端注入后同步 `local_models` 时把恶意端的 fc2 键删掉 → `average_weights` 在 `w[0]`（诚实端）与 `w[i]`（恶意端）键集不一致时崩溃。R1 因 0 号恰为恶意端而未暴露。**修复**：`load_state_dict` 入口先 `dict(state_dict)` 浅拷贝。`yolo_wrapper.py:669-680`。
 2. **收尾 `deepcopy` 异常**：`average_weights(last10_updates)` 对带 autograd 图的张量 `copy.deepcopy(w[0])` → `Only Tensors created explicitly by the user ... support deepcopy`。**修复**：改为 `{k: v.detach().clone() if tensor else deepcopy(v)}`。`fed_avg.py:24-31`。5 轮数据不受影响（异常发生在 R5 结束后的 Last-10 汇总）。
