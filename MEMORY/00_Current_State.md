@@ -31,6 +31,7 @@
 | ALIE（备选） | DPFLA 5 轮 43.87；探针 TMean 18.59 / MKrum 18.10（伤害仅约 2 点，力度偏低）|
 | VisDrone 验收 | ✅ **MinMax 与 IPM 两条攻击线均满足：DPFLA 领先 TMean/MKrum ≥1%，且 DPFLA ≥35%** |
 | 攻击组合 | CIFAR = 标签反转 + MinMax；**VisDrone = MinMax + IPM**；高斯、SignFlipping 已排除 |
+| TB 对照 | VisDrone 共 10 个目录：9 条最终 + 基线前 5 轮切片 `..._20261021_1421_first5`（21.21/37.05/41.44/43.82/45.08）|
 | dev 推送 | ✅ `614774d`（2026-10-23 17:25 推送）；VisDrone 修复与 5 轮结果待下一次推送 |
 
 ## 进度快照（2026-10-17）
