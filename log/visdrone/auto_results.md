@@ -54,3 +54,11 @@
 `logs_3/visdrone/run_screen_ipm_mkrum_20261024_0743.log`
 2026-10-24 07:53:52.748 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/1 - 📊 mAP@0.5: 0.05% | 损失: 546.3005
 
+## ipm DPFLA 2026-10-24 08:44:50
+`logs_3/visdrone/run_screen_ipm_DPFLA_20261024_0755.log`
+2026-10-24 08:05:32.860 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 1/5 - 📊 mAP@0.5: 21.17% | 损失: 294.2879
+2026-10-24 08:15:16.181 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 2/5 - 📊 mAP@0.5: 36.02% | 损失: 241.9330
+2026-10-24 08:25:01.957 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 3/5 - 📊 mAP@0.5: 40.67% | 损失: 241.0593
+2026-10-24 08:34:47.921 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 4/5 - 📊 mAP@0.5: 42.69% | 损失: 232.8848
+2026-10-24 08:44:30.056 | INFO     | federated_learning.fl_core:run_experiment:904 - ✓ Round 5/5 - 📊 mAP@0.5: 43.93% | 损失: 227.4194
+
