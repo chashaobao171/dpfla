@@ -6,6 +6,7 @@
 
 ## 2026-10-27
 
+- **新建 `socket` 分支并接收 socketFed 分布式参考**：先推一个空树占位提交（`637d64a`），用户经 **GitHub 网页上传** 得到 `0ecb8d3`（`socketFed/` 52 文件；本地 `.trae-cn/attachments` 通道未生效，网页上传绕开了它）。内容见 `08_Roadmap.md` §5 参考；本地检出于 `/tmp/socket_ref`（临时 worktree）。该分支**不与 dev 合并**。
 - **建立两条只读存档分支（用户要求：进入分布式改造前的小结，此后不再修改）**：
   - `archive/2026-10-27-full`（`dba6888`，403 文件）：dev(`1d06b97`) **＋** `yolov8{l,m,s,n}.pt`、`cache/`、`runs/`、`orthogonal_matrices/{387,512,579}.pkl`。后三类为 gitignore 项，用**临时索引**（`GIT_INDEX_FILE=/tmp/...` + `read-tree/write-tree/commit-tree`）强制纳入，**未触碰 dev 工作区与索引**。
   - `archive/2026-10-27-lean`（`61119a0`，272 文件）：dev **−** `FedAIoT-main/`（参考第三方项目 35M）、`refs/`（参考论文）、`federated_learning/attack_alg/enhanced_label_flip_attack.py`（全仓 grep 无引用）**＋** 3 个 pkl（随机正交矩阵缓存，保证复现）。

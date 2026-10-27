@@ -261,6 +261,11 @@ VisDrone（v8m@1280）：
 
 - `FedAIoT-main/` 用 **Ray** 做分布式 + ultralytics 原生训练（借鉴进程编排，**不借鉴其聚合**，见 `04_Retracted.md` R1）。
 - FLPoison 也是单进程模拟，**不提供分布式参考**。
+- **`socket` 分支（socketFed）——用户早期自写的 socket 分布式 FL 参考**（2026-10-27 上传；用户原话："很久以前自己写的，不一定好用，仅作参考"）：
+  - 通信：TCP + **4 字节长度前缀**（`struct.pack('!I', len)`）+ JSON/pickle 载荷；server 每个客户端起一个线程，`aggregate_and_broadcast` 主循环，支持注册/广播/上报。
+  - 关键文件：`src/server/server.py`（584 行）、`src/client/client.py`（442 行）、`src/aggregation/fedavg.py`（40 行）、`src/defense/differential_privacy.py`（64 行）、`config/config.yaml`（CIFAR10+ResNet18 / max_clients=3 / DP / 压缩 / 攻击开关）。
+  - 已知残留（上传内容）：`__pycache__/`（11 个 pyc）、`src/federated_learning.log`、无关的竞赛题解 `solution.py`、残片 `src/client/client.client.py`（18 行）；`src/attack/` 只剩 pyc 无源码；README 提到的 `tests/` 缺失。
+  - 本地查看：`git worktree add /tmp/socket_ref socket`（已检出于 `/tmp/socket_ref`）；该分支**不并入 dev**，只作参考。
 
 ## §6 前置条件
 
