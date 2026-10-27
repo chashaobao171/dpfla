@@ -1,8 +1,17 @@
 # 03_History.md — 时间线（改动与回退）
 
-<!-- 最后更新：2026-10-23 -->
+<!-- 最后更新：2026-10-27 -->
 <!-- 追加式：新事件加在最上方。回退/证伪的事件保留，不删除。 -->
 <!-- 结论性判断请以 01_Facts.md 为准；本文件只记"做了什么、结果如何"。 -->
+
+## 2026-10-27
+
+- **建立两条只读存档分支（用户要求：进入分布式改造前的小结，此后不再修改）**：
+  - `archive/2026-10-27-full`（`dba6888`，403 文件）：dev(`1d06b97`) **＋** `yolov8{l,m,s,n}.pt`、`cache/`、`runs/`、`orthogonal_matrices/{387,512,579}.pkl`。后三类为 gitignore 项，用**临时索引**（`GIT_INDEX_FILE=/tmp/...` + `read-tree/write-tree/commit-tree`）强制纳入，**未触碰 dev 工作区与索引**。
+  - `archive/2026-10-27-lean`（`61119a0`，272 文件）：dev **−** `FedAIoT-main/`（参考第三方项目 35M）、`refs/`（参考论文）、`federated_learning/attack_alg/enhanced_label_flip_attack.py`（全仓 grep 无引用）**＋** 3 个 pkl（随机正交矩阵缓存，保证复现）。
+  - 两条均已推 GitHub（full 含 84M `yolov8l.pt`，在 GitHub 单文件 100M 限制内）。
+- **本地 zip 备份**：`/root/chashaobao/data.zip`（2.2G，`data/` = `/root/autodl-tmp/data`：MNIST/CIFAR10/VisDrone）、`/root/chashaobao/DPFLA-master.zip`（366M，含 `.git` 与两条存档分支）。
+- **下一步（用户定）**：分布式改造 —— 多终端各充当客户端/服务器；分布式代码以**函数/工具形式被调用**，不融入本项目，便于 Multi-Krum / Trimmed-Mean 等其他防御复用。
 
 ## 2026-10-23
 

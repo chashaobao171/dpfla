@@ -1,6 +1,6 @@
 # 00_Current_State.md — 当前状态
 
-<!-- 最后更新：2026-10-23 -->
+<!-- 最后更新：2026-10-27 -->
 <!-- ⚠️ 本文件会过期。与 01_Facts.md 冲突时，以 01_Facts.md 的实测数据为准 -->
 
 ## 一句话
@@ -32,7 +32,10 @@
 | VisDrone 验收 | ✅ **MinMax 与 IPM 两条攻击线均满足：DPFLA 领先 TMean/MKrum ≥1%，且 DPFLA ≥35%** |
 | 攻击组合 | CIFAR = 标签反转 + MinMax；**VisDrone = MinMax + IPM**；高斯、SignFlipping 已排除 |
 | TB 对照 | VisDrone 共 10 个目录：9 条最终 + 基线前 5 轮切片 `..._20261021_1421_first5`（21.21/37.05/41.44/43.82/45.08）|
-| dev 推送 | ✅ `614774d`（2026-10-23 17:25 推送）；VisDrone 修复与 5 轮结果待下一次推送 |
+| 存档分支（只读） | ✅ `archive/2026-10-27-full`（`dba6888`，含 yolo 权重/cache/runs）/ `archive/2026-10-27-lean`（`61119a0`，去掉 FedAIoT-main、refs、死代码）—— 均已推 GitHub，**不再修改** |
+| 本地 zip 备份 | ✅ `/root/chashaobao/data.zip`（2.2G，原始数据）/ `/root/chashaobao/DPFLA-master.zip`（366M，含 .git）|
+| 下一篇 | 🚧 **分布式改造**：多终端充当客户端/服务器；分布式能力做成"可被调用的函数/工具"，不融入本项目，便于其他防御方法（Multi-Krum / Trimmed-Mean 等）复用 |
+| dev 推送 | ✅ 见 `git log origin/dev -1`；存档与 zip 流程已入 `06_Git_Workflow.md` |
 
 ## 进度快照（2026-10-17）
 

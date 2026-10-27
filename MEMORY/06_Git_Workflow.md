@@ -1,6 +1,6 @@
 # 06_Git_Workflow.md — Git 与备份流程
 
-<!-- 最后更新：2026-10-14 -->
+<!-- 最后更新：2026-10-27 -->
 
 ## §项目信息
 
@@ -12,6 +12,8 @@
 | `main` | **发布分支**：只在"版本确认可用"时，由**人工手动**推送 |
 | `dev` | **日常工作分支**：改动 / 实验记录**默认推这里**（2026-10-14 起）|
 | `master` | 历史遗留（= 初始提交 `8ef2a47`）|
+| `archive/2026-10-27-full` | **只读存档（不再修改）**：完整快照，含 yolo 权重 / 数据缓存 / runs —— `dba6888`，403 文件 |
+| `archive/2026-10-27-lean` | **只读存档（不再修改）**：仅 DPFLA 项目本体 —— `61119a0`，272 文件 |
 
 ## §备份策略（重要）
 
@@ -21,6 +23,27 @@
 - **分支约定（2026-10-14 起，用户明确）**：
   - **默认推送 `dev`** —— 日常改动、实验记录都走 dev。
   - **`main` 只在用户认为"版本可用"时由人工手动推送**，**不作为默认目标**。
+
+## §存档分支（2026-10-27 建立，只读）
+
+用户要求为"进入分布式改造前"的项目状态建立 **两个不再修改** 的存档分支（作为阶段小结）：
+
+| 分支 | 提交 | 内容 | 相对 dev |
+|------|------|------|----------|
+| `archive/2026-10-27-full` | `dba6888` | 完整快照 | dev(1d06b97) **+** `yolov8{l,m,s,n}.pt`、`cache/`、`runs/`、`orthogonal_matrices/{387,512,579}.pkl`（后三类为 gitignore 项，用临时索引强制纳入）|
+| `archive/2026-10-27-lean` | `61119a0` | 仅 DPFLA 项目本体 | dev **−** `FedAIoT-main/`（参考第三方项目）、`refs/`（参考论文）、`federated_learning/attack_alg/enhanced_label_flip_attack.py`（无引用死代码）**+** 上述 3 个 pkl（保证随机正交矩阵可复现）|
+
+- 两者均以 **临时索引（`GIT_INDEX_FILE=/tmp/...`）** 构建，**未触碰 dev 工作区与索引**；构建方式可复用：
+  `GIT_INDEX_FILE=/tmp/x git read-tree dev && git add -f <文件> && T=$(git write-tree) && git commit-tree $T -p dev -m ... && git branch <名> <commit>`
+- ⚠️ **这两个分支从此不再追加任何提交**；后续工作一律走 `dev`。
+- full 分支含 84M 的 `yolov8l.pt`（GitHub 单文件 <100M 限制内，已成功推送）；full 的 blob 已进本地 `.git`（约 +160M 对象）。
+
+### 本地 zip 备份（2026-10-27）
+
+| 文件 | 大小 | 内容 |
+|------|------|------|
+| `/root/chashaobao/data.zip` | 2.2G | `data/`（= `/root/autodl-tmp/data`：MNIST / CIFAR10 / VisDrone 原始数据）|
+| `/root/chashaobao/DPFLA-master.zip` | 366M | 整个项目目录（含 `.git`，含两条存档分支）|
 
 ## §一键备份
 
