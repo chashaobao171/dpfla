@@ -1,0 +1,116 @@
+# 服务器配置
+server:
+  host: '0.0.0.0'  # 服务器监听所有网络接口
+  port: 5000
+  max_clients: 3
+  aggregation_method: 'fedavg'
+  min_clients: 3
+  timeout: 300
+
+# 客户端配置
+client:
+  host: 'localhost'  # 客户端连接到本地服务器
+  port: 5000
+  batch_size: 32
+  learning_rate: 0.001
+  optimizer:
+    type: 'adam'
+    config:
+      learning_rate: 0.001
+      betas: [0.9, 0.999]
+      eps: 1e-8
+      weight_decay: 0
+
+# 模型配置
+model:
+  type: 'resnet'
+  config:
+    in_channels: 3  # CIFAR10是3通道图像
+    num_classes: 10
+    model_type: 'resnet18'
+
+# 数据集配置
+dataset:
+  type: 'cifar10'
+  config:
+    data_path: './data'
+    batch_size: 128
+    num_workers: 4
+    pin_memory: true
+    prefetch_factor: 2
+    transform:
+      train:
+        - type: 'RandomRotation'
+          degrees: 10
+        - type: 'RandomAffine'
+          degrees: 0
+          translate: [0.1, 0.1]
+        - type: 'ToTensor'
+        - type: 'Normalize'
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+      test:
+        - type: 'ToTensor'
+        - type: 'Normalize'
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2023, 0.1994, 0.2010]
+
+# 训练配置
+training:
+  rounds: 6
+  epochs: 5
+  min_clients: 3
+  learning_rate: 0.01
+  optimizer: 'adam'
+  momentum: 0.9
+  weight_decay: 5e-4
+  batch_size: 128
+  num_workers: 4
+  use_gpu: true
+  scheduler:
+    type: 'cosine'
+    T_max: 1
+    eta_min: 0.0001
+
+# 隐私配置
+privacy:
+  enabled: true
+  noise_scale: 0.1
+  clip_threshold: 1.0
+
+# 压缩配置
+compression:
+  enabled: true
+  quantization_bits: 8
+
+# 防御配置
+defense:
+  enabled: false  # 暂时禁用防御机制以简化调试
+  methods:
+    - "differential_privacy"
+  differential_privacy:
+    epsilon: 2.0
+    delta: 1e-4
+
+# 攻击配置
+attack:
+  enabled: false  # 暂时禁用攻击以简化调试
+  type: "label_flipping"
+  attacker_ratio: 0.1
+
+# 可视化配置
+visualization:
+  enabled: true
+  tensorboard:
+    log_dir: "runs"
+    update_freq: 1
+  checkpoint:
+    save_dir: "checkpoints"
+    save_freq: 1
+    keep_last_n: 3
+
+# 日志配置
+logging:
+  level: "INFO"
+  file: "logs/federated_learning.log"
+  client_log_dir: "logs" 
