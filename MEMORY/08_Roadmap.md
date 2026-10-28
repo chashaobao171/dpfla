@@ -1,6 +1,6 @@
 # 08_Roadmap.md — 高层路线图（用户 2026-10-23 定稿）
 
-<!-- 最后更新：2026-10-23 -->
+<!-- 最后更新：2026-10-28 -->
 <!-- 级别：**高级别记忆**。与 00_Current_State.md 同级；本文件只记"目标 / 验收 / 约束 / 阻塞"，实测数据仍以 01_Facts.md 为准。 -->
 <!-- 规则：目标与验收来自用户原话；现状标【实测】；推断标【推断·未验证】。用户后续修订指令优先。 -->
 
@@ -246,6 +246,9 @@ VisDrone（v8m@1280）：
 > **交付约束（用户 2026-10-27 明确）**：分布式能力要做成**可被调用的函数/工具**（独立模块），**不融入本项目**；
 > 便于该 DPFLA 项目回到原大项目后，其余防御方法（Multi-Krum / Trimmed-Mean 等）也能直接复用。
 >
+> **范围澄清（用户 2026-10-28 明确）**：分布式**暂不要求防御效果**，只要求**可调用 + 多终端分客户端/服务器**。
+> 冒烟指标不作为任何结论；不要再为"分布式下的防御优势"增加实验。
+>
 > **阶段存档（只读，勿改）**：`archive/2026-10-27-full`(`dba6888`) / `archive/2026-10-27-lean`(`61119a0`)；本地 zip 见 `06_Git_Workflow.md`。
 
 ### 反向约束（现在的改动不要破坏这些，否则后续要返工）
@@ -257,15 +260,160 @@ VisDrone（v8m@1280）：
 5. **`fl_core` 保留为单机模拟器**：新增传输层（gRPC / HTTP / Ray），两条路径**共用同一聚合实现**，否则结果不可比。
 6. 参数化 GPU / 线程 / DataLoader workers 的分配。
 
-### 参考
-
+### 参考（2026-10-28 更新：socketFed 已逐文件核验）
 - `FedAIoT-main/` 用 **Ray** 做分布式 + ultralytics 原生训练（借鉴进程编排，**不借鉴其聚合**，见 `04_Retracted.md` R1）。
 - FLPoison 也是单进程模拟，**不提供分布式参考**。
-- **`socket` 分支（socketFed）——用户早期自写的 socket 分布式 FL 参考**（2026-10-27 上传；用户原话："很久以前自己写的，不一定好用，仅作参考"）：
-  - 通信：TCP + **4 字节长度前缀**（`struct.pack('!I', len)`）+ JSON/pickle 载荷；server 每个客户端起一个线程，`aggregate_and_broadcast` 主循环，支持注册/广播/上报。
-  - 关键文件：`src/server/server.py`（584 行）、`src/client/client.py`（442 行）、`src/aggregation/fedavg.py`（40 行）、`src/defense/differential_privacy.py`（64 行）、`config/config.yaml`（CIFAR10+ResNet18 / max_clients=3 / DP / 压缩 / 攻击开关）。
-  - 已知残留（上传内容）：`__pycache__/`（11 个 pyc）、`src/federated_learning.log`、无关的竞赛题解 `solution.py`、残片 `src/client/client.client.py`（18 行）；`src/attack/` 只剩 pyc 无源码；README 提到的 `tests/` 缺失。
-  - 本地查看：`git worktree add /tmp/socket_ref socket`（已检出于 `/tmp/socket_ref`）；该分支**不并入 dev**，只作参考。
+- **`socket` 分支（socketFed）——用户早期自写的 socket 分布式 FL 参考**（2026-10-27 上传；用户原话："很久以前自己写的，不一定好用，仅作参考"）：**只作协议/进程骨架参考，不直接复用代码**，详见下方剖析。
+
+#### socketFed 源码剖析（2026-10-28，逐文件核验）【实测】
+
+- 规模：`socketFed/` 52 文件；核心 `src/server/server.py` 584 行、`src/client/client.py` 442 行、`src/aggregation/fedavg.py` 40 行、`config/config.yaml` 115 行。
+- **通信协议**：TCP；帧 = 4 字节大端长度（`struct.pack('!I', len)`）+ UTF-8 JSON；模型参数 = `torch.save(state_dict)` → base64 字符串嵌入 JSON；服务端发送带 3 次重试，单条消息上限 100MB（`server.py:102-172`）。
+- **消息类型**：`register` / `registered_ack` / `global_model`（`round`,`model`）/ `model_update`（`client_id`,`model`,`metrics`）/ `training_progress` / `epoch_complete` / `stop`。
+- **服务端状态机**（`server.py:174-300`）：先 `accept` 到 `min_clients`；每个连接一个线程（`handle_client_registration_and_messages`），更新统一塞 `queue.Queue`；主循环每轮 `broadcast_model()` → 最多等 600s 收齐 `len(clients)` 条 → `aggregator.aggregate()` → 下一轮。
+- **客户端**（`client.py:204-431`）：连接 → 注册 → 阻塞收 `global_model` → 本地训练 `epochs` 轮（Adam）→ 每 10 batch 上报进度 → 训练完发整份 `state_dict`。
+- **可复用（思路）**：长度前缀分帧、注册/广播/上报三态、按轮收集、Per-client 线程 + 队列。
+
+**不可直接复用（已核验缺陷）**：
+
+1. **FedAvg 实际等权**：客户端从未上报 `data_size`，服务端固定 `.get('data_size', 1)`（`server.py:421`）。
+2. **整数 buffer 被转 float**：聚合器对所有键先建 `float32` 零张量（`fedavg.py:29`），`num_batches_tracked` 等会丢 dtype；BN 统计量无特殊处理。
+3. **跨轮脏更新**：`model_update` 不带 round，迟到/重复更新会被算进下一轮；`queue` 无去重。
+4. **并发不安全**：`self.clients` 跨线程读写无锁；`broadcast_model()` 遍历中 `del self.clients[...]`（`server.py:504-512`）。
+5. **收帧不完整**：客户端 `sock.recv(4)` 不保证一次读满 4 字节（`client.py:181`）。
+6. **数据划分不可复现**：按 client 编号切连续区间、`download=True`、CIFAR10 写死，无 seed / 无分区 JSON / 无 Non-IID（`client.py:95-166`）。
+7. **DP 不是 DP-SGD**：只对权重裁剪 + 加噪（`defense/differential_privacy.py`），且 `defense.enabled=false`；压缩仅做阈值稀疏化，量化未实现。
+8. **残留物**：`__pycache__`（11 个 pyc）、`solution.py`（无关竞赛题解）、`src/client/client.client.py` 残片、`src/attack/` 仅 pyc 无源码、README 提到的 `tests/` 缺失。
+9. **无 TLS / 无鉴权 / 无心跳重连 / 无断点续跑**；`aggregate_and_broadcast()` 以 `self.global_model.state_dict()` 调用聚合，逻辑本身不可用（`server.py:521-534`）。
+
+> **结论**：socketFed 的**分帧 + 注册/广播/上报流程**可借鉴；聚合、数据划分、模型/数据集假设、容错与安全都需重写。P4 交付物按用户约束做成**独立可调用模块**（不并入 `fl_core`）。
+
+#### 落地情况（2026-10-28）【实测】
+
+- 文件：仓库根 **`distributed_fl.py`**（单文件，只依赖 torch + 标准库，**不 import 本项目任何模块**）。
+- 传输：裸 TCP；帧 = `4B header_len | JSON header | torch.save(state_dict)`；**不做 base64**，避免 +33% 膨胀；payload 上限 4GB。
+- API：`make_partitions` / `load_partition` / `partition_sizes` / `FLServer` / `FLClient` / `run_server` / `run_client` / `fedavg_state_dicts`。
+- 注入点：`train_fn(global_state, ctx) -> (state_dict, metrics)`、`aggregate_fn(updates, meta, global_state) -> state_dict`、`evaluate_fn(state_dict, round) -> dict`。
+- 正确性措施：`UPDATE` 必带 `round`（过期/重复丢弃）、整数 buffer 取首份不转 float、`torch.load(weights_only=True)`、按轮 strict 收齐（缺端即报错）。
+- 冒烟：`python distributed_fl.py selftest` 通过（分区确定性 / 大 payload 分帧 / 2 客户端 × 2 轮聚合数学）；CLI server+client 单轮对拍通过。
+- 已知边界：无 TLS / 无鉴权 / 无断线重连 / 无断点续跑，仅可信局域网；客户端断开会中止当前轮（strict）。
+
+#### 分布式冒烟测试方案（2026-10-28 定稿）
+
+**目标**：用 `distributed_fl.py` 跑通 CIFAR10 / VisDrone 的三类实验（**无攻击 / 有攻击无防御 / 有攻击有防御**），每类 **2 轮**、小数据、小分辨率。只验证链路：server 广播 → 多 client 训练/攻击 → 上传 → 聚合/防御 → 评估 → 下一轮；**不追求指标**。
+
+**文件**
+- `run_distributed_smoke.py`：项目适配器 + 子进程编排（server/client 双角色）。
+- `distributed_fl.py`：通用传输层；`aggregate_fn` 已扩展第三参数 `global_state`（供服务端注入攻击使用）。
+
+**场景矩阵（Phase A，必跑 10 条）**
+
+| 数据集 | 攻击 | 无防御 | 有防御 |
+|---|---|---|---|
+| CIFAR10 | 无 | FedAvg | — |
+| CIFAR10 | label_flipping `{5→3}`（客户端侧） | FedAvg | DPFLA |
+| CIFAR10 | MinMax（服务端注入） | FedAvg | DPFLA |
+| VisDrone | 无 | FedAvg | — |
+| VisDrone | MinMax（服务端注入） | FedAvg | DPFLA |
+| VisDrone | IPM（服务端注入） | FedAvg | DPFLA |
+
+Phase B（可选扩展）：同攻击 × MKrum / Trimmed-Mean（CIFAR 4 条 + VisDrone 4 条）。
+
+**冒烟参数**
+
+| 项 | CIFAR10 | VisDrone |
+|---|---|---|
+| clients | 5（1 恶意，20%） | 3（1 恶意，33%） |
+| rounds | 2 | 2 |
+| model | ResNet18CIFAR | YOLOv8n |
+| img_size | 32（原生） | 320 |
+| samples/client | 32 | 4 |
+| local epochs | 1 | 1 |
+| batch | 16 | 2 |
+| eval | 256 test samples accuracy | full val mAP@0.5（`FL.test` 原生子进程） |
+| AMP | off | off |
+| lr | 0.01 | 2e-4 |
+| partition | IID seed 42（`make_partitions`）后截断 | 同 |
+| malicious id | 0 | 0 |
+
+- CIFAR 用 5 客户端是为满足 Multi-Krum `n ≥ 2f+3`；VisDrone Phase A 用 3 客户端，Phase B 的 MKrum 需 5 客户端。
+- **冒烟恶意率与正式 30% 不同，仅用于链路验证，不用于指标结论**。
+- CIFAR label flipping 会保证恶意端至少含 8 个 class 5 样本，否则攻击日志会“启动但无翻转”。
+
+**适配器合同**
+- client `train_fn(global_state, ctx)`：构造 `CustomDataset(trainset, indices)` + `Client(client_type)`，调用 `participant_update`；label flipping 走客户端侧，MinMax/IPM 走服务端。
+- server `aggregate_fn(updates, meta, global_state)`：
+  - 服务端攻击先 `apply_server_attack`；
+  - FedAvg → `average_weights`；DPFLA → 用 `setup_model` 重建 `global_model/local_models` 后 `dpfla.score(...)`；MKrum / TMean 直接调用。
+- server `evaluate_fn`：复用 `FL.test`（CIFAR 自定义 accuracy；VisDrone YOLO 原生 val 子进程）。
+- partition 用 `make_partitions` 精确 IID；**不等同于** `distribute_dataset` 的 dirichlet(α=1e6) 划分，冒烟只验证链路，不做数值对拍。
+
+**验收**
+- server 完成 2 轮并退出 0；所有 client 退出 0；
+- 每轮收到 N 条更新；评估指标为有限数；
+- label flipping 客户端日志出现 `Label flipping attack launched`；
+- MinMax/IPM 服务端日志出现 `服务端注入攻击 ... 已应用`；
+- DPFLA 日志出现每端聚合权重（恶意端权重明显低，仅作冒烟检查）；
+- 无 NaN / KeyError / 形状错误。
+
+**执行顺序**
+1. 扩展 `distributed_fl` 聚合签名 + 数字 ID 排序（已完成 2026-10-28）。
+2. 写 `run_distributed_smoke.py`（适配器 + 编排）。
+3. CIFAR Phase A（5 条）→ VisDrone Phase A（5 条）→ 修问题。
+4. Phase B（8 条）可选。
+5. 结果写 `03_History` / `00_Current_State`，日志留 `logs_dist_smoke/`。
+
+**风险**
+- VisDrone 5 进程显存/CPU 竞争；Phase B 失败则降为 3 客户端并接受 MKrum 回退。
+- `FL.test` 的 YOLO val 是**全量 val**（548 图），不是子集；每轮可能多花数十秒。
+- DPFLA 需要模型对象；服务端重建 YOLO/ResNet 模型，CPU 内存可接受。
+- 冒烟分区与单终端 `distribute_dataset` 不完全一致；只验证链路，不做数值对拍。
+
+**数据划分口径（2026-10-28 明确）**
+
+- **分区只切训练集**：CIFAR10 `train 50,000 / test 10,000`；VisDrone `train 6,471 / val 548`。
+- `partitions.json` 是「client → 训练集索引」，**不是 train/val 比例，也不是内存划分**。
+- `--max-samples` 只用于冒烟截断（CIFAR 32 / VisDrone 4）；正式实验用全量索引。
+- 验证/测试集固定、由 server 统一评估：CIFAR smoke 取前 256 张 test；VisDrone 用全量 val 548。
+- CIFAR 每个 client 进程仍会加载完整 50k 数据集对象（torchvision 在内存），分区只限制“取哪些索引”；VisDrone 图像懒加载，内存主要是索引与标注缓存。
+
+**冒烟结果补充（2026-10-28 20:31–20:38）【实测】**
+
+- **全矩阵 18/18 PASS**：Phase A 10/10（CIFAR 基线/标签/MinMax × FedAvg/DPFLA；VisDrone 基线/MinMax/IPM × FedAvg/DPFLA）+ Phase B 8/8（两数据集攻击 × MKrum/TMean）。
+- 单条耗时：CIFAR 13–25s，VisDrone 27–31s；总约 7 分钟（单卡 4080S）。
+- **日志布局（2026-10-28 改）**：`logs_dist_smoke/<dataset>/<scenario>/<defense>/<timestamp>/`；每次含 `server.log` / `client_*.log` / `rounds.jsonl` / `result.json`。汇总在 `logs_dist_smoke/summaries/`。
+- **TensorBoard：不做（用户 2026-10-28 明确）**。分布式冒烟只写 `rounds.jsonl`，不生成 `tb/` 事件文件；单终端实验的 `tb/` 不受影响。
+- 验证点：每轮 N 条更新；标签翻转客户端日志出现 `Label flipping attack launched`；MinMax/IPM 服务端日志出现 `服务端注入攻击 ... 已应用`；DPFLA 日志打印每端聚合权重；无 NaN/KeyError。
+- ⚠️ **指标无意义**：CIFAR 准确率 8–15%（随机水平），VisDrone mAP=0（2 轮/极小数据）。本结果只证明分布式链路与三类实验代码路径可跑通，**不用于任何性能/防御效果结论**。
+- ⚠️ **VisDrone 数据根已修正**：`get_visdrone()` 默认先命中 `/root/autodl-tmp/data/{images,labels}`（第三方结构 1763/220），已改为强制优先 `/root/autodl-tmp/data/visdrone`（6471/548），与 `server.py` 一致；VisDrone 9 条均在该口径下重跑通过。
+- 冒烟偏差（仅冒烟）：CIFAR 5 端/1 恶意（20%），VisDrone 3 端/1 恶意（33%；MKrum 臂 5 端/1 恶意），非正式 30%。
+
+**多终端手动模式（2026-10-28 新增并实测）**
+
+`run_distributed_smoke.py` 支持 `--role prepare|server|client`，server/client 可跑在不同机器：
+
+```bash
+# 1) 生成分区（server 机器或任意机器；生成后拷贝到各终端）
+python run_distributed_smoke.py --role prepare --dataset cifar10 --num-clients 5 \
+    --scenario minmax --partition /shared/partitions.json --max-samples 32
+
+# 2) server（监听所有网卡）
+python run_distributed_smoke.py --role server --dataset cifar10 --scenario minmax \
+    --defense fedavg --num-clients 5 --rounds 2 --bind-host 0.0.0.0 --port 5000 \
+    --partition /shared/partitions.json --workdir /shared/server_run --timeout 1800
+
+# 3) 每台 client（同一份 repo + 同一份数据 + partitions.json）
+python run_distributed_smoke.py --role client --dataset cifar10 --scenario minmax \
+    --defense fedavg --num-clients 5 --rounds 2 --server-host <server-ip> --port 5000 \
+    --client-id 0 --partition /shared/partitions.json --workdir ./client0 --timeout 1800
+```
+
+- **实测**：本机非 loopback 地址 `172.17.0.3`，CIFAR 基线 5 客户端 × 2 轮，server 收齐 10 条更新、两轮 eval 完成。
+- VisDrone 各终端需同一数据路径；可用 `--visdrone-root` 覆盖（默认 `/root/autodl-tmp/data/visdrone`）。
+- 客户端不需要 `--defense`（只影响 server 聚合），但保持一致便于日志比对。
+- 仍需注意：无 TLS / 无鉴权 / 无断线重连，仅可信局域网。
+
+- 本地查看：`git worktree add /tmp/socket_ref origin/socket --detach`（2026-10-28 已检出于 `/tmp/socket_ref`）；该分支**不并入 dev**，只作参考。
 
 ## §6 前置条件
 

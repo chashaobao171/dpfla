@@ -1,8 +1,27 @@
 # 03_History.md — 时间线（改动与回退）
 
-<!-- 最后更新：2026-10-27 -->
+<!-- 最后更新：2026-10-28 -->
 <!-- 追加式：新事件加在最上方。回退/证伪的事件保留，不删除。 -->
 <!-- 结论性判断请以 01_Facts.md 为准；本文件只记"做了什么、结果如何"。 -->
+
+## 2026-10-28
+
+- **VisDrone 1 轮自然结束实测（2026-10-28）**：3 客户端 / MinMax + DPFLA / `--rounds 1`；server 完成 1 次聚合后自行发送 `stop` 并退出 0，3 个 client 均收到 stop 退出 0；`rounds.jsonl` 1 行，3 条 update，服务端注入攻击 1 次，DPFLA 权重（恶意 0.163 / 诚实 0.794、0.861）。临时日志 `/tmp/mt1_visdrone` 已清理。
+- **3 客户端手动多终端实测（2026-10-28）**：CIFAR `label_flipping + DPFLA` 与 VisDrone `MinMax + DPFLA`，各 3 客户端 × 2 轮，server 均收齐 6 条更新；CIFAR 恶意端权重 0.128，VisDrone 恶意端权重 0.119。**TensorBoard 写入已移除**（用户明确不需要），现有 `logs_dist_smoke/**/tb` 已清空。
+- **范围澄清（用户 2026-10-28 明确）**：分布式**暂不要求防御效果**，只要求**可调用 + 多终端分客户端/服务器**。因此冒烟指标（CIFAR 8–15%、VisDrone mAP=0）不作为任何结论；后续不再为"分布式下的防御优势"加实验。
+- **新增多终端手动模式（`run_distributed_smoke.py`）**：`--role prepare|server|client`；server 用 `--bind-host 0.0.0.0`，client 用 `--server-host <server-ip>`；新增 `--visdrone-root` 便于各终端自定义数据根。**实测**：本机非 loopback 地址 `172.17.0.3`，CIFAR 基线 5 客户端 × 2 轮，server 正常收齐 10 条更新、两轮 eval 完成（`/tmp/mt_server` 临时目录已清理）。
+- **分布式冒烟全矩阵 18/18 PASS（2026-10-28 20:31–20:38）**：新增 `run_distributed_smoke.py`（项目适配器 + server/client 子进程编排），复用 `Client.participant_update`、`server_attacks.apply_server_attack`、`average_weights / DPFLA / multi_krum / trimmed_mean`、`FL.test`。
+  - Phase A（10 条）：CIFAR10 基线 / 标签翻转（FedAvg、DPFLA）/ MinMax（FedAvg、DPFLA）；VisDrone 基线 / MinMax（FedAvg、DPFLA）/ IPM（FedAvg、DPFLA）→ 10/10 PASS。
+  - Phase B（8 条）：CIFAR10 标签翻转与 MinMax × MKrum/TMean；VisDrone MinMax/IPM × MKrum/TMean → 8/8 PASS。
+  - 参数：2 轮；CIFAR 5 客户端（1 恶意）/ 32 样本/端 / ResNet18CIFAR / CPU；VisDrone 3 客户端（1 恶意，MKrum 臂 5 端）/ 4 图/端 / YOLOv8n@320 / GPU；`FL_GRADIENT_SCALE=1`、AMP off。
+  - 单条耗时：CIFAR 13–25s，VisDrone 27–31s；日志布局 `logs_dist_smoke/<dataset>/<scenario>/<defense>/<timestamp>/`，汇总 `logs_dist_smoke/summaries/`。
+  - **TensorBoard：不写入**（用户 2026-10-28 明确：分布式暂不需要 TB 数据）；只看 `rounds.jsonl`。
+  - **指标无意义**（2 轮 / 极小数据；VisDrone mAP=0），仅证明分布式链路与攻击/防御代码路径可跑通；DPFLA 权重已打印但未评估防御效果。
+- **修正 VisDrone 数据根目录**：`get_visdrone()` 默认会先命中 `/root/autodl-tmp/data/{images,labels}`（第三方结构，1763/220），与 `server.py` 主口径不一致。`run_distributed_smoke.py` 已强制优先 `/root/autodl-tmp/data/visdrone`（6471/548），并重跑 VisDrone 全部 9 条通过。
+- **落地独立分布式模块 `distributed_fl.py`（仓库根，单文件，零项目依赖）**：裸 TCP 帧（`4B header_len | JSON header | torch.save payload`），整份 `state_dict` 直传；`FLServer` / `FLClient` / `make_partitions` / `fedavg_state_dicts` 均可 import；训练、聚合、评估全部由调用方注入。**不 import `federated_learning`，不并入 `fl_core`**。
+- **CPU 冒烟测试通过**：`python distributed_fl.py selftest` → 分区确定性、大 payload 分帧、2 客户端 × 2 轮聚合数学与整数 buffer 保持均 OK；CLI server/client 单客户端 1 轮也跑通（日志 `/tmp/fl_rounds.jsonl` 已清理）。
+- **逐文件核验 `socket` 分支（socketFed）**：worktree 检出于 `/tmp/socket_ref`；读完 `server.py`(584) / `client.py`(442) / `fedavg.py`(40) / `config.yaml`(115)。结论已写入 `08_Roadmap.md` §5「socketFed 源码剖析」：**仅借鉴分帧与注册/广播/上报流程**；聚合等权、整数 buffer 转 float、跨轮脏更新、无锁并发、数据划分不可复现、DP 非 DP-SGD 等 9 项缺陷，不复用其代码。
+- **P4 下一步**：真多终端（至少 2 台机器）跑同矩阵；或把冒烟参数放大到 5–10 轮验证收敛；当前 18 条仅为链路验证。
 
 ## 2026-10-27
 

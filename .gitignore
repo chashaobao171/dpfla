@@ -10,6 +10,7 @@ __pycache__/
 # Logs and runs
 logs_*/
 runs/
+dist_run/
 cache/
 
 # tb/ 是 TensorBoard 事件目录，**故意纳入 git 跟踪**（曲线跨主机留存），勿在此忽略
