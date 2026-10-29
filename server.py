@@ -90,11 +90,10 @@ def run_exp(num_workers, frac_workers, attack_type, rule, replace_method, datase
 
     args.log()
 
-    # VisDrone数据集路径配置（主项目强制走 autodl-tmp 目录）
-    # 约束：
-    # - 主项目统一使用 /root/autodl-tmp/data/visdrone 下的 train/val
-    # - 第三方项目如需使用 /root/autodl-tmp/data/images|labels，不在这里处理
+    # VisDrone数据集路径配置
+    # 优先历史绝对路径；都找不到时自动在项目根目录 data/ 下查找。
     import os
+    from federated_learning.utils.dataset_paths import find_visdrone_root
     if os.path.exists('/root/autodl-tmp/data/visdrone'):
         visdrone_root_path = '/root/autodl-tmp/data/visdrone'  # autodl-tmp VisDrone 目录
         print("✓ 主项目使用 autodl-tmp VisDrone 目录: /root/autodl-tmp/data/visdrone")
@@ -102,8 +101,8 @@ def run_exp(num_workers, frac_workers, attack_type, rule, replace_method, datase
         visdrone_root_path = '/home/featurize/data/visdrone'  # featurize 旧路径
         print("✓ 主项目使用 featurize VisDrone 目录: /home/featurize/data/visdrone")
     else:
-        visdrone_root_path = 'D:/Pycharmworkplace/visdrone'  # 本地路径
-        print("✓ 主项目使用本地原始 VisDrone 目录")
+        visdrone_root_path = find_visdrone_root() or 'D:/Pycharmworkplace/visdrone'
+        print(f"✓ 主项目使用 VisDrone 目录: {visdrone_root_path}")
     
     # 处理malicious_rate可能是列表的情况
     malicious_rate_value = args.get_malicious_rate()

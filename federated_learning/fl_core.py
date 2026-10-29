@@ -46,7 +46,8 @@ class FL:
             elif os.path.exists('/home/featurize/data/visdrone'):
                 visdrone_root_path = '/home/featurize/data/visdrone'
             else:
-                visdrone_root_path = 'D:/Pycharmworkplace/visdrone'
+                from federated_learning.utils.dataset_paths import find_visdrone_root
+                visdrone_root_path = find_visdrone_root() or 'D:/Pycharmworkplace/visdrone'
         
         FL._history = np.zeros(num_clients)
         self.dataset_name = dataset_name

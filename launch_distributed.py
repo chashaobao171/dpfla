@@ -23,9 +23,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
 
+from federated_learning.utils.dataset_paths import find_visdrone_root
+
 
 ROOT = Path(__file__).resolve().parent
 SMOKE = ROOT / "run_distributed_smoke.py"
+DEFAULT_VISDRONE_ROOT = find_visdrone_root() or "/root/autodl-tmp/data/visdrone"
 
 
 ROLE_OPTIONS = [
@@ -89,7 +92,7 @@ class Config:
     server_host: str = "127.0.0.1"
     client_id: int = 0
     timeout: int = 1800
-    visdrone_root: str = "/root/autodl-tmp/data/visdrone"
+    visdrone_root: str = DEFAULT_VISDRONE_ROOT
 
 
 def _section(title: str) -> None:

@@ -5,6 +5,9 @@
 
 import os
 
+from federated_learning.utils.dataset_paths import find_visdrone_root, visdrone_yaml_paths
+
+
 def generate_visdrone_yaml(output_path='visdrone_temp.yaml'):
     """
     生成VisDrone数据集的YOLO配置文件
@@ -15,28 +18,28 @@ def generate_visdrone_yaml(output_path='visdrone_temp.yaml'):
     Returns:
         生成的yaml文件路径
     """
-    # 主项目口径：优先 FL_VISDRONE_ROOT（多机部署可覆盖），其次 autodl-tmp
+    # 主项目口径：优先 FL_VISDRONE_ROOT（多机部署可覆盖），其次历史路径，最后项目内 data/
     env_root = (os.environ.get('FL_VISDRONE_ROOT') or '').strip()
     if env_root and os.path.exists(env_root):
         visdrone_root = env_root
-        train_path = 'VisDrone2019-DET-train/VisDrone2019-DET-train/images'
-        val_path = 'VisDrone2019-DET-val/VisDrone2019-DET-val/images'
-        test_path = None
     elif os.path.exists('/root/autodl-tmp/data/visdrone'):
         visdrone_root = '/root/autodl-tmp/data/visdrone'
-        train_path = 'VisDrone2019-DET-train/VisDrone2019-DET-train/images'
-        val_path = 'VisDrone2019-DET-val/VisDrone2019-DET-val/images'
-        test_path = None
     elif os.path.exists('/home/featurize/data/visdrone'):
         visdrone_root = '/home/featurize/data/visdrone'
-        train_path = 'VisDrone2019-DET-train/VisDrone2019-DET-train/images'
-        val_path = 'VisDrone2019-DET-val/VisDrone2019-DET-val/images'
-        test_path = None
     else:
-        visdrone_root = 'D:/Pycharmworkplace/visdrone'
+        visdrone_root = find_visdrone_root() or 'D:/Pycharmworkplace/visdrone'
+
+    paths = visdrone_yaml_paths(visdrone_root)
+    if paths is not None:
+        train_path, val_path = paths
+    elif os.path.isdir(os.path.join(visdrone_root, 'images', 'train')) and \
+            os.path.isdir(os.path.join(visdrone_root, 'images', 'val')):
+        train_path, val_path = 'images/train', 'images/val'
+    else:
+        # 兼容旧目录：多包一层同名目录
         train_path = 'VisDrone2019-DET-train/VisDrone2019-DET-train/images'
         val_path = 'VisDrone2019-DET-val/VisDrone2019-DET-val/images'
-        test_path = None
+    test_path = None
     
     # 使用 VisDrone 原始 10 类定义（保留官方类别语义）
     visdrone_names = [

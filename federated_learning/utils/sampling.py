@@ -13,6 +13,7 @@ import codecs
 import pandas as pd
 from federated_learning.datasets.visdrone_dataset import get_visdrone_dataset
 from federated_learning.datasets.yolo_visdrone_dataset import get_yolo_visdrone_dataset
+from federated_learning.utils.dataset_paths import find_cifar10_root, find_visdrone_root
 
 
 def distribute_dataset(dataset_name, num_peers, num_classes, dd_type='IID', classes_per_peer=1, samples_per_class=582,
@@ -26,7 +27,7 @@ def distribute_dataset(dataset_name, num_peers, num_classes, dd_type='IID', clas
         elif os.path.exists('/home/featurize/data/visdrone'):
             visdrone_root_path = '/home/featurize/data/visdrone'
         else:
-            visdrone_root_path = 'D:/Pycharmworkplace/visdrone'
+            visdrone_root_path = find_visdrone_root() or 'D:/Pycharmworkplace/visdrone'
     
     tokenizer = None
     if dataset_name == 'MNIST':
@@ -106,6 +107,9 @@ def get_cifar10():
         'D:/Pycharmworkplace/DPFLA-master/data/cifar',
         'data/cifar/'
     ]
+    project_root = find_cifar10_root()
+    if project_root and project_root not in candidate_roots:
+        candidate_roots.append(project_root)
 
     required_files = [
         'batches.meta',
@@ -194,7 +198,7 @@ def get_visdrone(root_path=None):
         elif os.path.exists('/home/featurize/data/visdrone'):
             root_path = '/home/featurize/data/visdrone'
         else:
-            root_path = 'D:/Pycharmworkplace/visdrone'
+            root_path = find_visdrone_root() or 'D:/Pycharmworkplace/visdrone'
 
     # 输入分辨率（单变量实验开关）：FL_IMG_SIZE，默认 640（= 历史基线口径，行为不变）
     # 训练与评估共用此值，保证口径一致

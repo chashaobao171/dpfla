@@ -58,10 +58,11 @@ from torch import nn
 from torch.utils.data import DataLoader, Subset
 
 from distributed_fl import FLClient, FLServer, ClientContext, load_partition, make_partitions, setup_logging
+from federated_learning.utils.dataset_paths import find_visdrone_root
 
 DATASET_CIFAR = "cifar10"
 DATASET_VISDRONE = "visdrone"
-VISDRONE_ROOT = Path("/root/autodl-tmp/data/visdrone")
+VISDRONE_ROOT = Path(find_visdrone_root() or "/root/autodl-tmp/data/visdrone")
 DEFENSES = ("fedavg", "dpfla", "mkrum", "tmean")
 SCENARIOS = ("baseline", "label_flipping", "minmax", "ipm", "alie", "signflipping")
 SERVER_ATTACKS = ("minmax", "ipm", "alie", "signflipping")
@@ -245,7 +246,7 @@ def _apply_env(cfg: SmokeConfig) -> None:
 # ---------------------------------------------------------------------------
 
 def _get_visdrone(cfg: SmokeConfig):
-    """与 server.py 对齐：主项目优先使用 /root/autodl-tmp/data/visdrone。"""
+    """优先使用显式路径；默认路径已包含项目内 data/ 自动探测。"""
     from federated_learning.utils.sampling import get_visdrone
 
     root = cfg.visdrone_root if Path(cfg.visdrone_root).exists() else None

@@ -423,6 +423,7 @@ python run_distributed_smoke.py --role client --dataset cifar10 --scenario minma
 
 **单机正式参数对齐（2026-10-29）**
 
+- **项目内 data/ 自动探测（2026-10-29）**：`dataset_paths.py` 在历史绝对路径都找不到时，自动从项目根目录 `data/` 查找 CIFAR10 / VisDrone；`data/` 已在 `.gitignore`。本地把整个 data 文件夹放在项目根即可，无需改环境变量。
 - **交互式启动（2026-10-29）**：`python launch_distributed.py` 一条命令进入，分四段询问：数据集/攻击/防御/档位、角色与分区、训练参数、网络参数；`--dry-run` 只打印命令。仅拼装 `run_distributed_smoke.py` 参数，`distributed_fl.py` 不变。
 - 单机正式口径是 **10 个模拟客户端 / 30% 恶意 / IID / 全量训练集**；分布式必须启动 10 个 client 进程，不能只开 2 个。
 - 新增 CLI 开关：`--full-data`、`--local-epochs`、`--test-batch-size`、`--test-samples`、`--model-size`、`--image-size`、`--amp`、`--malicious-rate`。

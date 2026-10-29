@@ -32,8 +32,9 @@ python launch_distributed.py
 - 三台机器在同一局域网，互相能 `ping`；server 放行 TCP 端口（下文用 `6000`）。
 - 三台机器都有同一份项目代码，且 `python` 能 import `torch`、`ultralytics`。
 - 数据集：
-  - CIFAR10：每台机器本地有数据；`get_cifar10()` 会自动找 `/root/autodl-tmp/data` 等路径，找不到会尝试下载。
-  - VisDrone：每台机器要有同一份数据；用 `--visdrone-root` 指定路径；server 还需要 val 548 张用于评估。
+  - CIFAR10：每台机器本地有数据；`get_cifar10()` 会自动找 `/root/autodl-tmp/data` 等历史路径，找不到时自动在项目根目录 `data/` 下查找（支持 `data/cifar`、`data/cifar10`、`data/cifar-10-batches-py`）。
+  - VisDrone：每台机器要有同一份数据；历史绝对路径找不到时自动在项目根目录 `data/` 下查找（支持 `data/visdrone`、`data/VisDrone2019-DET-*` 等）；也可用 `--visdrone-root` 显式指定；server 还需要 val 548 张用于评估。
+  - `data/` 已被 `.gitignore` 忽略，不会误提交。
 - YOLO 权重：`yolov8n.pt` 可自动下载，或提前放到各机器项目根目录。
 
 ## 1. 准备分区（只在 server 执行一次）

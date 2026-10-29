@@ -14,6 +14,8 @@ import numpy as np
 import cv2
 from loguru import logger
 
+from federated_learning.utils.dataset_paths import find_visdrone_root
+
 
 # VisDrone类别映射 (原始类别ID -> 新类别ID)
 # VisDrone原始: 0=ignored, 1=pedestrian, 2=people, 3=bicycle, 4=car, 
@@ -104,7 +106,7 @@ class VisDroneDataset(Dataset):
             elif os.path.exists('/home/featurize/data/visdrone'):
                 root_path = '/home/featurize/data/visdrone'
             else:
-                root_path = 'D:/Pycharmworkplace/visdrone'
+                root_path = find_visdrone_root() or 'D:/Pycharmworkplace/visdrone'
         
         self.root_path = root_path
         self.split = split
