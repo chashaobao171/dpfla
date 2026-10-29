@@ -52,6 +52,21 @@
 - **CIFAR10**：历史已经是 **1**，无法再降到 0.5（当前训练器只支持整数 epoch）。50 轮 × 1 = 50，历史 15 × 1 = 15，本地更新量约为历史 3.3 倍；这是“50 轮”必然的结果，不做额外降采样/半 epoch 改造。
 - 如果 50 轮结果明显高于历史，只记录，不据此推翻历史 15 轮结论；若明显偏低，先排查参数/数据/OOM，而不是直接改结论。
 
+### CIFAR 50 轮等效方案（待用户确认）
+
+历史 CIFAR 每客户端约 5000 条，BS64、`drop_last=True` → 每轮约 **78 步**；15 轮共约 **1170 步**。
+50 轮若要同等本地优化步数，每轮应约 **23–24 步**。推荐：
+
+```bash
+export FL_LOCAL_STEPS=24   # 50 × 24 = 1200 步，接近历史 1170
+```
+
+- 这需要给 `Client.participant_update` 增加“每轮本地 step 上限”（小改动），保持全量数据、BS64、lr0.01 不变；每轮 shuffle 后只跑前 24 个 batch，50 轮覆盖全量数据。
+- 不建议用调大 batch 硬凑：BS192/224 会改变优化动态，且 lr 未同步调整，效果不可比。
+- 不建议减少每轮参与客户端：会破坏 10 客户端 / 30% 恶意 / DPFLA 语义。
+- 若用户不接受改代码，则只能接受 50×1 的更高本地更新量，或直接使用 50×1 并记录结果，不承诺“与历史相似”。
+- 实施前先跑 5 轮 CIFAR 对照（`FL_LOCAL_STEPS=24` vs 历史 15×1 曲线量级），确认无异常后再进入 50 轮。
+
 ## §2 分支与封存
 
 - 已创建并推送只读分支：
@@ -87,6 +102,8 @@ VisDrone：
 ```bash
 export FL_GLOBAL_ROUNDS=50
 export FL_LOCAL_EPOCHS=1
+# CIFAR 待确认等效步数；VisDrone 先用 1 epoch 跑满
+# export FL_LOCAL_STEPS=24
 export FL_NUM_WORKERS=10
 export FL_FRAC_WORKERS=1.0
 export FL_MALICIOUS_RATE=0.3
@@ -126,7 +143,7 @@ export FL_LOCAL_EPOCHS=1
 
 - 先 CIFAR 9 条，再 VisDrone 9 条；VisDrone 50 轮 × 9 条成本远高于 CIFAR，按 tmux 排队。
 - 每次只跑一个，避免 GPU/CPU 抢占和日志互相干扰。
-- 需要 GPU + 大内存；当前 2GB 无卡容器不能跑，换有卡/高内存主机。
+- 需要 GPU + 大内存；**后续统一按 32GB GPU 配置规划**。CIFAR 无压力；VisDrone 保持 `v8m@1280 + AMP=1 + BS16`，若 32GB 下评估 OOM，先降 test batch，不要同时改分辨率/模型（保持单变量）。当前 2GB 无卡容器不能跑，换有卡/高内存主机。
 
 ## §4 阶段 B：分布式 10 客户端 50 轮与写入冲突
 
@@ -174,10 +191,11 @@ export FL_LOCAL_EPOCHS=1
 ## §5 不做的事
 
 - 不把 CIFAR local epochs 改成 0.5 或自定义半 epoch；当前训练器不支持，属于代码改造。
+- 不通过调大 batch 硬凑 CIFAR 总步数；优化动态会变，且未做 lr 同步。
 - 不为“分布式”新增 TB 写入（已明确关闭）。
 - 不并发跑多个单机实验。
 - 不在当前 2GB 无卡容器上跑 50 轮全量。
-- 不改攻击强度/恶意率/梯度放大等已定口径；本轮只改全局轮数和 VisDrone local epochs。
+- 不改攻击强度/恶意率/梯度放大等已定口径；本轮只改全局轮数、VisDrone local epochs，以及待确认的 CIFAR 每轮本地 step 上限。
 
 ## §6 提交与状态
 
