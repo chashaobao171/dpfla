@@ -12,7 +12,7 @@
 
 | 约束 | 内容 | 说明 |
 |---|---|---|
-| **轮数上限** | **15 轮**（原 25） | 今后所有实验的全局轮数上限 |
+| **轮数上限** | **15 轮**（P1/P3 对比）；**2026-10-29 全量复跑例外：50 轮** | 日常对比仍 15；全量 50 轮仅按 `09_Full_Run_Plan.md` 执行 |
 | 恶意率 | 30%（10 客户端 → 3 个恶意） | 沿用，不可调 |
 | **梯度放大** | CIFAR10 新实验**一律 `FL_GRADIENT_SCALE=1`**（纯攻击、不放大） | 代码默认 15 不改，只用 env 覆盖 |
 | 攻击强度 | 只用环境变量调，**不改代码默认值** | 沿用 |
@@ -423,6 +423,7 @@ python run_distributed_smoke.py --role client --dataset cifar10 --scenario minma
 
 **单机正式参数对齐（2026-10-29）**
 
+- **50 轮全量计划（2026-10-29 用户定稿）**：详见 `09_Full_Run_Plan.md`。先非分布式 18 条（两数据集各 9 条），`FL_GLOBAL_ROUNDS=50`；VisDrone local epochs 3→1，CIFAR 已为 1 无法再降；之后分布式 10 客户端全量 50 轮冲突验证；封存分支 `archive/2026-10-29-pre-fullrun`。
 - **项目内 data/ 自动探测（2026-10-29）**：`dataset_paths.py` 在历史绝对路径都找不到时，自动从项目根目录 `data/` 查找 CIFAR10 / VisDrone；`data/` 已在 `.gitignore`。本地把整个 data 文件夹放在项目根即可，无需改环境变量。
 - **交互式启动（2026-10-29）**：`python launch_distributed.py` 一条命令进入，分四段询问：数据集/攻击/防御/档位、角色与分区、训练参数、网络参数；`--dry-run` 只打印命令。仅拼装 `run_distributed_smoke.py` 参数，`distributed_fl.py` 不变。
 - 单机正式口径是 **10 个模拟客户端 / 30% 恶意 / IID / 全量训练集**；分布式必须启动 10 个 client 进程，不能只开 2 个。

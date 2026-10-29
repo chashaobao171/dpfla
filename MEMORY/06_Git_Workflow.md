@@ -14,6 +14,7 @@
 | `master` | 历史遗留（= 初始提交 `8ef2a47`）|
 | `archive/2026-10-27-full` | **只读存档（不再修改）**：完整快照，含 yolo 权重 / 数据缓存 / runs —— `dba6888`，403 文件 |
 | `archive/2026-10-27-lean` | **只读存档（不再修改）**：仅 DPFLA 项目本体 —— `61119a0`，272 文件 |
+| `archive/2026-10-29-pre-fullrun` | **只读存档（不再修改）**：50 轮全量实验前代码快照 —— `043cac5` |
 | `socket` | **参考分支（不合并）**：用户早期自写的 socketFed（52 文件），P4 分布式协议参考；2026-10-28 已核验，见 `08_Roadmap.md` §5 |
 | `FLPoison` | **参考分支（不合并）**：上游 `vio1etus/FLPoison` 整仓拷贝（92 文件），攻击/防御实现参考 |
 
@@ -38,6 +39,7 @@
 - 两者均以 **临时索引（`GIT_INDEX_FILE=/tmp/...`）** 构建，**未触碰 dev 工作区与索引**；构建方式可复用：
   `GIT_INDEX_FILE=/tmp/x git read-tree dev && git add -f <文件> && T=$(git write-tree) && git commit-tree $T -p dev -m ... && git branch <名> <commit>`
 - ⚠️ **这两个分支从此不再追加任何提交**；后续工作一律走 `dev`。
+- **`archive/2026-10-29-pre-fullrun`（2026-10-29）**：以 `dev@043cac5` 建立的只读封存分支，保存 50 轮全量实验前代码；**不再提交/合并/删除**。如需对比：`git diff archive/2026-10-29-pre-fullrun..dev`。
 - full 分支含 84M 的 `yolov8l.pt`（GitHub 单文件 <100M 限制内，已成功推送）；full 的 blob 已进本地 `.git`（约 +160M 对象）。
 
 ### 本地 zip 备份（2026-10-27）
