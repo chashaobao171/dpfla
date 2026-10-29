@@ -34,7 +34,7 @@
 | TB 对照 | VisDrone 共 10 个目录：9 条最终 + 基线前 5 轮切片 `..._20261021_1421_first5`（21.21/37.05/41.44/43.82/45.08）|
 | 存档分支（只读） | ✅ `archive/2026-10-27-full`（`dba6888`，含 yolo 权重/cache/runs）/ `archive/2026-10-27-lean`（`61119a0`，去掉 FedAIoT-main、refs、死代码）—— 均已推 GitHub，**不再修改** |
 | 本地 zip 备份 | ✅ `/root/chashaobao/data.zip`（2.2G，原始数据）/ `/root/chashaobao/DPFLA-master.zip`（366M，含 .git）|
-| 下一篇 | 🚧 **50 轮全量实验**：先非分布式 18 条（CIFAR/VisDrone 各 9 条，`FL_GLOBAL_ROUNDS=50`、VisDrone `LOCAL_EPOCHS=1`），再分布式 10 客户端全量 50 轮冲突验证。CIFAR 50 轮等效方案待确认：`FL_LOCAL_STEPS=24`（见 `09_Full_Run_Plan.md`）；封存分支 `archive/2026-10-29-pre-fullrun`；后续按 32GB GPU 规划。 |
+| 下一篇 | 🚧 **50 轮全量实验**：先非分布式 18 条（CIFAR/VisDrone 各 9 条，`FL_GLOBAL_ROUNDS=50`、VisDrone `LOCAL_EPOCHS=1`、CIFAR `FL_LOCAL_STEPS=24`），再分布式 10 客户端全量 50 轮冲突验证。封存分支 `archive/2026-10-29-pre-fullrun`；后续按 32GB GPU 规划。 |
 | dev 推送 | ✅ 见 `git log origin/dev -1`；存档与 zip 流程已入 `06_Git_Workflow.md` |
 
 ## 进度快照（2026-10-17）

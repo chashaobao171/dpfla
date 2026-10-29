@@ -242,6 +242,13 @@ class Client():
                 target_class -= 1
 
         epochs = self.local_epochs
+        # 可选：限制每轮本地训练的 step 数（默认 0 = 不限制）。
+        # 50 轮全量时用 FL_LOCAL_STEPS=24 对齐历史 15×78≈1170 步，避免本地更新量放大 3.3 倍。
+        try:
+            max_steps = int(os.environ.get('FL_LOCAL_STEPS', '0') or 0)
+        except ValueError:
+            max_steps = 0
+        max_steps = max(0, max_steps)
         
         # 根据数据集类型选择collate_fn
         if dataset_name == 'VisDrone':
@@ -420,9 +427,16 @@ class Client():
         # 计算总batch数用于显示进度
         total_batches = len(train_loader)
         logger.info(f'🔄 {self.client_pseudonym} 开始训练: {total_batches} batches, {epochs} epoch(s)')
+        if max_steps:
+            logger.info(f'   → FL_LOCAL_STEPS={max_steps}，每轮最多 {max_steps} 个本地 step')
 
+        steps_done = 0
         for epoch in range(epochs):
+            if max_steps and steps_done >= max_steps:
+                break
             for batch_idx, (data, target) in enumerate(train_loader):
+                if max_steps and steps_done >= max_steps:
+                    break
                 # 每50个batch或最后一个batch显示进度
                 if batch_idx % 50 == 0 or batch_idx == total_batches - 1:
                     progress = (batch_idx + 1) / total_batches * 100
@@ -504,6 +518,11 @@ class Client():
                         optimizer.step()
                 model.zero_grad()
                 optimizer.zero_grad()
+                steps_done += 1
+
+            if max_steps and steps_done >= max_steps:
+                logger.info(f'   ✓ {self.client_pseudonym} 达到 FL_LOCAL_STEPS={max_steps}，提前结束本地训练')
+                break
 
             # epoch结束时显示平均损失
             avg_loss = np.mean(epoch_loss) if epoch_loss else 0
@@ -512,8 +531,8 @@ class Client():
         # 训练完成
         logger.info(f'✅ {self.client_pseudonym} 训练完成！总损失: {np.mean(epoch_loss):.4f}')
 
-        # 梯度累加后除以总 batch 数，得到平均梯度（DPFLA SVD 分析依赖此尺度）
-        total_steps = len(train_loader) * epochs
+        # 梯度累加后除以实际 batch 数，得到平均梯度（DPFLA SVD 分析依赖此尺度）
+        total_steps = steps_done if steps_done > 0 else len(train_loader) * epochs
         if total_steps > 0 and client_grad:
             for name in client_grad:
                 client_grad[name] = client_grad[name] / total_steps
