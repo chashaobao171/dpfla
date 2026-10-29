@@ -6,6 +6,7 @@
 
 ## 2026-10-29
 
+- **交互式启动器**：新增 `launch_distributed.py`，一条 `python launch_distributed.py` 分四段询问数据集/攻击/防御/档位、角色与分区、训练参数、网络参数，最后拼装 `run_distributed_smoke.py` 命令；支持 `--dry-run`。`distributed_fl.py` 未改。已用 dry-run 验证 prepare/server/client 三种流程。
 - **单机正式参数对齐**：`run_distributed_smoke.py` 新增 `--full-data / --local-epochs / --test-batch-size / --test-samples / --model-size / --image-size / --amp / --malicious-rate`；可对齐 CIFAR（10端/15轮/BS64/lr0.01/全量10k测试/恶意率0.3）与 VisDrone（10端/15轮/3 epoch/BS16/lr2e-4/v8m@1280/AMP/恶意率0.3）。`DISTRIBUTED_GUIDE.md` 增补正式参数命令。
 - **限制**：本机 cgroup 2GB，完整 10 客户端未在本机跑；已通过全量分区生成（CIFAR 2×25000）和 `py_compile`。正式多机需在目标机器执行。
 - **三机部署准备（1 server + 2 clients）**：新增根目录 [DISTRIBUTED_GUIDE.md](DISTRIBUTED_GUIDE.md)；`generate_visdrone_yaml.py` 支持 `FL_VISDRONE_ROOT`（多机数据根可覆盖），`run_distributed_smoke.py` 自动设置该环境变量。

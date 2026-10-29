@@ -4,6 +4,29 @@
 
 > 2 客户端时 DPFLA 的 KMeans 会退化成每簇 1 个样本，聚合权重通常相同；**只验证分布式链路，不验证防御效果**。需要防御对比请用 ≥3 客户端；Multi-Krum 需要 ≥5 客户端（代码会在 `--num-clients 2 --defense mkrum` 时直接报错）。
 
+## 交互式启动（推荐）
+
+只需要一条命令，不需要记参数：
+
+```bash
+python launch_distributed.py
+```
+
+它会分四段询问：
+
+1. 数据集（CIFAR10 / VisDrone）、攻击样式、防御样式、参数档位（冒烟 / 单机正式 / 自定义）。
+2. 本机角色（prepare / server / client / orchestrator），客户端数量，是否全量数据，分区路径。
+3. 训练参数（轮数、local epoch、batch、测试 batch、lr；VisDrone 额外问模型尺寸、分辨率、AMP）。
+4. 网络参数（绑定地址、端口、server 地址、client ID、日志目录、超时）。
+
+最后打印完整命令并确认执行。各机器都运行同一条 `python launch_distributed.py`：
+
+- 第一台选 `prepare` 生成分区；把 JSON 拷给其他机器。
+- 一台选 `server`，其余按 `client-id 0..N-1` 选 `client`。
+- 想先看命令不执行：`python launch_distributed.py --dry-run`。
+
+`launch_distributed.py` 只是交互式拼装 `run_distributed_smoke.py` 的参数，`distributed_fl.py` 完全不变。
+
 ## 0. 前置条件
 
 - 三台机器在同一局域网，互相能 `ping`；server 放行 TCP 端口（下文用 `6000`）。

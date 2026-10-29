@@ -423,6 +423,7 @@ python run_distributed_smoke.py --role client --dataset cifar10 --scenario minma
 
 **单机正式参数对齐（2026-10-29）**
 
+- **交互式启动（2026-10-29）**：`python launch_distributed.py` 一条命令进入，分四段询问：数据集/攻击/防御/档位、角色与分区、训练参数、网络参数；`--dry-run` 只打印命令。仅拼装 `run_distributed_smoke.py` 参数，`distributed_fl.py` 不变。
 - 单机正式口径是 **10 个模拟客户端 / 30% 恶意 / IID / 全量训练集**；分布式必须启动 10 个 client 进程，不能只开 2 个。
 - 新增 CLI 开关：`--full-data`、`--local-epochs`、`--test-batch-size`、`--test-samples`、`--model-size`、`--image-size`、`--amp`、`--malicious-rate`。
 - CIFAR 正式：10 端 / 15 轮 / 1 local epoch / BS64 / test BS1000 / lr0.01 / 恶意率0.3 / test 全量10k / seed7。
