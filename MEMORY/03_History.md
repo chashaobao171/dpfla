@@ -7,7 +7,8 @@
 ## 2026-10-29
 
 - **封存分支**：`archive/2026-10-29-pre-fullrun` @ `043cac5` 已推送，只读保存 50 轮实验前代码版本，不合并、不修改。
-- **CIFAR 50 轮等效步数（2026-10-29 用户确认）**：`client.py` 新增 `FL_LOCAL_STEPS`（默认 0=不限制），CIFAR 用 24（历史 15×78≈1170 步 vs 50×24=1200 步）；梯度平均改为按实际 step 数。VisDrone 直接 `LOCAL_EPOCHS=1`。后续统一按 32GB GPU。
+- **分布式范围再收敛（2026-10-29 用户明确）**：以后分布式**只跑 DPFLA**，且**仅用于测试分布式能否使用**；所有 accuracy/mAP 对比全部用非分布式。不跑 FedAvg/MKrum/TMean 分布式分支，不扩分布式矩阵。
+- **50 轮全量计划**：新增 `09_Full_Run_Plan.md`；记录历史参数（CIFAR 10端/15轮/1 epoch；VisDrone 10端/15轮/3 epoch），阶段 A 非分布式 18 条 50 轮，阶段 B 分布式 10 客户端全量 50 轮冲突验证。CIFAR 50 轮等效方案已确认：`FL_LOCAL_STEPS=24`（历史 15×78≈1170 步 vs 50×24=1200 步）；VisDrone 直接 `LOCAL_EPOCHS=1`。后续统一按 32GB GPU。
 - **项目内 data/ 自动探测**：新增 `federated_learning/utils/dataset_paths.py`；历史绝对路径找不到时，CIFAR10 自动在 `data/` 下找 `cifar` / `cifar10` / `cifar-10-batches-py`，VisDrone 自动找 `data/visdrone` / `data/VisDrone2019-DET-*`。已接入 `sampling.py`、`fl_core.py`、`visdrone_dataset.py`、`server.py`、`generate_visdrone_yaml.py`、`run_distributed_smoke.py`、`launch_distributed.py`。
 - **交互式启动器**：新增 `launch_distributed.py`，一条 `python launch_distributed.py` 分四段询问数据集/攻击/防御/档位、角色与分区、训练参数、网络参数，最后拼装 `run_distributed_smoke.py` 命令；支持 `--dry-run`。`distributed_fl.py` 未改。已用 dry-run 验证 prepare/server/client 三种流程。
 - **单机正式参数对齐**：`run_distributed_smoke.py` 新增 `--full-data / --local-epochs / --test-batch-size / --test-samples / --model-size / --image-size / --amp / --malicious-rate`；可对齐 CIFAR（10端/15轮/BS64/lr0.01/全量10k测试/恶意率0.3）与 VisDrone（10端/15轮/3 epoch/BS16/lr2e-4/v8m@1280/AMP/恶意率0.3）。`DISTRIBUTED_GUIDE.md` 增补正式参数命令。

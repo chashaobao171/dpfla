@@ -148,13 +148,15 @@ unset FL_LOCAL_STEPS   # VisDrone 不设步数上限
 
 ## §4 阶段 B：分布式 10 客户端 50 轮与写入冲突
 
-### B1 范围
+### B1 范围（2026-10-29 用户明确）
 
-- 每数据集先做 1 条代表性实验：
+- **分布式只跑 DPFLA**，不再跑 FedAvg / Multi-Krum / Trimmed-Mean 分布式分支。
+- **仅用于验证分布式能否使用**（10 client 同时训练、聚合、退出、文件写入），**不用于比较 accuracy / mAP**；所有准确率/mAP 对比一律走非分布式阶段 A。
+- 每数据集 1 条代表性实验：
   - CIFAR：`label_flipping + DPFLA`
   - VisDrone：`minmax + DPFLA`
-- 10 个 client 进程、全量分区、`--rounds 50`、`--local-epochs 1`、`--malicious-rate 0.3`、`--full-data`。
-- 若 B1 无冲突，再决定是否扩到完整 9 条/数据集；不默认全跑。
+- 10 个 client 进程、全量分区、`--rounds 50`、`--local-epochs 1`、`--malicious-rate 0.3`、`--full-data`；CIFAR 另加 `FL_LOCAL_STEPS=24`。
+- 不扩展成 9 条/数据集的分布式矩阵；若以后确需扩展，需用户另行明确。
 
 ### B2 启动前
 
@@ -187,13 +189,16 @@ unset FL_LOCAL_STEPS   # VisDrone 不设步数上限
 
 - 10 个 client 每轮都有 update；50 轮 `rounds.jsonl` 完整；server/client 退出 0。
 - 无 `File exists` / `Permission` / `pickle` 截断 / `KeyError` / `NaN`。
-- 两个数据集代表性实验均完成；如发现冲突，记录“路径 + 错误 + 修复方案”，修复前不继续跑完整矩阵。
+- 两个数据集代表性实验均完成；如发现冲突，记录“路径 + 错误 + 修复方案”；修复后只重跑分布式可用性验证，不扩分布式矩阵。
+- 分布式结果只写“是否可用/冲突情况”，**不写 accuracy/mAP 结论**；指标对比仍以阶段 A 非分布式结果为准。
 
 ## §5 不做的事
 
 - 不把 CIFAR local epochs 改成 0.5；已改用 `FL_LOCAL_STEPS=24` 控制每轮本地步数。
 - 不通过调大 batch 硬凑 CIFAR 总步数；优化动态会变，且未做 lr 同步。
 - 不为“分布式”新增 TB 写入（已明确关闭）。
+- 不跑 FedAvg / Multi-Krum / Trimmed-Mean 的分布式分支；分布式只做 DPFLA 可用性验证。
+- 不把分布式结果用于 accuracy/mAP 对比。
 - 不并发跑多个单机实验。
 - 不在当前 2GB 无卡容器上跑 50 轮全量。
 - 不改攻击强度/恶意率/梯度放大等已定口径；本轮只改全局轮数、VisDrone local epochs，以及已确认的 CIFAR 每轮本地 step 上限。
