@@ -131,7 +131,98 @@ python run_distributed_smoke.py --role client \
 
 VisDrone 的 server 评估会读取 `FL_VISDRONE_ROOT`，`run_distributed_smoke.py` 已自动把它设为 `--visdrone-root`，所以三台机器的数据路径可以不同。
 
-## 6. 常见问题
+## 6. 对齐单机正式实验参数（10 客户端）
+
+单机正式口径是 **10 个模拟客户端**、30% 恶意、IID、全量训练集。分布式要真正同参，需要启动 **10 个 client 进程**（可分散在多台机器），而不是 2 个。2 客户端只能做链路验证，不能同时满足 10 客户端和 30% 恶意。
+
+| 参数 | CIFAR10 正式 | VisDrone 正式 |
+|---|---|---|
+| 客户端 | 10 | 10 |
+| 轮数 | 15 | 15 |
+| local epochs | 1 | 3 |
+| batch size | 64 | 16 |
+| test batch | 1000 | 64 |
+| lr | 0.01 | 0.0002 |
+| 模型/分辨率 | ResNet18CIFAR | yolov8m @1280 |
+| AMP | 0 | 1 |
+| 恶意率 | 0.3 | 0.3 |
+| 梯度放大 | 1（不放大） | 1（不放大） |
+| 数据 | 全量训练集 + 全量测试集 | 全量训练集 + 全量 val |
+
+CIFAR 命令骨架：
+
+```bash
+# 只执行一次：全量分区
+python run_distributed_smoke.py --role prepare \
+  --dataset cifar10 --num-clients 10 --scenario label_flipping \
+  --partition ./dist_run/parity/cifar10/partitions.json \
+  --full-data --seed 7 --device cuda
+
+# server
+python run_distributed_smoke.py --role server \
+  --dataset cifar10 --scenario label_flipping --defense dpfla \
+  --num-clients 10 --rounds 15 \
+  --batch-size 64 --test-batch-size 1000 --test-samples 0 \
+  --lr 0.01 --local-epochs 1 --seed 7 --malicious-rate 0.3 --full-data \
+  --bind-host 0.0.0.0 --port 6000 \
+  --partition ./dist_run/parity/cifar10/partitions.json \
+  --workdir ./dist_run/parity/cifar10/server --device cuda --timeout 7200
+
+# 10 个 client（--client-id 0..9，每个终端/进程一个）
+python run_distributed_smoke.py --role client \
+  --dataset cifar10 --scenario label_flipping --defense dpfla \
+  --num-clients 10 --rounds 15 \
+  --batch-size 64 --test-batch-size 1000 --test-samples 0 \
+  --lr 0.01 --local-epochs 1 --seed 7 --malicious-rate 0.3 --full-data \
+  --server-host <SERVER_LAN_IP> --port 6000 --client-id 0 \
+  --partition ./dist_run/parity/cifar10/partitions.json \
+  --workdir ./dist_run/parity/cifar10/client0 --device cuda --timeout 7200
+```
+
+VisDrone 命令骨架（把 `--scenario minmax` 可换成 `--scenario ipm`）：
+
+```bash
+python run_distributed_smoke.py --role prepare \
+  --dataset visdrone --num-clients 10 --scenario minmax \
+  --partition ./dist_run/parity/visdrone/partitions.json \
+  --full-data --seed 7 --device cuda --visdrone-root /path/to/visdrone
+
+python run_distributed_smoke.py --role server \
+  --dataset visdrone --scenario minmax --defense dpfla \
+  --num-clients 10 --rounds 15 \
+  --batch-size 16 --test-batch-size 64 \
+  --lr 0.0002 --local-epochs 3 \
+  --model-size m --image-size 1280 --amp 1 \
+  --seed 7 --malicious-rate 0.3 --full-data \
+  --bind-host 0.0.0.0 --port 6000 \
+  --partition ./dist_run/parity/visdrone/partitions.json \
+  --workdir ./dist_run/parity/visdrone/server --device cuda --timeout 43200 \
+  --visdrone-root /path/to/visdrone
+
+# 10 个 client，除 --client-id / --workdir 外与 server 参数一致
+python run_distributed_smoke.py --role client \
+  --dataset visdrone --scenario minmax --defense dpfla \
+  --num-clients 10 --rounds 15 \
+  --batch-size 16 --test-batch-size 64 \
+  --lr 0.0002 --local-epochs 3 \
+  --model-size m --image-size 1280 --amp 1 \
+  --seed 7 --malicious-rate 0.3 --full-data \
+  --server-host <SERVER_LAN_IP> --port 6000 --client-id 0 \
+  --partition ./dist_run/parity/visdrone/partitions.json \
+  --workdir ./dist_run/parity/visdrone/client0 --device cuda --timeout 43200 \
+  --visdrone-root /path/to/visdrone
+```
+
+注意：
+
+- 10 个 client 进程可分布在多台机器；`--num-clients 10` 是进程数，不是机器数。
+- VisDrone `yolov8m.pt` 需在三台机器都存在；1280 分辨率必须开 AMP，否则 32GB 显存可能 OOM。
+- 如果实际只有 1 台 server + 2 台 client 且每台只跑 1 个 client 进程，就只能用 `--num-clients 2`；此时恶意率无法同时保持 30%，请用 `--malicious-rate 0.5`（1/2）并只做链路验证。
+- 单机正式 CIFAR 的 `--test-samples 0` 表示全量 10k 测试集；默认 256 只用于冒烟。
+- `--full-data` 生成的是全量索引；客户端数量变化后必须重新 `prepare`。
+- VisDrone `label_flipping` 的分布式映射目前是 `{5→3}`；单机演示的 car→truck 是 `{3→5}`。正式对比请用 `minmax` 或 `ipm`，避免标签映射口径混淆。
+
+## 7. 常见问题
 
 | 现象 | 原因 / 处理 |
 |---|---|
@@ -143,7 +234,7 @@ VisDrone 的 server 评估会读取 `FL_VISDRONE_ROOT`，`run_distributed_smoke.
 | 2 客户端 DPFLA 权重相同 | 正常退化，不代表防御失效；只用于链路验证 |
 | MKrum 报错 | 2 客户端不满足 `n >= 2f+3`；用 FedAvg/DPFLA，或扩到 5 客户端 |
 
-## 7. 安全与日志
+## 8. 安全与日志
 
 - 传输无 TLS / 无鉴权 / 无断线重连，只在可信局域网使用。
 - 日志在各自 `--workdir`：`server.module.log`、`rounds.jsonl`、`client_<id>.module.log`；控制台日志需自行重定向。

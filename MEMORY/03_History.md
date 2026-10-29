@@ -6,6 +6,8 @@
 
 ## 2026-10-29
 
+- **单机正式参数对齐**：`run_distributed_smoke.py` 新增 `--full-data / --local-epochs / --test-batch-size / --test-samples / --model-size / --image-size / --amp / --malicious-rate`；可对齐 CIFAR（10端/15轮/BS64/lr0.01/全量10k测试/恶意率0.3）与 VisDrone（10端/15轮/3 epoch/BS16/lr2e-4/v8m@1280/AMP/恶意率0.3）。`DISTRIBUTED_GUIDE.md` 增补正式参数命令。
+- **限制**：本机 cgroup 2GB，完整 10 客户端未在本机跑；已通过全量分区生成（CIFAR 2×25000）和 `py_compile`。正式多机需在目标机器执行。
 - **三机部署准备（1 server + 2 clients）**：新增根目录 [DISTRIBUTED_GUIDE.md](DISTRIBUTED_GUIDE.md)；`generate_visdrone_yaml.py` 支持 `FL_VISDRONE_ROOT`（多机数据根可覆盖），`run_distributed_smoke.py` 自动设置该环境变量。
 - **2 客户端边界实测**：CIFAR `label_flipping + DPFLA`、VisDrone `ipm + DPFLA` 各 1 轮自然结束（server/client 退出 0，2 条 update、2 个 stop）；DPFLA 两端权重相同（0.877 / 0.867）属 2 客户端退化，**只验证分布式链路，不验证防御效果**。
 - **2 客户端约束**：MKrum 需 `n>=5`，代码对 `--num-clients 2 --defense mkrum` 直接报错；MinMax 在 2 客户端只有 1 个良性端会退化，建议用 IPM 或客户端侧 label flipping。

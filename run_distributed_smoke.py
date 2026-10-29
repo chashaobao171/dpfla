@@ -24,7 +24,8 @@
         --client-id 0 --partition /shared/partitions.json --workdir ./client0 --timeout 1800
 
 设计说明：
-- 只验证链路，不追求指标；参数显著小于正式实验。
+- 默认参数是冒烟口径，不追求指标；可用 `--full-data / --local-epochs / --model-size /
+  --image-size / --amp / --malicious-rate` 对齐单机正式实验。
 - 每个 client 是独立进程，server 也是独立进程，和真实分布式形态一致。
 - 多终端模式下 server 用 `--bind-host 0.0.0.0`，client 用 `--server-host <server-ip>`；
   各终端需有相同的 repo 与数据集路径（VisDrone 可用 `--visdrone-root` 覆盖）。
@@ -89,6 +90,14 @@ def _default_lr(dataset: str) -> float:
     return 0.01 if dataset == DATASET_CIFAR else 2e-4
 
 
+def _default_test_batch(dataset: str) -> int:
+    return 64 if dataset == DATASET_CIFAR else 8
+
+
+def _default_image_size(dataset: str) -> int:
+    return 32 if dataset == DATASET_CIFAR else 320
+
+
 @dataclass
 class SmokeConfig:
     role: str
@@ -98,9 +107,16 @@ class SmokeConfig:
     num_clients: int
     rounds: int = 2
     seed: int = 42
-    max_samples: int = 32
+    max_samples: Optional[int] = 32
     batch_size: int = 16
+    test_batch_size: int = 64
+    test_samples: Optional[int] = 256
     lr: float = 0.01
+    local_epochs: int = 1
+    model_size: str = "n"
+    image_size: int = 32
+    amp: int = 0
+    malicious_rate: Optional[float] = None
     device: str = "cuda"
     port: int = 0
     bind_host: str = "127.0.0.1"
@@ -128,7 +144,11 @@ class SmokeConfig:
     def malicious_ids(self) -> Tuple[int, ...]:
         if self.scenario == "baseline":
             return ()
-        return (0,)
+        if self.malicious_rate is None:
+            return (0,)
+        count = max(1, int(self.num_clients * self.malicious_rate))
+        count = min(count, self.num_clients - 1)
+        return tuple(range(count))
 
     @property
     def attack_type(self) -> str:
@@ -147,9 +167,16 @@ def _config_from_args(args: argparse.Namespace) -> SmokeConfig:
                 "for a 2-client multi-machine test use --defense fedavg or dpfla"
             )
         num_clients = max(num_clients, 5)
-    max_samples = args.max_samples or _default_max_samples(dataset)
+    max_samples = args.max_samples if args.max_samples is not None else _default_max_samples(dataset)
+    if getattr(args, "full_data", False) or max_samples == 0:
+        max_samples = None
     batch_size = args.batch_size or _default_batch(dataset)
+    test_batch_size = args.test_batch_size or _default_test_batch(dataset)
+    test_samples = args.test_samples if args.test_samples is not None else 256
+    if test_samples == 0:
+        test_samples = None
     lr = args.lr if args.lr is not None else _default_lr(dataset)
+    image_size = args.image_size or _default_image_size(dataset)
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
     return SmokeConfig(
         role=args.role,
@@ -161,7 +188,14 @@ def _config_from_args(args: argparse.Namespace) -> SmokeConfig:
         seed=args.seed,
         max_samples=max_samples,
         batch_size=batch_size,
+        test_batch_size=test_batch_size,
+        test_samples=test_samples,
         lr=lr,
+        local_epochs=args.local_epochs,
+        model_size=args.model_size or "n",
+        image_size=image_size,
+        amp=args.amp,
+        malicious_rate=args.malicious_rate,
         device=device,
         port=args.port,
         bind_host=args.bind_host,
@@ -177,13 +211,12 @@ def _config_from_args(args: argparse.Namespace) -> SmokeConfig:
 
 def _apply_env(cfg: SmokeConfig) -> None:
     """子进程和父进程都设置；确保导入项目模块前生效。"""
-    is_visdrone = cfg.dataset == DATASET_VISDRONE
-    os.environ["YOLO_MODEL_SIZE"] = "n"
-    os.environ["FL_IMG_SIZE"] = "320" if is_visdrone else "32"
-    os.environ["FL_AMP"] = "0"
+    os.environ["YOLO_MODEL_SIZE"] = cfg.model_size
+    os.environ["FL_IMG_SIZE"] = str(cfg.image_size)
+    os.environ["FL_AMP"] = str(cfg.amp)
     os.environ["FL_TRAIN_BATCH_SIZE"] = str(cfg.batch_size)
-    os.environ["FL_TEST_BATCH_SIZE"] = "8" if is_visdrone else "64"
-    os.environ["FL_LOCAL_EPOCHS"] = "1"
+    os.environ["FL_TEST_BATCH_SIZE"] = str(cfg.test_batch_size)
+    os.environ["FL_LOCAL_EPOCHS"] = str(cfg.local_epochs)
     os.environ["FL_GLOBAL_ROUNDS"] = str(cfg.rounds)
     os.environ["FL_LOCAL_LR"] = str(cfg.lr)
     os.environ["FL_MOMENTUM"] = "0.9"
@@ -234,15 +267,16 @@ def _build_testloader(cfg: SmokeConfig):
         from federated_learning.utils.sampling import get_cifar10
 
         _, testset = get_cifar10()
-        subset = Subset(testset, list(range(min(256, len(testset)))))
-        return DataLoader(subset, batch_size=64, shuffle=False, num_workers=0)
+        limit = len(testset) if cfg.test_samples is None else min(cfg.test_samples, len(testset))
+        subset = Subset(testset, list(range(limit)))
+        return DataLoader(subset, batch_size=cfg.test_batch_size, shuffle=False, num_workers=0)
 
     from federated_learning.client import detection_collate_fn
 
     _, testset = _get_visdrone(cfg)
     return DataLoader(
         testset,
-        batch_size=8,
+        batch_size=cfg.test_batch_size,
         shuffle=False,
         num_workers=0,
         collate_fn=detection_collate_fn,
@@ -258,21 +292,26 @@ def _build_model(cfg: SmokeConfig):
 def _create_partition(cfg: SmokeConfig, path: Path) -> None:
     trainset = _build_trainset(cfg)
     data = make_partitions(len(trainset), cfg.num_clients, seed=cfg.seed, mode="iid")
-    parts = {
-        str(client): list(indices)[: cfg.max_samples]
-        for client, indices in data["partitions"].items()
-    }
+    if cfg.max_samples is None:
+        parts = {str(client): list(indices) for client, indices in data["partitions"].items()}
+    else:
+        parts = {
+            str(client): list(indices)[: cfg.max_samples]
+            for client, indices in data["partitions"].items()
+        }
 
-    # CIFAR label flipping：保证恶意端至少含 min(8, max_samples) 个 class 5 样本
+    # CIFAR label flipping：保证恶意端至少含 min(8, 该端样本数) 个 class 5 样本
     if cfg.is_cifar and cfg.scenario == "label_flipping" and cfg.malicious_ids:
         targets = getattr(trainset, "targets", None)
         if targets is not None:
             class5 = [index for index, target in enumerate(targets) if int(target) == 5]
-            malicious_key = str(cfg.malicious_ids[0])
-            keep = class5[: min(8, cfg.max_samples)]
-            keep_set = set(keep)
-            rest = [index for index in parts[malicious_key] if index not in keep_set]
-            parts[malicious_key] = keep + rest[: max(0, cfg.max_samples - len(keep))]
+            for malicious_id in cfg.malicious_ids:
+                malicious_key = str(malicious_id)
+                limit = len(parts[malicious_key]) if cfg.max_samples is None else cfg.max_samples
+                keep = class5[: min(8, limit)]
+                keep_set = set(keep)
+                rest = [index for index in parts[malicious_key] if index not in keep_set]
+                parts[malicious_key] = keep + rest[: max(0, limit - len(keep))]
 
     data["partitions"] = parts
     data["smoke"] = {
@@ -309,7 +348,7 @@ def _make_train_fn(cfg: SmokeConfig):
         labels=[],
         criterion=nn.CrossEntropyLoss(),
         device=cfg.device,
-        local_epochs=1,
+        local_epochs=cfg.local_epochs,
         local_bs=cfg.batch_size,
         local_lr=cfg.lr,
         local_momentum=0.9,
@@ -520,12 +559,12 @@ def _wait_for_ready(path: Path, timeout_s: float, server_proc: subprocess.Popen)
 def _child_env(cfg: SmokeConfig) -> Dict[str, str]:
     env = os.environ.copy()
     env.update({
-        "YOLO_MODEL_SIZE": "n",
-        "FL_IMG_SIZE": "320" if cfg.dataset == DATASET_VISDRONE else "32",
-        "FL_AMP": "0",
+        "YOLO_MODEL_SIZE": cfg.model_size,
+        "FL_IMG_SIZE": str(cfg.image_size),
+        "FL_AMP": str(cfg.amp),
         "FL_TRAIN_BATCH_SIZE": str(cfg.batch_size),
-        "FL_TEST_BATCH_SIZE": "8" if cfg.dataset == DATASET_VISDRONE else "64",
-        "FL_LOCAL_EPOCHS": "1",
+        "FL_TEST_BATCH_SIZE": str(cfg.test_batch_size),
+        "FL_LOCAL_EPOCHS": str(cfg.local_epochs),
         "FL_GLOBAL_ROUNDS": str(cfg.rounds),
         "FL_LOCAL_LR": str(cfg.lr),
         "FL_MOMENTUM": "0.9",
@@ -561,9 +600,15 @@ def _run_one(cfg: SmokeConfig) -> Dict[str, Any]:
         "--num-clients", str(cfg.num_clients),
         "--rounds", str(cfg.rounds),
         "--seed", str(cfg.seed),
-        "--max-samples", str(cfg.max_samples),
+        "--max-samples", str(cfg.max_samples if cfg.max_samples is not None else 0),
         "--batch-size", str(cfg.batch_size),
+        "--test-batch-size", str(cfg.test_batch_size),
+        "--test-samples", str(cfg.test_samples if cfg.test_samples is not None else 0),
         "--lr", str(cfg.lr),
+        "--local-epochs", str(cfg.local_epochs),
+        "--model-size", cfg.model_size,
+        "--image-size", str(cfg.image_size),
+        "--amp", str(cfg.amp),
         "--device", cfg.device,
         "--port", str(cfg.port),
         "--workdir", str(cfg.workdir),
@@ -573,6 +618,8 @@ def _run_one(cfg: SmokeConfig) -> Dict[str, Any]:
         "--server-host", cfg.server_host,
         "--visdrone-root", cfg.visdrone_root,
     ]
+    if cfg.malicious_rate is not None:
+        common.extend(["--malicious-rate", str(cfg.malicious_rate)])
     server_log_path = cfg.workdir / "server.log"
     server_log = open(server_log_path, "w", encoding="utf-8")
     server_proc = subprocess.Popen(
@@ -768,8 +815,18 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rounds", type=int, default=2)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-samples", type=int, default=None)
+    parser.add_argument("--full-data", action="store_true", help="use every sample in each client partition")
     parser.add_argument("--batch-size", type=int, default=None)
+    parser.add_argument("--test-batch-size", type=int, default=None)
+    parser.add_argument("--test-samples", type=int, default=None,
+                        help="CIFAR test samples for evaluation; 0 = full test set; default 256")
     parser.add_argument("--lr", type=float, default=None)
+    parser.add_argument("--local-epochs", type=int, default=1)
+    parser.add_argument("--model-size", default=None, choices=("n", "s", "m", "l", "x"))
+    parser.add_argument("--image-size", type=int, default=None)
+    parser.add_argument("--amp", type=int, default=0, choices=(0, 1))
+    parser.add_argument("--malicious-rate", type=float, default=None,
+                        help="fraction of malicious clients; default: 1 client")
     parser.add_argument("--device", default=None)
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--bind-host", default="127.0.0.1", help="server bind host; multi-terminal use 0.0.0.0")

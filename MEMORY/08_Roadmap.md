@@ -421,6 +421,18 @@ python run_distributed_smoke.py --role client --dataset cifar10 --scenario minma
 - 2 客户端限制：MKrum 需 `n>=5`（代码会报错）；MinMax 只有 1 个良性端会退化，建议 IPM 或客户端侧 label flipping。
 - VisDrone 多机数据根用 `--visdrone-root`；`generate_visdrone_yaml.py` 已支持 `FL_VISDRONE_ROOT`，server 评估 YAML 会跟随。
 
+**单机正式参数对齐（2026-10-29）**
+
+- 单机正式口径是 **10 个模拟客户端 / 30% 恶意 / IID / 全量训练集**；分布式必须启动 10 个 client 进程，不能只开 2 个。
+- 新增 CLI 开关：`--full-data`、`--local-epochs`、`--test-batch-size`、`--test-samples`、`--model-size`、`--image-size`、`--amp`、`--malicious-rate`。
+- CIFAR 正式：10 端 / 15 轮 / 1 local epoch / BS64 / test BS1000 / lr0.01 / 恶意率0.3 / test 全量10k / seed7。
+- VisDrone 正式：10 端 / 15 轮 / 3 local epoch / BS16 / test BS64 / lr2e-4 / v8m@1280 / AMP1 / 恶意率0.3 / seed7；`yolov8m.pt` 需各机存在。
+- `--malicious-rate 0.3` 按 `int(num_clients * rate)` 取前 k 个 client 为恶意端（10 端→3）；`--seed 7` 对齐单机 `Arguments` 默认 seed。
+- `--max-samples` 仍保留为冒烟截断；`--full-data` 或 `--max-samples 0` 表示全量。客户端数变化必须重新 `prepare`。
+- 2 客户端若强行跑正式超参，只能用 `--num-clients 2 --malicious-rate 0.5`，且 DPFLA 退化，只验证链路。
+- VisDrone `label_flipping` 的分布式映射仍是 `{5:3}`；单机演示的 car→truck 是 `{3:5}`，正式 VisDrone 用 MinMax/IPM（服务端注入）避免口径混淆。
+- 本机 cgroup 仅 2GB，10 客户端正式规模未在本机跑；已通过全量分区生成（CIFAR 2×25000）与语法检查，完整多机运行需在目标机器上执行。
+
 - 本地查看：`git worktree add /tmp/socket_ref origin/socket --detach`（2026-10-28 已检出于 `/tmp/socket_ref`）；该分支**不并入 dev**，只作参考。
 
 ## §6 前置条件
