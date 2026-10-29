@@ -1,6 +1,6 @@
 # 00_Current_State.md — 当前状态
 
-<!-- 最后更新：2026-10-28 -->
+<!-- 最后更新：2026-10-29 -->
 <!-- ⚠️ 本文件会过期。与 01_Facts.md 冲突时，以 01_Facts.md 的实测数据为准 -->
 
 ## 一句话
@@ -34,7 +34,7 @@
 | TB 对照 | VisDrone 共 10 个目录：9 条最终 + 基线前 5 轮切片 `..._20261021_1421_first5`（21.21/37.05/41.44/43.82/45.08）|
 | 存档分支（只读） | ✅ `archive/2026-10-27-full`（`dba6888`，含 yolo 权重/cache/runs）/ `archive/2026-10-27-lean`（`61119a0`，去掉 FedAIoT-main、refs、死代码）—— 均已推 GitHub，**不再修改** |
 | 本地 zip 备份 | ✅ `/root/chashaobao/data.zip`（2.2G，原始数据）/ `/root/chashaobao/DPFLA-master.zip`（366M，含 .git）|
-| 下一篇 | ✅ **P4 分布式（范围已收敛）**：**暂不要求防御效果**，只要求可调用 + 多终端 server/client。`distributed_fl.py`（通用传输）+ `run_distributed_smoke.py`（`prepare/server/client` 手动多终端 + 本地编排）；本地冒烟 18/18 PASS，非 loopback 多终端实测通过。日志按 `数据集/攻击/防御/时间戳` 分层，**不写 TensorBoard**；汇总见 `logs_dist_smoke/summaries/` |
+| 下一篇 | 🚧 **三机局域网验证（1 server + 2 clients）**：代码已支持 2 客户端；引导见根目录 `DISTRIBUTED_GUIDE.md`。2 客户端 DPFLA 权重会退化，只验证“真正分布式”链路；防御效果仍需 ≥3 客户端。 |
 | dev 推送 | ✅ 见 `git log origin/dev -1`；存档与 zip 流程已入 `06_Git_Workflow.md` |
 
 ## 进度快照（2026-10-17）

@@ -15,8 +15,14 @@ def generate_visdrone_yaml(output_path='visdrone_temp.yaml'):
     Returns:
         生成的yaml文件路径
     """
-    # 主项目口径：强制优先 autodl-tmp 目录
-    if os.path.exists('/root/autodl-tmp/data/visdrone'):
+    # 主项目口径：优先 FL_VISDRONE_ROOT（多机部署可覆盖），其次 autodl-tmp
+    env_root = (os.environ.get('FL_VISDRONE_ROOT') or '').strip()
+    if env_root and os.path.exists(env_root):
+        visdrone_root = env_root
+        train_path = 'VisDrone2019-DET-train/VisDrone2019-DET-train/images'
+        val_path = 'VisDrone2019-DET-val/VisDrone2019-DET-val/images'
+        test_path = None
+    elif os.path.exists('/root/autodl-tmp/data/visdrone'):
         visdrone_root = '/root/autodl-tmp/data/visdrone'
         train_path = 'VisDrone2019-DET-train/VisDrone2019-DET-train/images'
         val_path = 'VisDrone2019-DET-val/VisDrone2019-DET-val/images'

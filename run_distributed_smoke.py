@@ -141,6 +141,11 @@ def _config_from_args(args: argparse.Namespace) -> SmokeConfig:
     scenario = args.scenario or "baseline"
     num_clients = args.num_clients or _default_num_clients(dataset, defense)
     if defense == "mkrum":
+        if args.num_clients is not None and int(args.num_clients) < 5:
+            raise ValueError(
+                "Multi-Krum requires at least 5 clients (f=1); "
+                "for a 2-client multi-machine test use --defense fedavg or dpfla"
+            )
         num_clients = max(num_clients, 5)
     max_samples = args.max_samples or _default_max_samples(dataset)
     batch_size = args.batch_size or _default_batch(dataset)
@@ -185,6 +190,7 @@ def _apply_env(cfg: SmokeConfig) -> None:
     os.environ["FL_GRADIENT_SCALE"] = "1"
     os.environ["FL_VISDRONE_LR_SCHEDULE"] = "constant"
     os.environ["VISDRONE_DATALOADER_WORKERS"] = "0"
+    os.environ["FL_VISDRONE_ROOT"] = cfg.visdrone_root
     os.environ["FL_IPM_SCALE"] = os.environ.get("FL_IPM_SCALE", "0.1")
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"

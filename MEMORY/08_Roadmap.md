@@ -1,6 +1,6 @@
 # 08_Roadmap.md — 高层路线图（用户 2026-10-23 定稿）
 
-<!-- 最后更新：2026-10-28 -->
+<!-- 最后更新：2026-10-29 -->
 <!-- 级别：**高级别记忆**。与 00_Current_State.md 同级；本文件只记"目标 / 验收 / 约束 / 阻塞"，实测数据仍以 01_Facts.md 为准。 -->
 <!-- 规则：目标与验收来自用户原话；现状标【实测】；推断标【推断·未验证】。用户后续修订指令优先。 -->
 
@@ -412,6 +412,14 @@ python run_distributed_smoke.py --role client --dataset cifar10 --scenario minma
 - VisDrone 各终端需同一数据路径；可用 `--visdrone-root` 覆盖（默认 `/root/autodl-tmp/data/visdrone`）。
 - 客户端不需要 `--defense`（只影响 server 聚合），但保持一致便于日志比对。
 - 仍需注意：无 TLS / 无鉴权 / 无断线重连，仅可信局域网。
+
+**三机局域网部署（2026-10-29 准备）**
+
+- 目标形态：1 台 server + 2 台 client；操作步骤见根目录 **`DISTRIBUTED_GUIDE.md`**。
+- 2 客户端已验证：CIFAR `label_flipping + DPFLA`、VisDrone `ipm + DPFLA` 各 1 轮自然结束，server/client 退出 0。
+- **2 客户端只是链路验证**：DPFLA 的 KMeans 退化为每簇 1 个样本，两端权重相同；不能据此判断防御效果。
+- 2 客户端限制：MKrum 需 `n>=5`（代码会报错）；MinMax 只有 1 个良性端会退化，建议 IPM 或客户端侧 label flipping。
+- VisDrone 多机数据根用 `--visdrone-root`；`generate_visdrone_yaml.py` 已支持 `FL_VISDRONE_ROOT`，server 评估 YAML 会跟随。
 
 - 本地查看：`git worktree add /tmp/socket_ref origin/socket --detach`（2026-10-28 已检出于 `/tmp/socket_ref`）；该分支**不并入 dev**，只作参考。
 

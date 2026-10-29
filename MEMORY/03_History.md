@@ -1,8 +1,15 @@
 # 03_History.md — 时间线（改动与回退）
 
-<!-- 最后更新：2026-10-28 -->
+<!-- 最后更新：2026-10-29 -->
 <!-- 追加式：新事件加在最上方。回退/证伪的事件保留，不删除。 -->
 <!-- 结论性判断请以 01_Facts.md 为准；本文件只记"做了什么、结果如何"。 -->
+
+## 2026-10-29
+
+- **三机部署准备（1 server + 2 clients）**：新增根目录 [DISTRIBUTED_GUIDE.md](DISTRIBUTED_GUIDE.md)；`generate_visdrone_yaml.py` 支持 `FL_VISDRONE_ROOT`（多机数据根可覆盖），`run_distributed_smoke.py` 自动设置该环境变量。
+- **2 客户端边界实测**：CIFAR `label_flipping + DPFLA`、VisDrone `ipm + DPFLA` 各 1 轮自然结束（server/client 退出 0，2 条 update、2 个 stop）；DPFLA 两端权重相同（0.877 / 0.867）属 2 客户端退化，**只验证分布式链路，不验证防御效果**。
+- **2 客户端约束**：MKrum 需 `n>=5`，代码对 `--num-clients 2 --defense mkrum` 直接报错；MinMax 在 2 客户端只有 1 个良性端会退化，建议用 IPM 或客户端侧 label flipping。
+- **2 客户端 CIFAR baseline** 复测通过（1 轮，2 条 update）。
 
 ## 2026-10-28
 
