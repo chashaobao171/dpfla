@@ -1,0 +1,10 @@
+state.json
+status.json
+supervisor.log
+supervisor.console.log
+watchdog.log
+results.csv
+supervisor.pid
+supervisor.lock
+DONE
+console/
