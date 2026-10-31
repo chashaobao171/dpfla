@@ -1,6 +1,6 @@
 # 50 轮全量实验自动汇总（阶段 A）
 
-- 更新时间：2026-11-01 02:40:29
+- 更新时间：2026-11-01 04:46:00
 - 说明：主口径为末 5 轮均值；`last` 为第 50 轮；`best` 为 50 轮内最佳。
 
 | # | 实验 | 数据集 | 攻击 | 方法 | 状态 | best | last | 末5 | 末10 | 耗时(min) | 日志 |
@@ -20,3 +20,4 @@
 | 13 | visdrone_minmax_tmean | visdrone | minmax | tmean | success | 28.12 | 28.12 | 27.7 | 27.31 | 141.1 | run_screen_minmax_tmean_20261031_1951.log |
 | 14 | visdrone_minmax_mkrum | visdrone | minmax | mkrum | success | 14.62 | 14.09 | 13.86 | 14.01 | 141.8 | run_screen_minmax_mkrum_20261031_2212.log |
 | 15 | visdrone_ipm_dpfla | visdrone | ipm | DPFLA | success | 38.32 | 38.32 | 37.99 | 37.49 | 126.5 | run_screen_ipm_DPFLA_20261101_0034.log |
+| 16 | visdrone_ipm_fedavg | visdrone | ipm | fedavg | success | 35.87 | 35.87 | 35.36 | 34.7 | 125.4 | run_screen_ipm_fedavg_20261101_0240.log |
