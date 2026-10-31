@@ -1,0 +1,9 @@
+state.json
+status.json
+supervisor.log
+console.log
+watchdog.log
+results.csv
+pid
+DONE
+console/
