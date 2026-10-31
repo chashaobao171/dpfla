@@ -10,6 +10,23 @@ if [ -f queue_after_vd/DONE ]; then
   exit 0
 fi
 
+# 已在运行就不要重复拉起（避免打断正在跑的 job）
+if [ -f queue_after_vd/pid ]; then
+  pid="$(cat queue_after_vd/pid 2>/dev/null || true)"
+  if [ -n "${pid:-}" ] && kill -0 "$pid" 2>/dev/null; then
+    echo "aftervd 已在运行（pid $pid），无需重启。"
+    exit 0
+  fi
+fi
+
+# 主机续费/重启后：如果 full50 还没完成且已经不在运行，先把 full50 拉起来
+if [ ! -f queue/DONE ]; then
+  if ! tmux has-session -t full50 2>/dev/null; then
+    echo "full50 未完成且不在运行，先启动 full50 队列..."
+    bash scripts/start_full50.sh || echo "⚠️ full50 启动失败（可能 GPU 尚未就绪），aftervd 会继续等待"
+  fi
+fi
+
 tmux kill-session -t aftervd 2>/dev/null || true
 tmux kill-session -t aftervdwd 2>/dev/null || true
 
