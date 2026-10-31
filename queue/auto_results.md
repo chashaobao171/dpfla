@@ -1,6 +1,6 @@
 # 50 轮全量实验自动汇总（阶段 A）
 
-- 更新时间：2026-10-31 12:15:23
+- 更新时间：2026-10-31 12:37:05
 - 说明：主口径为末 5 轮均值；`last` 为第 50 轮；`best` 为 50 轮内最佳。
 
 | # | 实验 | 数据集 | 攻击 | 方法 | 状态 | best | last | 末5 | 末10 | 耗时(min) | 日志 |
@@ -12,3 +12,4 @@
 | 5 | cifar10_label_tmean | cifar10 | label_flipping | tmean | success | 70.05 | 69.76 | 69.66 | 69.05 | 14.4 | run_tmean_label_flipping_20261031_1117.log |
 | 6 | cifar10_minmax_fedavg | cifar10 | minmax | fedavg | success | 56.64 | 56.58 | 56.36 | 55.88 | 22.5 | run_screen_minmax_fedavg_20261031_1131.log |
 | 7 | cifar10_minmax_dpfla | cifar10 | minmax | DPFLA | success | 68.15 | 68.12 | 67.84 | 67.39 | 21.1 | run_screen_minmax_DPFLA_20261031_1154.log |
+| 8 | cifar10_minmax_mkrum | cifar10 | minmax | mkrum | success | 25.83 | 17.77 | 19.88 | 20.57 | 21.6 | run_screen_minmax_mkrum_20261031_1215.log |
