@@ -11,11 +11,12 @@ CIFAR10 联邦实验共用训练超参（与 run-test/visdrone/visdrone_fed_hpar
 FL_NUM_WORKERS / FL_GLOBAL_ROUNDS / FL_LOCAL_EPOCHS / FL_TRAIN_BATCH_SIZE /
 FL_TEST_BATCH_SIZE / FL_LOCAL_LR / FL_MOMENTUM / FL_MALICIOUS_RATE /
 FL_MALICIOUS_BEHAVIOR_RATE / FL_FLIP_RATIO / FL_GAUSSIAN_STD / FL_GRADIENT_SCALE /
-CIFAR_MODEL
+CIFAR_MODEL / FL_FLIP_MAPPING（JSON，如 {"5":3,"3":5,"4":6}）
 """
 
 from __future__ import annotations
 
+import json
 import os
 
 DATASET_NAME = "CIFAR10"
@@ -34,8 +35,16 @@ MALICIOUS_RATE = float(os.environ.get("FL_MALICIOUS_RATE", "0.3"))
 MALICIOUS_BEHAVIOR_RATE = float(os.environ.get("FL_MALICIOUS_BEHAVIOR_RATE", "1.0"))
 
 NUM_CLASSES = 10
-# 固定映射（原历史归档口径）：dog(5) -> cat(3)；不使用 untarget，避免目标类每轮漂移
-FLIP_MAPPING = {5: 3}
+# 固定映射（原历史归档口径）：dog(5) -> cat(3)；不使用 untarget，避免目标类每轮漂移。
+# 50 轮 24-step 下可用 FL_FLIP_MAPPING 覆盖为多类映射（JSON，如 '{"5":3,"3":5,"4":6}'）。
+_FLIP_MAPPING_RAW = (os.environ.get("FL_FLIP_MAPPING") or "").strip()
+if _FLIP_MAPPING_RAW:
+    try:
+        FLIP_MAPPING = {int(k): int(v) for k, v in json.loads(_FLIP_MAPPING_RAW).items()}
+    except Exception as e:
+        raise ValueError(f"FL_FLIP_MAPPING 解析失败: {_FLIP_MAPPING_RAW}") from e
+else:
+    FLIP_MAPPING = {5: 3}
 FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "1.0"))
 
 # 高斯攻击噪声 std（CIFAR 未测过，默认先给 0.05；实际档位按 5 轮阶梯筛）
