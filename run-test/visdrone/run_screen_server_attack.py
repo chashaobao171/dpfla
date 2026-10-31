@@ -98,6 +98,9 @@ os.environ["FL_VISDRONE_LR_SCHEDULE"] = LR_SCHEDULE
 os.environ["FL_GLOBAL_ROUNDS"] = str(GLOBAL_ROUNDS)
 os.environ["FL_LR_MIN"] = str(LR_MIN)
 os.environ.setdefault("FL_GRADIENT_SCALE", "1")
+# 50 轮全量口径（2026-10-31 用户要求）：降低每轮本地步数，使 50 轮总本地更新量≈历史 5 轮（约 15 epoch）
+if GLOBAL_ROUNDS >= 50:
+    os.environ.setdefault("FL_LOCAL_STEPS", "12")
 torch.set_num_threads(CPU_THREADS)
 torch.set_num_interop_threads(max(1, CPU_THREADS // 2))
 
