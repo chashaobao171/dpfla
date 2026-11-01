@@ -25,7 +25,8 @@ if [[ "$DATASET" == "visdrone" ]]; then
   MODEL_SIZE=m
   IMAGE_SIZE=1280
   AMP=1
-  if [[ "$MODE" == "smoke" ]]; then TIMEOUT=7200; CLIENT_EVAL=64; else TIMEOUT=43200; CLIENT_EVAL=0; fi
+  # 50 轮全量实测约 14h；18h 总超时兜底，避免再次被 12h 截断。
+  if [[ "$MODE" == "smoke" ]]; then TIMEOUT=7200; CLIENT_EVAL=64; else TIMEOUT=64800; CLIENT_EVAL=0; fi
   # 与正式 VisDrone 50 轮实验一致：每客户端每轮 12 step，避免把总训练量放大 3.4 倍。
   export FL_LOCAL_STEPS=12
   EXTRA=(--visdrone-root /root/autodl-tmp/data/visdrone)
