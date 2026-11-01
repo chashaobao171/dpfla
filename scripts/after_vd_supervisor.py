@@ -5,10 +5,9 @@
 ----
 1. 等 `queue/DONE` 且无训练进程（当前 full50 队列自然结束/截止）。
 2. 补跑 VisDrone 中尚未完成的臂（含被 supervisor 跳过的 IPM TMean/MKrum/FedAvg）。
-3. CIFAR 多映射攻击强度筛选：M2(20%) / M3(30%) / M5(100%) × DPFLA/TMean/MKrum，
-   10 轮 × 24 step；选 `DPFLA − max(TMean, MKrum)` 最大的映射。
-4. 用选中映射重跑 CIFAR 标签线 4 臂（FedAvg/DPFLA/MKrum/TMean，50 轮 ×24 step）。
-5. 再重跑 CIFAR MinMax 4 臂（50 轮 ×24 step）。
+3. 按用户确认的 M5 全类循环映射 + 48 step，重跑 CIFAR 标签线 4 臂
+   （DPFLA/MKrum/TMean/FedAvg，50 轮）。
+4. VisDrone 与已经通过的 CIFAR MinMax 线不重跑。
 6. 每条成功后归档同类型旧 TB、写汇总、commit + push dev。
    **不自动停止**：一直顺序执行；主机续费/重启后运行 start_after_vd.sh 可从 state 断点续跑。
 
@@ -66,10 +65,10 @@ SCREEN_METHODS = [
     ("tmean", "run-test/cifar10/run_tmean_label_flipping.py", "run_tmean_label_flipping"),
 ]
 LABEL_ARMS = [
-    ("fedavg", "run-test/cifar10/run_no_defense_label_flipping.py", "run_no_defense_label_flipping"),
     ("DPFLA", "run-test/cifar10/run_dpfla_label_flipping.py", "run_dpfla_label_flipping"),
     ("mkrum", "run-test/cifar10/run_mkrum_label_flipping.py", "run_mkrum_label_flipping"),
     ("tmean", "run-test/cifar10/run_tmean_label_flipping.py", "run_tmean_label_flipping"),
+    ("fedavg", "run-test/cifar10/run_no_defense_label_flipping.py", "run_no_defense_label_flipping"),
 ]
 MINMAX_ARMS = ["fedavg", "DPFLA", "mkrum", "tmean"]
 
@@ -204,7 +203,8 @@ def label_jobs(mapping_json: str) -> list[dict]:
     for rule, script, tag in LABEL_ARMS:
         jobs.append(dict(
             id=f"relabel_{rule}", dataset="cifar10", attack="label_flipping", rule=rule,
-            script=script, tag=tag, extra={"FL_FLIP_MAPPING": mapping_json, "FL_RULE": rule},
+            script=script, tag=tag,
+            extra={"FL_FLIP_MAPPING": mapping_json, "FL_RULE": rule, "FL_LOCAL_STEPS": "48"},
         ))
     return jobs
 
@@ -270,42 +270,14 @@ def main() -> int:
         result = run_final_job(job, 50, 360, 20, state)
         git_commit_push(f"exp(aftervd): {job['id']} {result['status']} last={result.get('last')}")
 
-    # 2) CIFAR 映射筛选
-    screen: dict[tuple[str, str], dict] = {}
-    screen_rows = []
-    for job in screen_jobs():
-        log(f"筛选: {job['id']} | 10 轮 × 24 step")
-        result = base.run_job(job, 10, "screen", state, 30, 10)
-        if result["status"] == "success":
-            screen[(job["mapping"], job["rule"])] = result
-        screen_rows.append(result)
-        base.cleanup_test_artifacts(job, result)
-    mname, mjson, margin = select_mapping(screen)
-    SCREEN_PATH.write_text(
-        f"# CIFAR 多映射筛选（10 轮 × 24 step）\n\n选中：**{mname}** margin={margin:.2f}\n\n" +
-        "\n".join([
-            f"| {r['id']} | {r['status']} | last={r.get('last','')} last5={r.get('last5','')} |"
-            for r in screen_rows
-        ]) + "\n",
-        encoding="utf-8",
-    )
-    log(f"选中映射 {mname}: {mjson}（margin={margin:.2f}）")
-
-    # 3) CIFAR 标签线 4 臂（强攻击映射）
+    # 2) 用户确认：M5 全类循环映射 + 48 step，仅重跑 CIFAR 标签线 4 臂
+    mname, mjson = "M5", dict(MAPPINGS)["M5"]
     for job in label_jobs(mjson):
         if job["id"] in state["completed"]:
             continue
-        log(f"重跑 CIFAR 标签线: {job['id']} | 映射 {mname}")
-        result = run_final_job(job, 50, 60, 10, state)
-        git_commit_push(f"exp(aftervd): {job['id']} {mname} {result['status']} last={result.get('last')}")
-
-    # 4) CIFAR MinMax 4 臂（不吃映射，刷新 50 轮）
-    for job in minmax_jobs():
-        if job["id"] in state["completed"]:
-            continue
-        log(f"重跑 CIFAR MinMax: {job['id']}")
-        result = run_final_job(job, 50, 60, 10, state)
-        git_commit_push(f"exp(aftervd): {job['id']} {result['status']} last={result.get('last')}")
+        log(f"重跑 CIFAR 标签线: {job['id']} | 映射 {mname} | 50 轮 × 48 step")
+        result = run_final_job(job, 50, 90, 15, state)
+        git_commit_push(f"exp(aftervd): {job['id']} {mname}s48 {result['status']} last={result.get('last')}")
 
     write_summary(state["history"])
     DONE_PATH.write_text("finished", encoding="utf-8")
