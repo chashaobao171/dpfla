@@ -1,0 +1,9 @@
+mkdir: /root/.trae-cn-server/bin/stable-88f1a4b6dac6800abfb8f728a1327582e4e3e53f-debian10/modules/ai-agent/libselinux.so.1: no version information available (required by mkdir)
+2026-11-01 13:04:00.967 | INFO     | federated_learning.utils.sampling:get_cifar10:142 - --> CIFAR10 data root: /root/autodl-tmp/data, local cache found: True, download=False
+
+=== [1/1] cifar10 | minmax | dpfla | clients=10 ===
+  -> PASS metrics=[31.65, 44.1] updates=20 elapsed=72.7s
+
+=== summary: 1/1 PASS ===
+JSON: /root/chashaobao/DPFLA-master/logs_dist_full/smoke_2r/summaries/summary_20261101_130400.json
+MD:   /root/chashaobao/DPFLA-master/logs_dist_full/smoke_2r/summaries/summary_20261101_130400.md

@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import gc
 import json
 import os
 import random
@@ -390,9 +391,11 @@ def _make_train_fn(cfg: SmokeConfig):
                 "round": context.round,
             }
         finally:
-            # VisDrone 客户端串行使用单卡；训练结束立即释放模型显存，避免 10 进程累积 OOM。
+            # VisDrone 客户端串行使用单卡；训练结束立即释放模型及缓存显存，避免 10 进程累积 OOM。
             if cfg.dataset == DATASET_VISDRONE and cfg.device == "cuda":
                 model.to("cpu")
+                gc.collect()
+                torch.cuda.empty_cache()
 
     def train(global_state, context: ClientContext):
         if cfg.dataset == DATASET_VISDRONE and cfg.device == "cuda":

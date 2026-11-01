@@ -1,0 +1,674 @@
+2026-11-01 14:19:14.231 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:174 - Loading cached annotations from /root/chashaobao/DPFLA-master/cache/cache_VisDrone_train_6471_6ec8b842.pkl
+2026-11-01 14:19:14.476 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:177 - ✓ Loaded 6471 cached annotations
+2026-11-01 14:19:14.476 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:152 - --> Loaded VisDrone train dataset: 6471 images
+2026-11-01 14:19:14.477 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:174 - Loading cached annotations from /root/chashaobao/DPFLA-master/cache/cache_VisDrone_val_548_f6f27a02.pkl
+2026-11-01 14:19:14.495 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:177 - ✓ Loaded 548 cached annotations
+2026-11-01 14:19:14.495 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:152 - --> Loaded VisDrone val dataset: 548 images
+2026-11-01 14:19:14.499 | INFO     | federated_learning.models.model:setup_model:27 - --> Creating YOLO model.....
+2026-11-01 14:19:14.500 | INFO     | federated_learning.models.yolo_wrapper:__init__:113 - --> Creating YOLOv8m (pretrained backbone, detection nc=10, aligned with VisDrone val)
+2026-11-01 14:19:14.559 | INFO     | federated_learning.models.yolo_wrapper:__init__:133 - → Loading pretrained YOLOv8m model...
+2026-11-01 14:19:14.674 | INFO     | federated_learning.models.yolo_wrapper:__init__:135 - ✓ Loaded pretrained YOLOv8m (COCO head 将在下方替换为 nc=10)
+2026-11-01 14:19:14.689 | INFO     | federated_learning.models.yolo_wrapper:__init__:205 - ✓ 检测头已替换: nc 80 → 10（骨干仍为 COCO 预训练）
+2026-11-01 14:19:14.689 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: box = 7.5
+2026-11-01 14:19:14.689 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: cls = 0.5
+2026-11-01 14:19:14.689 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:244 - 为criterion.hyp添加缺失属性: dfl = 1.5
+2026-11-01 14:19:14.690 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:249 - ✓ 已启用所有模型参数的梯度
+2026-11-01 14:19:14.691 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:254 - ✓ 已将criterion移到设备: cpu
+2026-11-01 14:19:14.691 | DEBUG    | federated_learning.models.yolo_wrapper:__init__:256 - ✓ 将使用YOLO模型内置损失函数
+2026-11-01 14:19:14.691 | INFO     | federated_learning.models.yolo_wrapper:__init__:268 - --> YOLO model has been created!
+2026-11-01 14:19:14.691 | INFO     | federated_learning.models.model:setup_model:70 - --> Model has been created!
+14:19:14 [INFO] connected to 127.0.0.1:34103
+14:19:14 [INFO] registered: id=9 samples=647 rounds=50
+2026-11-01 14:19:38.330 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 14:19:38.516 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 14:19:38.517 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 14:19:38.783 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 14:19:38.784 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+/root/chashaobao/DPFLA-master/federated_learning/client.py:420: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  amp_scaler = torch.cuda.amp.GradScaler(enabled=use_amp) if use_amp else None
+2026-11-01 14:19:38.846 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 14:19:38.846 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 14:19:41.176 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 14:19:41.180 | DEBUG    | federated_learning.models.yolo_wrapper:forward:499 - ✓ 已将criterion移到设备: cuda:0
+2026-11-01 14:19:41.182 | DEBUG    | federated_learning.models.yolo_wrapper:forward:506 - 模型参数: 262/262 需要梯度
+2026-11-01 14:19:41.907 | DEBUG    | federated_learning.models.yolo_wrapper:forward:543 - loss_tuple type: <class 'tuple'>
+2026-11-01 14:19:41.907 | DEBUG    | federated_learning.models.yolo_wrapper:forward:545 - loss_tuple length: 2
+2026-11-01 14:19:41.907 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[0] shape: torch.Size([3]), requires_grad: True, grad_fn: <MulBackward0 object at 0x7f4c72a8fbb0>
+2026-11-01 14:19:41.907 | DEBUG    | federated_learning.models.yolo_wrapper:forward:548 -   item[1] shape: torch.Size([3]), requires_grad: False, grad_fn: None
+2026-11-01 14:20:00.276 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 14:20:00.276 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 221.0848
+2026-11-01 14:20:00.279 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 14:20:00.308 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 14:20:00.310 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 14:20:00.311 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+14:20:01 [INFO] round 1: update sent
+2026-11-01 14:33:12.403 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 14:33:12.438 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 14:33:12.439 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 14:33:12.490 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 14:33:12.490 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 14:33:12.545 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 14:33:12.545 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 14:33:14.164 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 14:34:13.511 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 14:34:13.511 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 181.6200
+2026-11-01 14:34:13.514 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 14:34:13.551 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 14:34:13.553 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 14:34:13.554 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+14:34:14 [INFO] round 2: update sent
+2026-11-01 14:48:58.084 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 14:48:58.116 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 14:48:58.117 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 14:48:58.169 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 14:48:58.169 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 14:48:58.224 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 14:48:58.224 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 14:49:00.040 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 14:50:22.189 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 14:50:22.190 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 145.8240
+2026-11-01 14:50:22.193 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 14:50:22.265 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 14:50:22.267 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 14:50:22.267 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+14:50:23 [INFO] round 3: update sent
+2026-11-01 15:05:22.985 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 15:05:23.017 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 15:05:23.017 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 15:05:23.069 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 15:05:23.069 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 15:05:23.122 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 15:05:23.122 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 15:05:24.813 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 15:06:07.669 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 15:06:07.670 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 123.3273
+2026-11-01 15:06:07.672 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 15:06:07.725 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 15:06:07.728 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 15:06:07.728 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+15:06:08 [INFO] round 4: update sent
+2026-11-01 15:19:24.815 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 15:19:24.848 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 15:19:24.848 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 15:19:24.899 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 15:19:24.899 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 15:19:24.954 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 15:19:24.954 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 15:19:26.264 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 15:20:09.518 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 15:20:09.518 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 107.7817
+2026-11-01 15:20:09.521 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 15:20:09.559 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 15:20:09.562 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 15:20:09.562 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+15:20:10 [INFO] round 5: update sent
+2026-11-01 15:36:43.116 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 15:36:43.150 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 15:36:43.150 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 15:36:43.203 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 15:36:43.203 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 15:36:43.257 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 15:36:43.257 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 15:36:45.150 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 15:37:38.656 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 15:37:38.657 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 98.9184
+2026-11-01 15:37:38.659 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 15:37:38.693 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 15:37:38.695 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 15:37:38.696 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+15:37:39 [INFO] round 6: update sent
+2026-11-01 15:51:48.127 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 15:51:48.155 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 15:51:48.156 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 15:51:48.208 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 15:51:48.208 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 15:51:48.263 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 15:51:48.263 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 15:51:50.258 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 15:52:45.084 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 15:52:45.084 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 95.4458
+2026-11-01 15:52:45.087 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 15:52:45.153 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 15:52:45.155 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 15:52:45.156 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+15:52:46 [INFO] round 7: update sent
+2026-11-01 16:08:05.205 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 16:08:05.233 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 16:08:05.234 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 16:08:05.285 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 16:08:05.285 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 16:08:05.339 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 16:08:05.339 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 16:08:06.647 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 16:08:48.120 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 16:08:48.121 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 86.6193
+2026-11-01 16:08:48.123 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 16:08:48.189 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 16:08:48.193 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 16:08:48.193 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+16:08:49 [INFO] round 8: update sent
+2026-11-01 16:23:48.360 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 16:23:48.389 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 16:23:48.389 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 16:23:48.442 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 16:23:48.442 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 16:23:48.496 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 16:23:48.496 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 16:23:49.753 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 16:24:08.437 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 16:24:08.438 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 83.5999
+2026-11-01 16:24:08.441 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 16:24:08.480 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 16:24:08.482 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 16:24:08.483 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+16:24:09 [INFO] round 9: update sent
+2026-11-01 16:38:10.935 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 16:38:10.963 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 16:38:10.964 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 16:38:11.016 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 16:38:11.016 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 16:38:11.070 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 16:38:11.070 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 16:38:12.334 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 16:39:25.432 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 16:39:25.433 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 82.6833
+2026-11-01 16:39:25.435 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 16:39:25.472 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 16:39:25.474 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 16:39:25.474 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+16:39:26 [INFO] round 10: update sent
+2026-11-01 16:55:16.413 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 16:55:16.445 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 16:55:16.446 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 16:55:16.497 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 16:55:16.498 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 16:55:16.552 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 16:55:16.552 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 16:55:17.870 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 16:56:00.146 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 16:56:00.147 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 79.8140
+2026-11-01 16:56:00.150 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 16:56:00.187 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 16:56:00.190 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 16:56:00.190 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+16:56:01 [INFO] round 11: update sent
+2026-11-01 17:11:17.317 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 17:11:17.346 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 17:11:17.347 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 17:11:17.398 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 17:11:17.398 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 17:11:17.459 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 17:11:17.460 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 17:11:18.812 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 17:12:02.618 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 17:12:02.618 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 78.7848
+2026-11-01 17:12:02.621 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 17:12:02.657 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 17:12:02.659 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 17:12:02.660 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+17:12:03 [INFO] round 12: update sent
+2026-11-01 17:27:13.273 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 17:27:13.301 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 17:27:13.301 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 17:27:13.353 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 17:27:13.353 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 17:27:13.407 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 17:27:13.407 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 17:27:14.570 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 17:27:46.349 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 17:27:46.349 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 76.0816
+2026-11-01 17:27:46.352 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 17:27:46.387 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 17:27:46.389 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 17:27:46.390 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+17:27:47 [INFO] round 13: update sent
+2026-11-01 17:44:08.262 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 17:44:08.290 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 17:44:08.290 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 17:44:08.341 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 17:44:08.341 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 17:44:08.394 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 17:44:08.395 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 17:44:09.986 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 17:45:02.675 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 17:45:02.675 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 73.9617
+2026-11-01 17:45:02.678 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 17:45:02.712 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 17:45:02.714 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 17:45:02.715 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+17:45:03 [INFO] round 14: update sent
+2026-11-01 18:00:55.263 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 18:00:55.292 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 18:00:55.292 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 18:00:55.347 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 18:00:55.347 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 18:00:55.400 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 18:00:55.401 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 18:00:56.529 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 18:01:51.279 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 18:01:51.279 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 76.2174
+2026-11-01 18:01:51.282 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 18:01:51.320 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 18:01:51.323 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 18:01:51.323 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+18:01:52 [INFO] round 15: update sent
+2026-11-01 18:17:13.154 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 18:17:13.182 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 18:17:13.182 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 18:17:13.233 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 18:17:13.234 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 18:17:13.288 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 18:17:13.288 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 18:17:14.509 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 18:18:28.151 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 18:18:28.151 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 71.9996
+2026-11-01 18:18:28.154 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 18:18:28.218 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 18:18:28.221 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 18:18:28.222 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+18:18:29 [INFO] round 16: update sent
+2026-11-01 18:33:40.332 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 18:33:40.361 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 18:33:40.361 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 18:33:40.412 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 18:33:40.412 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 18:33:40.467 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 18:33:40.467 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 18:33:41.810 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 18:34:56.029 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 18:34:56.029 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 72.4802
+2026-11-01 18:34:56.032 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 18:34:56.103 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 18:34:56.106 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 18:34:56.107 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+18:34:57 [INFO] round 17: update sent
+2026-11-01 18:50:30.715 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 18:50:30.744 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 18:50:30.744 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 18:50:30.796 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 18:50:30.796 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 18:50:30.851 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 18:50:30.851 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 18:50:32.136 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 18:51:22.686 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 18:51:22.687 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 70.3276
+2026-11-01 18:51:22.689 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 18:51:22.757 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 18:51:22.759 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 18:51:22.760 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+18:51:23 [INFO] round 18: update sent
+2026-11-01 19:07:01.113 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 19:07:01.152 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 19:07:01.153 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 19:07:01.204 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 19:07:01.204 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 19:07:01.260 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 19:07:01.260 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 19:07:02.609 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 19:07:37.323 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 19:07:37.323 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 69.1136
+2026-11-01 19:07:37.326 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 19:07:37.360 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 19:07:37.362 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 19:07:37.363 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+19:07:38 [INFO] round 19: update sent
+2026-11-01 19:23:34.079 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 19:23:34.107 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 19:23:34.108 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 19:23:34.158 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 19:23:34.158 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 19:23:34.212 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 19:23:34.212 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 19:23:35.650 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 19:24:31.533 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 19:24:31.533 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 69.0314
+2026-11-01 19:24:31.536 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 19:24:31.603 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 19:24:31.605 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 19:24:31.605 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+19:24:32 [INFO] round 20: update sent
+2026-11-01 19:39:35.799 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 19:39:35.832 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 19:39:35.832 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 19:39:35.885 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 19:39:35.885 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 19:39:35.939 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 19:39:35.939 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 19:39:37.229 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 19:40:56.911 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 19:40:56.912 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 68.5614
+2026-11-01 19:40:56.914 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 19:40:56.951 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 19:40:56.953 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 19:40:56.953 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+19:40:57 [INFO] round 21: update sent
+2026-11-01 19:55:31.191 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 19:55:31.219 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 19:55:31.220 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 19:55:31.271 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 19:55:31.271 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 19:55:31.326 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 19:55:31.326 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 19:55:32.688 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 19:56:01.992 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 19:56:01.993 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 69.4634
+2026-11-01 19:56:01.995 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 19:56:02.030 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 19:56:02.033 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 19:56:02.033 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+19:56:02 [INFO] round 22: update sent
+2026-11-01 20:12:14.413 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 20:12:14.441 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 20:12:14.441 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 20:12:14.494 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 20:12:14.494 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 20:12:14.547 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 20:12:14.547 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 20:12:15.750 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 20:12:56.425 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 20:12:56.426 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 67.9482
+2026-11-01 20:12:56.428 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 20:12:56.464 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 20:12:56.466 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 20:12:56.466 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+20:12:57 [INFO] round 23: update sent
+2026-11-01 20:29:39.180 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 20:29:39.208 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 20:29:39.208 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 20:29:39.260 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 20:29:39.261 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 20:29:39.315 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 20:29:39.315 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 20:29:40.602 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 20:30:34.066 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 20:30:34.066 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 68.0856
+2026-11-01 20:30:34.069 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 20:30:34.137 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 20:30:34.140 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 20:30:34.140 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+20:30:35 [INFO] round 24: update sent
+2026-11-01 20:44:48.348 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 20:44:48.375 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 20:44:48.376 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 20:44:48.426 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 20:44:48.426 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 20:44:48.478 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 20:44:48.479 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 20:44:49.729 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 20:45:34.593 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 20:45:34.594 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 66.6317
+2026-11-01 20:45:34.597 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 20:45:34.635 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 20:45:34.638 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 20:45:34.638 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+20:45:35 [INFO] round 25: update sent
+2026-11-01 21:01:54.548 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 21:01:54.579 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 21:01:54.579 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 21:01:54.631 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 21:01:54.631 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 21:01:54.685 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 21:01:54.685 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 21:01:56.115 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 21:02:28.581 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 21:02:28.582 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 67.9403
+2026-11-01 21:02:28.585 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 21:02:28.652 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 21:02:28.654 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 21:02:28.655 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+21:02:29 [INFO] round 26: update sent
+2026-11-01 21:17:00.967 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 21:17:00.995 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 21:17:00.995 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 21:17:01.046 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 21:17:01.046 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 21:17:01.100 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 21:17:01.100 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 21:17:02.352 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 21:18:25.653 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 21:18:25.653 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 67.8895
+2026-11-01 21:18:25.656 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 21:18:25.721 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 21:18:25.724 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 21:18:25.724 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+21:18:26 [INFO] round 27: update sent
+2026-11-01 21:33:01.263 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 21:33:01.292 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 21:33:01.292 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 21:33:01.344 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 21:33:01.344 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 21:33:01.397 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 21:33:01.397 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 21:33:03.229 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 21:33:37.934 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 21:33:37.934 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 65.3844
+2026-11-01 21:33:37.938 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 21:33:38.025 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 21:33:38.028 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 21:33:38.028 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+21:33:38 [INFO] round 28: update sent
+2026-11-01 21:49:12.518 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 21:49:12.547 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 21:49:12.547 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 21:49:12.599 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 21:49:12.599 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 21:49:12.653 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 21:49:12.653 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 21:49:14.121 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 21:50:10.452 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 21:50:10.453 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 64.8289
+2026-11-01 21:50:10.456 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 21:50:10.526 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 21:50:10.528 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 21:50:10.528 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+21:50:11 [INFO] round 29: update sent
+2026-11-01 22:04:40.282 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 22:04:40.310 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 22:04:40.310 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 22:04:40.361 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 22:04:40.361 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 22:04:40.415 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 22:04:40.415 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 22:04:41.763 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 22:05:12.690 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 22:05:12.690 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 65.1108
+2026-11-01 22:05:12.693 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 22:05:12.758 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 22:05:12.761 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 22:05:12.761 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+22:05:13 [INFO] round 30: update sent
+2026-11-01 22:19:44.393 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 22:19:44.421 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 22:19:44.421 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 22:19:44.473 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 22:19:44.473 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 22:19:44.527 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 22:19:44.527 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 22:19:45.771 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 22:20:42.063 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 22:20:42.063 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 64.0909
+2026-11-01 22:20:42.066 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 22:20:42.104 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 22:20:42.106 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 22:20:42.106 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+22:20:43 [INFO] round 31: update sent
+2026-11-01 22:35:25.550 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 22:35:25.590 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 22:35:25.590 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 22:35:25.691 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 22:35:25.691 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 22:35:25.798 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 22:35:25.798 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 22:35:27.208 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 22:36:44.393 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 22:36:44.393 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 67.1448
+2026-11-01 22:36:44.396 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 22:36:44.437 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 22:36:44.439 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 22:36:44.439 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+22:36:45 [INFO] round 32: update sent
+2026-11-01 22:52:13.842 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 22:52:13.870 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 22:52:13.871 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 22:52:13.923 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 22:52:13.923 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 22:52:13.978 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 22:52:13.978 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 22:52:15.809 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 22:53:20.192 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 22:53:20.192 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 63.8289
+2026-11-01 22:53:20.195 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 22:53:20.256 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 22:53:20.259 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 22:53:20.259 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+22:53:21 [INFO] round 33: update sent
+2026-11-01 23:08:48.210 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 23:08:48.243 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 23:08:48.244 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 23:08:48.298 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 23:08:48.298 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 23:08:48.352 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 23:08:48.352 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 23:08:49.616 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 23:09:57.143 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 23:09:57.143 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 64.1326
+2026-11-01 23:09:57.146 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 23:09:57.180 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 23:09:57.183 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 23:09:57.183 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+23:09:58 [INFO] round 34: update sent
+2026-11-01 23:26:43.851 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 23:26:43.879 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 23:26:43.880 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 23:26:43.931 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 23:26:43.931 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 23:26:43.986 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 23:26:43.986 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 23:26:45.782 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 23:27:31.015 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 23:27:31.015 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 63.5656
+2026-11-01 23:27:31.018 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 23:27:31.052 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 23:27:31.055 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 23:27:31.055 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+23:27:32 [INFO] round 35: update sent
+2026-11-01 23:43:17.514 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-01 23:43:17.542 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-01 23:43:17.542 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-01 23:43:17.595 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-01 23:43:17.595 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-01 23:43:17.678 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-01 23:43:17.678 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-01 23:43:19.350 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-01 23:44:03.426 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-01 23:44:03.427 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 62.4067
+2026-11-01 23:44:03.429 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-01 23:44:03.466 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-01 23:44:03.468 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-01 23:44:03.469 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+23:44:04 [INFO] round 36: update sent
+2026-11-02 00:13:16.455 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-02 00:13:16.483 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-02 00:13:16.483 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-02 00:13:16.535 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-02 00:13:16.535 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-02 00:13:16.590 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-02 00:13:16.590 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-02 00:13:17.924 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-02 00:14:37.346 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-02 00:14:37.346 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 64.0425
+2026-11-02 00:14:37.349 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-02 00:14:37.385 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-02 00:14:37.388 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-02 00:14:37.388 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+00:14:38 [INFO] round 37: update sent
+2026-11-02 00:43:02.600 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-02 00:43:02.631 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-02 00:43:02.632 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-02 00:43:02.683 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-02 00:43:02.684 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-02 00:43:02.742 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-02 00:43:02.742 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-02 00:43:03.945 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-02 00:43:59.363 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-02 00:43:59.364 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 63.0369
+2026-11-02 00:43:59.367 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-02 00:43:59.403 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-02 00:43:59.406 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-02 00:43:59.406 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+00:44:00 [INFO] round 38: update sent
+2026-11-02 01:12:09.358 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-02 01:12:09.387 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-02 01:12:09.388 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-02 01:12:09.442 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-02 01:12:09.442 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-02 01:12:09.497 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-02 01:12:09.497 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-02 01:12:10.921 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-02 01:12:44.045 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-02 01:12:44.046 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 63.6381
+2026-11-02 01:12:44.048 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-02 01:12:44.117 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-02 01:12:44.120 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-02 01:12:44.120 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+01:12:45 [INFO] round 39: update sent
+2026-11-02 01:28:49.132 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-02 01:28:49.163 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-02 01:28:49.164 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-02 01:28:49.217 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-02 01:28:49.217 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-02 01:28:49.273 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-02 01:28:49.273 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-02 01:28:51.319 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-02 01:29:26.436 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-02 01:29:26.436 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 61.1957
+2026-11-02 01:29:26.439 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-02 01:29:26.478 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-02 01:29:26.481 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-02 01:29:26.481 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+01:29:27 [INFO] round 40: update sent
+2026-11-02 01:45:17.505 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-02 01:45:17.534 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-02 01:45:17.534 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-02 01:45:17.586 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-02 01:45:17.586 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-02 01:45:17.641 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-02 01:45:17.641 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-02 01:45:18.971 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-02 01:46:27.230 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-02 01:46:27.230 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 61.6321
+2026-11-02 01:46:27.233 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-02 01:46:27.306 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-02 01:46:27.309 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-02 01:46:27.309 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+01:46:28 [INFO] round 41: update sent
+2026-11-02 02:01:16.355 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-02 02:01:16.384 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-02 02:01:16.384 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-02 02:01:16.435 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-02 02:01:16.435 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-02 02:01:16.489 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-02 02:01:16.490 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-02 02:01:18.063 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-02 02:02:12.488 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-02 02:02:12.489 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 62.7642
+2026-11-02 02:02:12.492 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-02 02:02:12.560 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-02 02:02:12.562 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-02 02:02:12.562 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+02:02:13 [INFO] round 42: update sent
+2026-11-02 02:18:06.388 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cuda) 被调用
+2026-11-02 02:18:06.424 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cuda
+2026-11-02 02:18:06.424 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cuda
+2026-11-02 02:18:06.476 | INFO     | federated_learning.client:participant_update:284 - 🔍 Client Client 9: type=honest, attack_type=minmax, malicious_behavior_rate=0.0
+2026-11-02 02:18:06.476 | DEBUG    | federated_learning.client:participant_update:374 -   → Attack type is minmax, not label_flipping
+2026-11-02 02:18:06.529 | INFO     | federated_learning.client:participant_update:429 - 🔄 Client 9 开始训练: 41 batches, 1 epoch(s)
+2026-11-02 02:18:06.529 | INFO     | federated_learning.client:participant_update:431 -    → FL_LOCAL_STEPS=12，每轮最多 12 个本地 step
+2026-11-02 02:18:07.952 | INFO     | federated_learning.client:participant_update:443 -    Client 9 - Epoch 1/1 - 2% (1/41)
+2026-11-02 02:18:37.831 | INFO     | federated_learning.client:participant_update:524 -    ✓ Client 9 达到 FL_LOCAL_STEPS=12，提前结束本地训练
+2026-11-02 02:18:37.832 | INFO     | federated_learning.client:participant_update:532 - ✅ Client 9 训练完成！总损失: 61.0219
+2026-11-02 02:18:37.835 | DEBUG    | federated_learning.client:participant_update:539 -   → 梯度已平均化（除以 12 个总步数）
+2026-11-02 02:18:37.870 | DEBUG    | federated_learning.models.yolo_wrapper:to:724 - → YOLOWrapper.to(cpu) 被调用
+2026-11-02 02:18:37.873 | DEBUG    | federated_learning.models.yolo_wrapper:to:732 -   → 移动criterion到 cpu
+2026-11-02 02:18:37.873 | DEBUG    | federated_learning.models.yolo_wrapper:to:734 -   ✓ criterion已移动到 cpu
+02:18:38 [INFO] round 43: update sent

@@ -1,0 +1,14 @@
+mkdir: /root/.trae-cn-server/bin/stable-88f1a4b6dac6800abfb8f728a1327582e4e3e53f-debian10/modules/ai-agent/libselinux.so.1: no version information available (required by mkdir)
+2026-11-01 13:56:47.729 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:174 - Loading cached annotations from /root/chashaobao/DPFLA-master/cache/cache_VisDrone_train_6471_6ec8b842.pkl
+2026-11-01 13:56:47.873 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:177 - ✓ Loaded 6471 cached annotations
+2026-11-01 13:56:47.873 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:152 - --> Loaded VisDrone train dataset: 6471 images
+2026-11-01 13:56:47.874 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:174 - Loading cached annotations from /root/chashaobao/DPFLA-master/cache/cache_VisDrone_val_548_f6f27a02.pkl
+2026-11-01 13:56:47.936 | INFO     | federated_learning.datasets.visdrone_dataset:_load_or_create_cache:177 - ✓ Loaded 548 cached annotations
+2026-11-01 13:56:47.936 | INFO     | federated_learning.datasets.visdrone_dataset:__init__:152 - --> Loaded VisDrone val dataset: 548 images
+
+=== [1/1] visdrone | minmax | dpfla | clients=10 ===
+  -> PASS metrics=[0.00022415039354776466, 0.00011108479801663641] updates=20 elapsed=1205.1s
+
+=== summary: 1/1 PASS ===
+JSON: /root/chashaobao/DPFLA-master/logs_dist_full/smoke_2r/summaries/summary_20261101_135647.json
+MD:   /root/chashaobao/DPFLA-master/logs_dist_full/smoke_2r/summaries/summary_20261101_135647.md

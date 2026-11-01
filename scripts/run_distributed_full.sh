@@ -26,6 +26,8 @@ if [[ "$DATASET" == "visdrone" ]]; then
   IMAGE_SIZE=1280
   AMP=1
   if [[ "$MODE" == "smoke" ]]; then TIMEOUT=7200; CLIENT_EVAL=64; else TIMEOUT=43200; CLIENT_EVAL=0; fi
+  # 与正式 VisDrone 50 轮实验一致：每客户端每轮 12 step，避免把总训练量放大 3.4 倍。
+  export FL_LOCAL_STEPS=12
   EXTRA=(--visdrone-root /root/autodl-tmp/data/visdrone)
 elif [[ "$DATASET" == "cifar10" ]]; then
   BATCH=64
@@ -34,6 +36,7 @@ elif [[ "$DATASET" == "cifar10" ]]; then
   MODEL_SIZE=n
   IMAGE_SIZE=32
   AMP=0
+  unset FL_LOCAL_STEPS || true
   if [[ "$MODE" == "smoke" ]]; then TIMEOUT=1800; CLIENT_EVAL=1000; else TIMEOUT=7200; CLIENT_EVAL=0; fi
   EXTRA=()
 else
