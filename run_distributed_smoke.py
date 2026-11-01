@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import random
@@ -128,6 +129,8 @@ class SmokeConfig:
     client_id: Optional[str] = None
     timeout_s: float = 600.0
     phase: str = "a"
+    tb11: bool = False
+    client_eval_samples: Optional[int] = None
 
     @property
     def is_cifar(self) -> bool:
@@ -207,6 +210,8 @@ def _config_from_args(args: argparse.Namespace) -> SmokeConfig:
         client_id=args.client_id,
         timeout_s=args.timeout,
         phase=args.phase,
+        tb11=bool(args.tb11),
+        client_eval_samples=(args.client_eval_samples if args.client_eval_samples > 0 else None),
     )
 
 
@@ -263,20 +268,23 @@ def _build_trainset(cfg: SmokeConfig):
     return trainset
 
 
-def _build_testloader(cfg: SmokeConfig):
+def _build_testloader(cfg: SmokeConfig, per_client: bool = False):
+    requested = cfg.client_eval_samples if per_client else cfg.test_samples
     if cfg.is_cifar:
         from federated_learning.utils.sampling import get_cifar10
 
         _, testset = get_cifar10()
-        limit = len(testset) if cfg.test_samples is None else min(cfg.test_samples, len(testset))
+        limit = len(testset) if requested is None else min(requested, len(testset))
         subset = Subset(testset, list(range(limit)))
         return DataLoader(subset, batch_size=cfg.test_batch_size, shuffle=False, num_workers=0)
 
     from federated_learning.client import detection_collate_fn
 
     _, testset = _get_visdrone(cfg)
+    limit = len(testset) if requested is None else min(requested, len(testset))
+    subset = Subset(testset, list(range(limit)))
     return DataLoader(
-        testset,
+        subset,
         batch_size=cfg.test_batch_size,
         shuffle=False,
         num_workers=0,
@@ -359,27 +367,44 @@ def _make_train_fn(cfg: SmokeConfig):
     mapping = {"mapping": {5: 3}, "flip_ratio": 1.0} if cfg.scenario == "label_flipping" else None
     attack_type = cfg.attack_type
 
-    def train(global_state, context: ClientContext):
+    def _train_impl(global_state, context: ClientContext):
         model.load_state_dict(global_state)
         model.to(cfg.device)
-        Client._performed_attacks = 0
-        update, _grad, _local_model, loss, attacked, _t = client.participant_update(
-            global_epoch=context.round - 1,
-            model=model,
-            attack_type=attack_type,
-            malicious_behavior_rate=1.0 if client_type == "attacker" and cfg.scenario == "label_flipping" else 0.0,
-            source_class=5 if cfg.scenario == "label_flipping" else None,
-            target_class=3 if cfg.scenario == "label_flipping" else None,
-            dataset_name=cfg.dataset_name,
-            untarget=False,
-            label_flip_mapping=mapping,
-        )
-        return update, {
-            "loss": float(loss),
-            "attacked": int(attacked),
-            "client_type": client_type,
-            "round": context.round,
-        }
+        try:
+            Client._performed_attacks = 0
+            update, _grad, _local_model, loss, attacked, _t = client.participant_update(
+                global_epoch=context.round - 1,
+                model=model,
+                attack_type=attack_type,
+                malicious_behavior_rate=1.0 if client_type == "attacker" and cfg.scenario == "label_flipping" else 0.0,
+                source_class=5 if cfg.scenario == "label_flipping" else None,
+                target_class=3 if cfg.scenario == "label_flipping" else None,
+                dataset_name=cfg.dataset_name,
+                untarget=False,
+                label_flip_mapping=mapping,
+            )
+            return update, {
+                "loss": float(loss),
+                "attacked": int(attacked),
+                "client_type": client_type,
+                "round": context.round,
+            }
+        finally:
+            # VisDrone 客户端串行使用单卡；训练结束立即释放模型显存，避免 10 进程累积 OOM。
+            if cfg.dataset == DATASET_VISDRONE and cfg.device == "cuda":
+                model.to("cpu")
+
+    def train(global_state, context: ClientContext):
+        if cfg.dataset == DATASET_VISDRONE and cfg.device == "cuda":
+            lock_path = cfg.workdir / "gpu_train.lock"
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(lock_path, "a+b") as lock_file:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                try:
+                    return _train_impl(global_state, context)
+                finally:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        return _train_impl(global_state, context)
 
     return train
 
@@ -410,6 +435,23 @@ def _run_client(cfg: SmokeConfig) -> None:
 # 服务端适配器
 # ---------------------------------------------------------------------------
 
+def _make_tb11(cfg: SmokeConfig):
+    """为 server 与每个 client 各建一个 run；同一 metric tag 在 TB 中形成 11 条曲线。"""
+    from torch.utils.tensorboard import SummaryWriter
+
+    stamp = time.strftime("%Y%m%d_%H%M%S")
+    roots = (ROOT / "tb", Path("/root/tf-logs"))
+    writers: Dict[str, List[Any]] = {}
+    for name in ["server"] + [f"client{i}" for i in range(cfg.num_clients)]:
+        writers[name] = []
+        for root in roots:
+            root.mkdir(parents=True, exist_ok=True)
+            run_dir = root / f"Dist{cfg.dataset_name}_{cfg.scenario}_{cfg.defense}_{name}_{stamp}"
+            writers[name].append(SummaryWriter(log_dir=str(run_dir)))
+    metric_tag = "accuracy/global" if cfg.is_cifar else "mAP50/global"
+    return writers, metric_tag
+
+
 def _make_server_hooks(cfg: SmokeConfig):
     from federated_learning.attack_alg.server_attacks import apply_server_attack
     from federated_learning.fl_algorithm import DPFLA, average_weights, multi_krum, trimmed_mean
@@ -425,9 +467,14 @@ def _make_server_hooks(cfg: SmokeConfig):
 
     dpfla = DPFLA() if defense == "dpfla" else None
     dpfla_models = [_build_model(cfg).cpu() for _ in range(cfg.num_clients + 1)] if dpfla else []
+    tb_writers, tb_tag = _make_tb11(cfg) if cfg.tb11 else ({}, None)
+    client_test_loader = _build_testloader(cfg, per_client=True) if cfg.tb11 else None
+    latest_client_states: List[Dict[str, torch.Tensor]] = []
+    latest_client_ids: List[str] = []
 
     def aggregate(updates: List[Dict[str, torch.Tensor]], meta: List[Dict[str, Any]],
                   global_state: Optional[Dict[str, torch.Tensor]]):
+        nonlocal latest_client_states, latest_client_ids
         client_ids = [int(item["client_id"]) for item in meta]
         clients_types = [
             "Bad update" if client_id in malicious else "Good update"
@@ -445,6 +492,10 @@ def _make_server_hooks(cfg: SmokeConfig):
                 num_attackers=len(malicious),
                 num_clients=len(updates),
             )
+
+        # MinMax 等服务端攻击之后的状态才是 DPFLA 实际看到的客户端更新。
+        latest_client_states = updates
+        latest_client_ids = [str(client_id) for client_id in client_ids]
 
         if defense == "fedavg":
             return average_weights(updates, [1 for _ in updates], float16_floats=False)
@@ -486,7 +537,28 @@ def _make_server_hooks(cfg: SmokeConfig):
             labels_dict={index: str(index) for index in range(10)},
         )
         metric, loss = FL.test(dummy, eval_model, cfg.device, test_loader, dataset_name=cfg.dataset_name)
-        return {"metric": float(metric), "loss": float(loss), "round": round_index}
+        client_metrics: Dict[str, float] = {}
+        if cfg.tb11:
+            for client_id, client_state in zip(latest_client_ids, latest_client_states):
+                eval_model.load_state_dict(client_state)
+                client_metric, client_loss = FL.test(
+                    dummy, eval_model, cfg.device, client_test_loader, dataset_name=cfg.dataset_name
+                )
+                client_metrics[client_id] = float(client_metric)
+                for writer in tb_writers.get(f"client{client_id}", []):
+                    writer.add_scalar(tb_tag, float(client_metric), round_index)
+                    writer.add_scalar("loss/test", float(client_loss), round_index)
+                    writer.flush()
+            for writer in tb_writers["server"]:
+                writer.add_scalar(tb_tag, float(metric), round_index)
+                writer.add_scalar("loss/test", float(loss), round_index)
+                writer.flush()
+        return {
+            "metric": float(metric),
+            "loss": float(loss),
+            "round": round_index,
+            "client_metrics": client_metrics,
+        }
 
     return initial_state, aggregate, evaluate
 
@@ -621,6 +693,9 @@ def _run_one(cfg: SmokeConfig) -> Dict[str, Any]:
     ]
     if cfg.malicious_rate is not None:
         common.extend(["--malicious-rate", str(cfg.malicious_rate)])
+    if cfg.tb11:
+        common.append("--tb11")
+    common.extend(["--client-eval-samples", str(cfg.client_eval_samples or 0)])
     server_log_path = cfg.workdir / "server.log"
     server_log = open(server_log_path, "w", encoding="utf-8")
     server_proc = subprocess.Popen(
@@ -706,6 +781,8 @@ def _run_one(cfg: SmokeConfig) -> Dict[str, Any]:
         "updates_seen": updates_seen,
         "attack_seen": attack_seen,
         "defense_seen": defense_seen,
+        "tb11": cfg.tb11,
+        "client_eval_samples": cfg.client_eval_samples,
         "workdir": str(cfg.workdir),
     }
     (cfg.workdir / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -838,6 +915,10 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--client-id", default=None)
     parser.add_argument("--timeout", type=float, default=None)
     parser.add_argument("--phase", default="a", choices=("a", "b", "all"))
+    parser.add_argument("--tb11", action="store_true",
+                        help="write 11 TensorBoard runs (server + each client) to tb/ and /root/tf-logs")
+    parser.add_argument("--client-eval-samples", type=int, default=0,
+                        help="per-client evaluation samples; 0 = full test/val set")
     return parser
 
 

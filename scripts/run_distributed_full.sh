@@ -1,51 +1,83 @@
 #!/usr/bin/env bash
-# CIFAR10 + ResNet18CIFAR，MinMax 攻击 + DPFLA，10 个客户端进程（3 恶意），50 轮全量分布式。
-# 用法：bash scripts/run_distributed_full.sh smoke|full
-# 日志只写入 logs_dist_full/：smoke_2r 为链路/显存体检，full50 为正式实验。
+# MinMax + DPFLA，10 个客户端进程（3 恶意），server + 10 client 共 11 条 TB 曲线。
+# 用法：bash scripts/run_distributed_full.sh smoke|full [cifar10|visdrone]
+# 日志只写入 logs_dist_full/；TB 同时写入 tb/ 与云平台 /root/tf-logs。
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 MODE="${1:-full}"
+DATASET="${2:-cifar10}"
+
 if [[ "$MODE" == "smoke" ]]; then
   ROUNDS=2
   OUT="$ROOT/logs_dist_full/smoke_2r"
-  TIMEOUT=900
 else
   ROUNDS=50
   OUT="$ROOT/logs_dist_full/full50"
-  TIMEOUT=7200
+fi
+
+if [[ "$DATASET" == "visdrone" ]]; then
+  BATCH=16
+  TEST_BATCH=64
+  LR=0.0002
+  MODEL_SIZE=m
+  IMAGE_SIZE=1280
+  AMP=1
+  if [[ "$MODE" == "smoke" ]]; then TIMEOUT=7200; CLIENT_EVAL=64; else TIMEOUT=43200; CLIENT_EVAL=0; fi
+  EXTRA=(--visdrone-root /root/autodl-tmp/data/visdrone)
+elif [[ "$DATASET" == "cifar10" ]]; then
+  BATCH=64
+  TEST_BATCH=1000
+  LR=0.01
+  MODEL_SIZE=n
+  IMAGE_SIZE=32
+  AMP=0
+  if [[ "$MODE" == "smoke" ]]; then TIMEOUT=1800; CLIENT_EVAL=1000; else TIMEOUT=7200; CLIENT_EVAL=0; fi
+  EXTRA=()
+else
+  echo "unknown dataset: $DATASET" >&2
+  exit 2
 fi
 
 mkdir -p "$OUT"
 
-# 正式实验前把同目录的旧 full50 产物移出，避免覆盖；不删除。
-if [[ "$MODE" == "full" && -d "$OUT/cifar10" ]]; then
-  ARCH="/root/dpfla_cleanup_20261101/dist_full_previous_$(date +%Y%m%d_%H%M%S)"
+# 同数据集旧正式产物移出归档，不删除；另一数据集的结果保留。
+if [[ "$MODE" == "full" && -d "$OUT/$DATASET" ]]; then
+  ARCH="/root/dpfla_cleanup_20261101/dist_full_previous_${DATASET}_$(date +%Y%m%d_%H%M%S)"
   mkdir -p "$ARCH"
-  mv "$OUT"/* "$ARCH"/ 2>/dev/null || true
+  mv "$OUT/$DATASET" "$ARCH"/
+fi
+if [[ "$MODE" == "smoke" ]]; then
+  rm -rf "$OUT/$DATASET"
 fi
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 python run_distributed_smoke.py \
   --role orchestrator \
-  --dataset cifar10 \
+  --dataset "$DATASET" \
   --scenario minmax \
   --defense dpfla \
   --num-clients 10 \
   --rounds "$ROUNDS" \
-  --batch-size 64 \
-  --test-batch-size 1000 \
+  --batch-size "$BATCH" \
+  --test-batch-size "$TEST_BATCH" \
   --test-samples 0 \
-  --lr 0.01 \
+  --lr "$LR" \
   --local-epochs 1 \
   --seed 7 \
   --malicious-rate 0.3 \
   --full-data \
+  --model-size "$MODEL_SIZE" \
+  --image-size "$IMAGE_SIZE" \
+  --amp "$AMP" \
   --device cuda \
   --workdir "$OUT" \
   --timeout "$TIMEOUT" \
   --bind-host 127.0.0.1 \
-  --server-host 127.0.0.1
+  --server-host 127.0.0.1 \
+  --tb11 \
+  --client-eval-samples "$CLIENT_EVAL" \
+  "${EXTRA[@]}"
