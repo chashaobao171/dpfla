@@ -217,6 +217,8 @@ class FL:
                             'tricycle', 'truck', 'awning-tricycle', 'bus', 'motor'
                         ])},
                         'model_size': getattr(model, 'model_size', 's'),
+                        'model_family': getattr(model, 'model_family', '8'),
+                        'model_weights': getattr(model, '_weights_name', ''),
                     }
                     torch.save(checkpoint, weights_path)
 
@@ -233,13 +235,21 @@ from ultralytics.nn.modules.head import Detect
 import torch.nn as nn
 
 ckpt = torch.load({weights_path!r}, map_location='cpu', weights_only=False)
-m = YOLO(f"yolov8{{ckpt['model_size']}}.pt")
+_fam = str(ckpt.get('model_family', '8'))
+_size = ckpt['model_size']
+_weights = ckpt.get('model_weights') or (f"yolo26{{_size}}.pt" if _fam == '26' else f"yolov8{{_size}}.pt")
+m = YOLO(_weights)
 m.model.eval()
 orig_head = m.model.model[-1]
 
 if isinstance(orig_head, Detect):
     ch = tuple(orig_head.cv2[i][0].conv.in_channels for i in range(orig_head.nl))
-    new_head = Detect(nc=ckpt['nc'], ch=ch)
+    new_head = Detect(
+        nc=ckpt['nc'],
+        reg_max=orig_head.reg_max,
+        end2end=orig_head.end2end,
+        ch=ch,
+    )
     # 复制原始 Detect 头的全部自定义属性（避免 validator 遍历时 AttributeError）
     new_head.i = getattr(orig_head, 'i', None)
     new_head.type = getattr(orig_head, 'type', '')
@@ -654,7 +664,9 @@ print(json.dumps(res))
         # 2. /root/tf-logs/ - AutoDL 平台监控目录（仅本机，仓库外）
         # 命名含 模型大小 / 分辨率 / 运行时间戳 → 每次运行独立目录，TensorBoard 中互不混淆
         _env_size = (os.environ.get("YOLO_MODEL_SIZE") or "").strip().lower()
-        _size_tag = f"yolov8{_env_size}_" if _env_size in ("n", "s", "m", "l", "x") else ""
+        _env_family = (os.environ.get("YOLO_MODEL_FAMILY") or "8").strip()
+        _fam_tag = "yolo26" if _env_family == "26" else "yolov8"
+        _size_tag = f"{_fam_tag}{_env_size}_" if _env_size in ("n", "s", "m", "l", "x") else ""
         _img_sz = int(os.environ.get("FL_IMG_SIZE", "640"))
         _run_ts = time.strftime("%Y%m%d_%H%M")
         run_name = (

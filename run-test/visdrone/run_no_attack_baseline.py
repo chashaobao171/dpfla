@@ -46,6 +46,7 @@ from visdrone_fed_hparams import (
     CPU_THREADS,
     DATALOADER_WORKERS,
     apply_default_yolo_model_size,
+    yolo_weights_name,
 )
 
 _yolo_sz = apply_default_yolo_model_size()
@@ -83,7 +84,7 @@ from server import run_exp
 print("=" * 70)
 print("VisDrone 基线：无攻击 + FedAvg（与 DPFLA / FedAvg+攻击 共用 visdrone_fed_hparams）")
 print("=" * 70)
-print(f"- YOLO: yolov8{_yolo_sz}.pt（可用 YOLO_MODEL_SIZE 覆盖）")
+print(f"- YOLO: {yolo_weights_name(_yolo_sz)}（可用 YOLO_MODEL_FAMILY / YOLO_MODEL_SIZE 覆盖）")
 print(f"- {NUM_WORKERS} 客户端, {GLOBAL_ROUNDS} 轮 × {LOCAL_EPOCHS} local epoch")
 print(f"- train_bs={TRAIN_BATCH_SIZE}, test_bs={TEST_BATCH_SIZE}, LOCAL_LR={LOCAL_LR}, schedule={LR_SCHEDULE}")
 print("=" * 70)

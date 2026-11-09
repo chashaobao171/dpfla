@@ -198,7 +198,8 @@ def job_env(job: dict, rounds: int) -> dict:
         })
     else:
         env.update({
-            "YOLO_MODEL_SIZE": "m",
+            "YOLO_MODEL_FAMILY": os.environ.get("FULL50_YOLO_FAMILY", "26"),
+            "YOLO_MODEL_SIZE": os.environ.get("FULL50_YOLO_SIZE", "s"),
             "FL_IMG_SIZE": "1280",
             "FL_AMP": "1",
             "FL_LOCAL_EPOCHS": "1",
@@ -216,7 +217,10 @@ def tb_prefix(job: dict) -> str:
     mr = "0.3" if job["attack"] != "no_attack" else "0.0"
     if job["dataset"] == "cifar10":
         return f"CIFAR10_ResNet18CIFAR_{job['rule']}_attack-{job['attack']}_mr-{mr}_img640_"
-    return f"VisDrone_YOLO_{job['rule']}_attack-{job['attack']}_mr-{mr}_yolov8m_img1280_"
+    fam = os.environ.get("FULL50_YOLO_FAMILY", "26")
+    size = os.environ.get("FULL50_YOLO_SIZE", "s")
+    fam_tag = f"yolo26{size}" if fam == "26" else f"yolov8{size}"
+    return f"VisDrone_YOLO_{job['rule']}_attack-{job['attack']}_mr-{mr}_{fam_tag}_img1280_"
 
 
 def same_prefix_dirs(prefix: str):

@@ -30,8 +30,9 @@ assert _spec.loader is not None
 _spec.loader.exec_module(_detach)
 _detach.maybe_detach()
 
-# VisDrone 正式对比口径（防止漏设 env 回落 v8s@640）
-os.environ.setdefault("YOLO_MODEL_SIZE", "m")
+# VisDrone 正式对比口径（YOLO26s 为首选；历史 v8m 复现需显式 YOLO_MODEL_FAMILY=8 YOLO_MODEL_SIZE=m）
+os.environ.setdefault("YOLO_MODEL_FAMILY", "26")
+os.environ.setdefault("YOLO_MODEL_SIZE", "s")
 os.environ.setdefault("FL_IMG_SIZE", "1280")
 os.environ.setdefault("FL_AMP", "1")
 os.environ.setdefault("FL_TRAIN_BATCH_SIZE", "16")
@@ -62,6 +63,7 @@ from visdrone_fed_hparams import (
     CPU_THREADS,
     DATALOADER_WORKERS,
     apply_default_yolo_model_size,
+    yolo_weights_name,
 )
 
 RULE = (os.environ.get("FL_RULE") or "DPFLA").strip()
@@ -106,7 +108,7 @@ print("=" * 70)
 print(f"VisDrone：多标签全翻转（{FLIP_MAPPING}）+ {RULE}")
 print("=" * 70)
 print(f"- {NUM_WORKERS} 客户端，恶意率 {MALICIOUS_RATE * 100:.0f}%，翻转比例 {FLIP_RATIO:.2f}")
-print(f"- YOLO: yolov8{_yolo_sz}.pt @ {_img_sz}, bs={TRAIN_BATCH_SIZE}, test_bs={TEST_BATCH_SIZE}")
+print(f"- YOLO: {yolo_weights_name(_yolo_sz)} @ {_img_sz}, bs={TRAIN_BATCH_SIZE}, test_bs={TEST_BATCH_SIZE}")
 print(f"- {GLOBAL_ROUNDS} 轮 × {LOCAL_EPOCHS} epoch")
 print("=" * 70)
 

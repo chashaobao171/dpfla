@@ -44,7 +44,8 @@
   3. CIFAR10 回归目标不变：有攻防 **≥65%**，DPFLA 比 Multi-Krum / Trimmed-Mean **高 ≥2%**。
 - **主硬门槛**：VisDrone **攻击 + DPFLA ≥35%**。因 DPFLA 在攻击下通常比无攻击基线低约 **1.2 点**，Phase 1 的无攻击基线**预门槛设为 ≥36.2%**；达不到先调训练配方，不进入攻击矩阵。CIFAR 65% 当前有 3–5 点余量，不是瓶颈。
 - **约束**：恶意率仍固定 30%、IID、不放大梯度、单变量；不复用 v8m/v8s 的数值结论，必须重跑 YOLO26s 自己的基线/攻击/防御矩阵。
-- **计划**：见 `MEMORY/10_YOLO26s_Plan.md`；代码改造清单（yolo_wrapper/model/DPFLA/fl_core/分布式/队列表）待确认后执行。本任务完成前，`00/01/03/08/09` 中的 v8m/v8s 数值仅作历史参照。
+- **计划**：见 `MEMORY/10_YOLO26s_Plan.md`；**Phase 0 已完成（2026-11-09）**——代码参数化 + 1280 端到端冒烟通过：基线 R1 5.06%、MinMax+DPFLA R1 5.03%（1 轮×1 epoch，仅链路验证），攻击/DPFLA/评估均无 KeyError/NaN/OOM。下一步 Phase 1：5 轮 → 15 轮×3 local epochs 基线，预门槛 ≥36.2%。
+- **代码改造清单（已完成）**：`yolo_wrapper`（family/换头/E2ELoss/device）、`model.py`、`DPFLA`（动态 layer22/23）、`fl_core`（评估子进程/TB family）、分布式 CLI、50 轮队列、VisDrone 入口默认值。历史 v8m/v8s 复现需显式 `YOLO_MODEL_FAMILY=8`。
 
 ## 历史进度（2026-10-23，15/5 轮口径）
 

@@ -44,6 +44,7 @@ from visdrone_fed_hparams import (
     CPU_THREADS,
     DATALOADER_WORKERS,
     apply_default_yolo_model_size,
+    yolo_weights_name,
 )
 
 _yolo_sz = apply_default_yolo_model_size()
@@ -93,7 +94,7 @@ print(f"- {NUM_WORKERS} 客户端，恶意率 {MALICIOUS_RATE * 100:.0f}%（约 
 print("- 攻击类型: 标签翻转攻击 (label_flipping)")
 print("- 聚合算法: DPFLA（有防御，SVD+K-Means 异常检测）")
 print(f"- {GLOBAL_ROUNDS} 轮 × {LOCAL_EPOCHS} epoch（与 visdrone_fed_hparams 一致）")
-print(f"- YOLO: yolov8{_yolo_sz}.pt（默认来自 visdrone_fed_hparams，可用 YOLO_MODEL_SIZE 覆盖）")
+print(f"- YOLO: {yolo_weights_name(_yolo_sz)}（默认来自 visdrone_fed_hparams，可用 YOLO_MODEL_FAMILY / YOLO_MODEL_SIZE 覆盖）")
 print(f"- 设备: {device}")
 print(f"- train_bs={TRAIN_BATCH_SIZE}, test_bs={TEST_BATCH_SIZE}, cpu_threads={CPU_THREADS}")
 print(f"- 学习率: LOCAL_LR={LOCAL_LR}, LR_MIN={LR_MIN}, schedule={LR_SCHEDULE}")

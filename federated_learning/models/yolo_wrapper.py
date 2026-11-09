@@ -89,7 +89,7 @@ class YOLOWrapper(nn.Module):
     - 添加虚拟fc2层以兼容DPFLA算法
     """
     
-    def __init__(self, model_size='s', num_classes=10, pretrained=True, model_path=None):
+    def __init__(self, model_size='s', num_classes=10, pretrained=True, model_path=None, model_family=None):
         """
         初始化YOLO封装类
         
@@ -98,9 +98,28 @@ class YOLOWrapper(nn.Module):
             num_classes: 目标检测类别数（用于联邦学习框架，实际YOLO保持80类）
             pretrained: 是否使用预训练权重（默认True，强烈推荐）
             model_path: 本地模型文件路径(可选，优先使用)
+            model_family: '8'=YOLOv8（历史默认），'26'=YOLO26（边缘终端首选）
         """
         super().__init__()
         self.model_size = model_size
+        _family = str(model_family or os.environ.get('YOLO_MODEL_FAMILY', '8')).strip()
+        if _family not in ('8', '26'):
+            logger.warning(f"无效的 YOLO_MODEL_FAMILY={_family!r}，回退为 '8'（YOLOv8）")
+            _family = '8'
+        self.model_family = _family
+        _required_family = (os.environ.get('FL_REQUIRE_YOLO_FAMILY') or '').strip()
+        if _required_family and _required_family != self.model_family:
+            raise RuntimeError(
+                f"FL_REQUIRE_YOLO_FAMILY={_required_family}，但实际 YOLO_MODEL_FAMILY={self.model_family}；"
+                "请检查环境变量，避免误用模型族"
+            )
+        self._family_tag = 'YOLO26' if self.model_family == '26' else 'YOLOv8'
+        self._weights_name = (
+            f'yolo26{model_size}.pt' if self.model_family == '26' else f'yolov8{model_size}.pt'
+        )
+        self._yaml_name = (
+            f'yolo26{model_size}.yaml' if self.model_family == '26' else f'yolov8{model_size}.yaml'
+        )
         self.num_classes = num_classes  # 联邦学习框架 / 检测头类别数（VisDrone=10）
         self.yolo_classes = num_classes  # 检测头实际类别数（与 yaml val、训练标签一致）
         self.use_yolo = False
@@ -110,11 +129,10 @@ class YOLOWrapper(nn.Module):
         self._error_counts = {}
         self._max_error_logs = 2  # 每种错误最多输出2次
         
-        logger.info(f'--> Creating YOLOv8{model_size} (pretrained backbone, detection nc={num_classes}, aligned with VisDrone val)')
+        logger.info(f'--> Creating {self._family_tag}{model_size} (pretrained backbone, detection nc={num_classes}, aligned with VisDrone val)')
         
         try:
             from ultralytics import YOLO
-            import os
             
             # 禁用ultralytics的详细输出和profiling
             os.environ['YOLO_VERBOSE'] = 'False'
@@ -130,14 +148,14 @@ class YOLOWrapper(nn.Module):
                 self.yolo = YOLO(model_path, verbose=False)
                 logger.info(f'✓ Loaded YOLO from local file: {model_path}')
             elif pretrained:
-                logger.info(f'→ Loading pretrained YOLOv8{model_size} model...')
-                self.yolo = YOLO(f'yolov8{model_size}.pt', verbose=False)
-                logger.info(f'✓ Loaded pretrained YOLOv8{model_size} (COCO head 将在下方替换为 nc={num_classes})')
+                logger.info(f'→ Loading pretrained {self._family_tag}{model_size} model ({self._weights_name})...')
+                self.yolo = YOLO(self._weights_name, verbose=False)
+                logger.info(f'✓ Loaded pretrained {self._family_tag}{model_size} (COCO head 将在下方替换为 nc={num_classes})')
             else:
                 # 从yaml配置创建新模型
-                logger.info(f'→ Creating YOLOv8{model_size} from scratch...')
-                self.yolo = YOLO(f'yolov8{model_size}.yaml', verbose=False)
-                logger.info(f'✓ Created YOLOv8{model_size} from scratch')
+                logger.info(f'→ Creating {self._family_tag}{model_size} from scratch ({self._yaml_name})...')
+                self.yolo = YOLO(self._yaml_name, verbose=False)
+                logger.info(f'✓ Created {self._family_tag}{model_size} from scratch')
             
             # 获取底层PyTorch模型（DetectionModel）
             self.model = self.yolo.model  # 这是DetectionModel实例
@@ -145,7 +163,6 @@ class YOLOWrapper(nn.Module):
 
             from types import SimpleNamespace
             from ultralytics.nn.modules.head import Detect
-            from ultralytics.utils.loss import v8DetectionLoss
 
             # 换头前（可选）：在 coco128 上跑一次 val，日志里多一行 COCO 预训练 mAP。
             # 默认关闭，避免每次启动下载/生成项目下 datasets/coco128。需要时: FL_RUN_COCO_PRETRAINED_VAL=1
@@ -157,7 +174,7 @@ class YOLOWrapper(nn.Module):
                 and num_classes != _head0.nc
                 and os.environ.get("FL_RUN_COCO_PRETRAINED_VAL", "").strip() == "1"
             ):
-                pt_for_val = os.path.abspath(os.path.expanduser(model_path)) if model_path else f'yolov8{model_size}.pt'
+                pt_for_val = os.path.abspath(os.path.expanduser(model_path)) if model_path else self._weights_name
                 dev_arg = 0 if torch.cuda.is_available() else "cpu"
                 baseline = _run_official_weights_coco128_val(pt_for_val, dev_arg)
                 if baseline:
@@ -188,13 +205,29 @@ class YOLOWrapper(nn.Module):
                 for key, val in default_hyp.items():
                     if not hasattr(self.model.args.hyp, key):
                         setattr(self.model.args.hyp, key, val)
+
+            # ultralytics 8.4 的 v8DetectionLoss/E2ELoss 直接读取 model.args.box/cls/dfl，
+            # 而不是 model.args.hyp；YOLO26 checkpoint 的 args 是 dict，缺这些键。
+            for key, val in default_hyp.items():
+                if not hasattr(self.model.args, key):
+                    setattr(self.model.args, key, val)
+            # E2ELoss.update() 会读取 hyp.epochs；本项目不调用 update，仍补齐以防未来使用。
+            if not hasattr(self.model.args, 'epochs'):
+                self.model.args.epochs = 100
             
             # P0：将 COCO 80 类检测头替换为与 VisDrone / yaml val 一致的 nc（默认 10），训练标签与评估同一 id 空间
             head = self.model.model[-1]
             if isinstance(head, Detect) and head.nc != num_classes:
                 ch = tuple(head.cv2[i][0].conv.in_channels for i in range(head.nl))
                 dev = next(self.model.parameters()).device
-                new_head = Detect(nc=num_classes, ch=ch)
+                # YOLO26: reg_max=1, end2end=True；YOLOv8: reg_max=16, end2end=False。
+                # 必须保留原头部的这两个属性，否则 E2E 结构/输出与损失不匹配。
+                new_head = Detect(
+                    nc=num_classes,
+                    reg_max=head.reg_max,
+                    end2end=head.end2end,
+                    ch=ch,
+                )
                 new_head.f = head.f
                 new_head.i = head.i
                 new_head.stride = head.stride.clone().to(dev)
@@ -202,7 +235,10 @@ class YOLOWrapper(nn.Module):
                 new_head.training = True
                 new_head.bias_init()
                 self.model.model[-1] = new_head
-                logger.info(f'✓ 检测头已替换: nc {head.nc} → {num_classes}（骨干仍为 COCO 预训练）')
+                logger.info(
+                    f'✓ 检测头已替换: nc {head.nc} → {num_classes} '
+                    f'(reg_max={head.reg_max}, end2end={head.end2end}；骨干仍为 COCO 预训练)'
+                )
             elif isinstance(head, Detect):
                 logger.info(f'✓ 检测头 nc={head.nc} 已与 num_classes={num_classes} 一致，跳过替换')
             
@@ -225,7 +261,8 @@ class YOLOWrapper(nn.Module):
             if hasattr(self.model, 'yaml') and isinstance(self.model.yaml, dict):
                 self.model.yaml['nc'] = num_classes
             
-            self.model.criterion = v8DetectionLoss(self.model)
+            self.model.criterion = self.model.init_criterion()
+            logger.info(f'✓ criterion 初始化: {type(self.model.criterion).__name__}（family={self.model_family}）')
             
             # 步骤4：直接修复criterion内部的hyp属性（以防万一）
             if hasattr(self.model.criterion, 'hyp'):
@@ -313,6 +350,21 @@ class YOLOWrapper(nn.Module):
         """
         if obj is None:
             return
+
+        # YOLO26 的 E2ELoss 把两个 v8DetectionLoss 藏在 one2many/one2one 里；
+        # 通用循环会因它们是 callable 而跳过，必须显式递归。
+        for child_name in ('one2many', 'one2one'):
+            child = getattr(obj, child_name, None)
+            if child is not None:
+                self._move_criterion_to_device(child, device)
+
+        # v8DetectionLoss/E2ELoss 的子损失用 self.device 创建 anchor/imgsz 张量；
+        # 只移动 stride/proj 不够，必须同步 device。
+        if hasattr(obj, 'device'):
+            try:
+                obj.device = device
+            except Exception:
+                pass
             
         # 关键组件1：移动proj（DFL投影矩阵）
         if hasattr(obj, 'proj') and isinstance(obj.proj, torch.Tensor):

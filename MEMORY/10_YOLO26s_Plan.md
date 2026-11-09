@@ -140,6 +140,14 @@ LOCAL_LR=2e-4 / constant / seed 对齐 Arguments 默认
 3. 记录：实际参数量（换头后约 9.96M）、峰值显存、单轮耗时、TB 目录名是否含 `yolo26s`。
 4. **G0**：无 OOM/NaN；参数量正确；日志明确 `yolo26s`；1 轮 mAP 正常（非 0 即可，不做精度结论）。
 
+**2026-11-09 实测（Phase 0 完成）**：
+
+- 基线 1 轮 × 1 local epoch：初始 mAP 0.01%，**R1 5.06%**，loss 284.06，5.1 min；无 OOM/NaN。
+- MinMax + DPFLA 1 轮 × 1 local epoch：**R1 5.03%**，loss 284.68，5.8 min；攻击已注入（3/10），DPFLA Detect=layer 23，恶意端 aux=0.666 → 权重 0.020，诚实端 0.200–0.451 → 权重 1.000。
+- 换头后参数量 **9,955,604**；1280/BS16/AMP 冒烟显存充足。
+- 日志：`logs_3/visdrone/run_no_attack_baseline_20261109_1228.log`、`logs_3/visdrone/run_screen_minmax_DPFLA_20261109_1234.log`。
+- ⚠️ 1 轮/1 epoch 只验证链路，**不是精度结论**；v26s 的 MinMax aux=0.666 低于 v8m（0.844/0.874），Phase 2 需监控 0.75 阈值。
+
 ### Phase 1 — YOLO26s 基线校准（决定后续口径）
 
 | 步骤 | 配置 | 目的 | 门槛 |
@@ -253,4 +261,4 @@ Phase 5 分布式 YOLO26s 可用性 → G5
 Phase 6 归档 + 回写 01_Facts / 00 / 03 / 08 / 09
 ```
 
-**当前状态**：YOLO26s 已确认开源且本地可加载/换头/反传；快照分支已建；本计划待用户确认代码改造清单后进入 Phase 0。未确认前不改训练/模型代码。
+**当前状态**：YOLO26s 已确认开源且本地可加载/换头/反传；**Phase 0 代码改造与端到端冒烟已完成（2026-11-09）**；下一步 Phase 1（5 轮 → 15 轮×3 local epochs 基线，预门槛 ≥36.2%）。

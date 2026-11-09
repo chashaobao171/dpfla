@@ -117,6 +117,7 @@ class SmokeConfig:
     lr: float = 0.01
     local_epochs: int = 1
     model_size: str = "n"
+    model_family: str = "26"
     image_size: int = 32
     amp: int = 0
     malicious_rate: Optional[float] = None
@@ -198,6 +199,7 @@ def _config_from_args(args: argparse.Namespace) -> SmokeConfig:
         lr=lr,
         local_epochs=args.local_epochs,
         model_size=args.model_size or "n",
+        model_family=args.model_family or "26",
         image_size=image_size,
         amp=args.amp,
         malicious_rate=args.malicious_rate,
@@ -219,6 +221,7 @@ def _config_from_args(args: argparse.Namespace) -> SmokeConfig:
 def _apply_env(cfg: SmokeConfig) -> None:
     """子进程和父进程都设置；确保导入项目模块前生效。"""
     os.environ["YOLO_MODEL_SIZE"] = cfg.model_size
+    os.environ["YOLO_MODEL_FAMILY"] = cfg.model_family
     os.environ["FL_IMG_SIZE"] = str(cfg.image_size)
     os.environ["FL_AMP"] = str(cfg.amp)
     os.environ["FL_TRAIN_BATCH_SIZE"] = str(cfg.batch_size)
@@ -636,6 +639,7 @@ def _child_env(cfg: SmokeConfig) -> Dict[str, str]:
     env = os.environ.copy()
     env.update({
         "YOLO_MODEL_SIZE": cfg.model_size,
+        "YOLO_MODEL_FAMILY": cfg.model_family,
         "FL_IMG_SIZE": str(cfg.image_size),
         "FL_AMP": str(cfg.amp),
         "FL_TRAIN_BATCH_SIZE": str(cfg.batch_size),
@@ -683,6 +687,7 @@ def _run_one(cfg: SmokeConfig) -> Dict[str, Any]:
         "--lr", str(cfg.lr),
         "--local-epochs", str(cfg.local_epochs),
         "--model-size", cfg.model_size,
+        "--model-family", cfg.model_family,
         "--image-size", str(cfg.image_size),
         "--amp", str(cfg.amp),
         "--device", cfg.device,
@@ -904,6 +909,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--lr", type=float, default=None)
     parser.add_argument("--local-epochs", type=int, default=1)
     parser.add_argument("--model-size", default=None, choices=("n", "s", "m", "l", "x"))
+    parser.add_argument("--model-family", default=None, choices=("8", "26"),
+                        help="8=YOLOv8, 26=YOLO26 (default: 26)")
     parser.add_argument("--image-size", type=int, default=None)
     parser.add_argument("--amp", type=int, default=0, choices=(0, 1))
     parser.add_argument("--malicious-rate", type=float, default=None,

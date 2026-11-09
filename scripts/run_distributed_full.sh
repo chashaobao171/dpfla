@@ -22,7 +22,8 @@ if [[ "$DATASET" == "visdrone" ]]; then
   BATCH=16
   TEST_BATCH=64
   LR=0.0002
-  MODEL_SIZE=m
+  MODEL_FAMILY=${YOLO_MODEL_FAMILY:-26}
+  MODEL_SIZE=${YOLO_MODEL_SIZE:-s}
   IMAGE_SIZE=1280
   AMP=1
   # 50 轮全量实测约 14h；18h 总超时兜底，避免再次被 12h 截断。
@@ -34,6 +35,7 @@ elif [[ "$DATASET" == "cifar10" ]]; then
   BATCH=64
   TEST_BATCH=1000
   LR=0.01
+  MODEL_FAMILY=8
   MODEL_SIZE=n
   IMAGE_SIZE=32
   AMP=0
@@ -75,6 +77,7 @@ python run_distributed_smoke.py \
   --malicious-rate 0.3 \
   --full-data \
   --model-size "$MODEL_SIZE" \
+  --model-family "$MODEL_FAMILY" \
   --image-size "$IMAGE_SIZE" \
   --amp "$AMP" \
   --device cuda \

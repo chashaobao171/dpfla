@@ -80,6 +80,7 @@ class Config:
     lr: float = 0.01
     local_epochs: int = 1
     model_size: str = "n"
+    model_family: str = "26"
     image_size: int = 32
     amp: int = 0
     malicious_rate: Optional[float] = None
@@ -238,7 +239,8 @@ def _profile_defaults(profile: str, dataset: str) -> Config:
             cfg.test_batch_size = 64
             cfg.lr = 2e-4
             cfg.local_epochs = 3
-            cfg.model_size = "m"
+            cfg.model_family = "26"
+            cfg.model_size = "s"
             cfg.image_size = 1280
             cfg.amp = 1
             cfg.malicious_rate = 0.3
@@ -303,6 +305,11 @@ def _ask_training(cfg: Config) -> None:
             0,
         )
     else:
+        cfg.model_family = _ask_choice(
+            "YOLO 模型族：",
+            [("26", "YOLO26（首选）"), ("8", "YOLOv8（历史/备选）")],
+            cfg.model_family,
+        )
         cfg.model_size = _ask_choice(
             "YOLO 模型尺寸：",
             [("n", "nano"), ("s", "small"), ("m", "medium"), ("l", "large"), ("x", "xlarge")],
@@ -351,6 +358,7 @@ def _build_argv(cfg: Config, role: Optional[str] = None) -> list[str]:
         "--lr", str(cfg.lr),
         "--local-epochs", str(cfg.local_epochs),
         "--model-size", cfg.model_size,
+        "--model-family", cfg.model_family,
         "--image-size", str(cfg.image_size),
         "--amp", str(cfg.amp),
         "--device", cfg.device,

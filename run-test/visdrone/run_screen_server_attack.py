@@ -30,8 +30,9 @@ assert _spec.loader is not None
 _spec.loader.exec_module(_detach)
 _detach.maybe_detach()
 
-# VisDrone 正式对比口径（防止漏设 env 回落 v8s@640）
-os.environ.setdefault("YOLO_MODEL_SIZE", "m")
+# VisDrone 正式对比口径（YOLO26s 为首选；历史 v8m 复现需显式 YOLO_MODEL_FAMILY=8 YOLO_MODEL_SIZE=m）
+os.environ.setdefault("YOLO_MODEL_FAMILY", "26")
+os.environ.setdefault("YOLO_MODEL_SIZE", "s")
 os.environ.setdefault("FL_IMG_SIZE", "1280")
 os.environ.setdefault("FL_AMP", "1")
 os.environ.setdefault("FL_TRAIN_BATCH_SIZE", "16")
@@ -63,6 +64,7 @@ from visdrone_fed_hparams import (
     CPU_THREADS,
     DATALOADER_WORKERS,
     apply_default_yolo_model_size,
+    yolo_weights_name,
 )
 
 SERVER_ATTACK = (os.environ.get("FL_SERVER_ATTACK") or "minmax").strip().lower()
@@ -113,7 +115,7 @@ print("\n配置:")
 print(f"- {NUM_WORKERS} 客户端，恶意率 {MALICIOUS_RATE * 100:.0f}%（约 {int(MALICIOUS_RATE * NUM_WORKERS)} 个）")
 print(f"- 攻击: {SERVER_ATTACK}（服务端聚合前注入，不放大）")
 print(f"- 聚合: {RULE}")
-print(f"- YOLO: yolov8{_yolo_sz}.pt @ {_img_sz}, bs={TRAIN_BATCH_SIZE}, AMP={_amp}")
+print(f"- YOLO: {yolo_weights_name(_yolo_sz)} @ {_img_sz}, bs={TRAIN_BATCH_SIZE}, AMP={_amp}")
 print(f"- {GLOBAL_ROUNDS} 轮 × {LOCAL_EPOCHS} epoch（全局上限 15）")
 print(f"- 学习率: LOCAL_LR={LOCAL_LR}, LR_MIN={LR_MIN}, schedule={LR_SCHEDULE}")
 print("=" * 70)

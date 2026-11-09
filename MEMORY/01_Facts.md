@@ -554,3 +554,14 @@ FedAvg vs FedBN 逐轮（同口径）：
 
 - 出处：本机 2026-11-09 临时验证脚本（`yolo26s.pt` + `ultralytics 8.4.50`）；未写入正式实验日志。
 - 结论：YOLO26s 具备集成可行性；但联邦基线/攻击/防御数值必须按 `10_YOLO26s_Plan.md` 重跑，**不得用本次冒烟推断精度**。
+
+### Phase 0 端到端冒烟（2026-11-09）
+
+| 场景 | 配置 | 结果 | 日志 |
+|---|---|---|---|
+| 基线 | 10 客户端 / IID / YOLO26s@1280 / BS16 / AMP / **1 轮 × 1 local epoch** | 初始 0.01%；**R1 mAP@0.5 = 5.06%**，loss 284.06；总耗时 5.1 min；无 OOM/NaN | `logs_3/visdrone/run_no_attack_baseline_20261109_1228.log` |
+| MinMax + DPFLA | 同上 + 30% 恶意（3/10）+ 服务端注入 | **R1 mAP@0.5 = 5.03%**，loss 284.68；总耗时 5.8 min；攻击已应用；DPFLA Detect 层=23；恶意端 aux=0.666 → KMeans 少数簇 / risk 0.98 / **权重 0.020**；诚实端 aux 0.200–0.451 / **权重 1.000** | `logs_3/visdrone/run_screen_minmax_DPFLA_20261109_1234.log` |
+
+- 【重要】以上为 **1 轮 × 1 local epoch** 的链路冒烟，**不是性能/达标签收结论**；mAP 低是训练量极小所致。
+- 【实测】YOLO26s 的 MinMax 恶意端 aux=0.666，低于 v8m 的 0.844/0.874，但仍 >0.60 强否决线；Phase 2 必须监控 aux 分布，必要时重标定 0.75 极强证据阈值。
+- 【实测】端到端链路已打通：v26s 加载 → 10 类 E2E 换头 → 本地训练 → MinMax 注入 → DPFLA 动态 layer23 特征 → 聚合 → 原生 val，无 KeyError/NaN/OOM。

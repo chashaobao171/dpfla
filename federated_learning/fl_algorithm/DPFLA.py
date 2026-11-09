@@ -1,5 +1,6 @@
 import copy
 import time
+import re
 import numpy as np
 import os
 import pickle
@@ -225,21 +226,45 @@ class DPFLA:
         # 根据模型类型选择要分析的层
         if model_name == 'YOLO':
             state_keys = set(global_model.state_dict().keys())
-            # 优先使用检测头分类分支的可比较参数（YOLOv8n 常见键）
-            preferred_keys = [
-                'model.22.cv3.0.2.weight',
-                'model.22.cv3.1.2.weight',
-                'model.22.cv3.2.2.weight',
-            ]
-            layer_keys = [k for k in preferred_keys if k in state_keys]
-
-            # 兼容不同Ultralytics版本：自动抓取检测头cv3末端卷积
-            if not layer_keys:
+            # 动态探测 Detect 层索引：YOLOv8=22，YOLO26=23；不要写死。
+            _head_ids = sorted({
+                int(m.group(1))
+                for k in state_keys
+                if (m := re.match(r'^model\.(\d+)\.cv3\.\d+\.2\.weight$', k))
+            })
+            layer_keys = []
+            if _head_ids:
+                _head_idx = _head_ids[-1]
                 layer_keys = [
-                    k for k in global_model.state_dict().keys()
-                    if k.startswith('model.22.cv3.') and k.endswith('.2.weight')
+                    f'model.{_head_idx}.cv3.{i}.2.weight'
+                    for i in range(3)
+                    if f'model.{_head_idx}.cv3.{i}.2.weight' in state_keys
                 ]
-                layer_keys = sorted(layer_keys)
+                logger.info(
+                    f"YOLO Detect 层索引={_head_idx}"
+                    f"（family={os.environ.get('YOLO_MODEL_FAMILY', '8')}）"
+                )
+            # 兜底：one2one 分类头（部分 YOLO26/自定义导出）
+            if not layer_keys:
+                _one_ids = sorted({
+                    int(m.group(1))
+                    for k in state_keys
+                    if (m := re.match(r'^model\.(\d+)\.one2one_cv3\.\d+\.2\.weight$', k))
+                })
+                if _one_ids:
+                    _head_idx = _one_ids[-1]
+                    layer_keys = [
+                        f'model.{_head_idx}.one2one_cv3.{i}.2.weight'
+                        for i in range(3)
+                        if f'model.{_head_idx}.one2one_cv3.{i}.2.weight' in state_keys
+                    ]
+                    logger.warning(f"cv3 未命中，回退 one2one_cv3（layer {_head_idx}）")
+            # 最后兜底：旧的 model.22 扫描
+            if not layer_keys:
+                layer_keys = sorted(
+                    k for k in state_keys
+                    if k.startswith('model.22.cv3.') and k.endswith('.2.weight')
+                )
 
             # 兜底：若未找到检测头参数，退回历史fc2（仅保证可运行）
             if not layer_keys:

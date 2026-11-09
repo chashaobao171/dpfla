@@ -44,12 +44,17 @@ def setup_model(model_architecture, num_classes=None, tokenizer=None, embedding_
     elif 'YOLO' in model_architecture:
         # YOLO模型配置
         # 可选环境变量（不改训练脚本即可切换）：
-        #   YOLO_MODEL_SIZE=n|s|m|l|x  — 使用 Ultralytics 官方 COCO 预训练 yolov8*.pt（默认 s，对齐 23.7% 基线口径）
+        #   YOLO_MODEL_FAMILY=8|26  — 8=YOLOv8（历史默认），26=YOLO26（边缘终端首选）
+        #   YOLO_MODEL_SIZE=n|s|m|l|x  — 使用对应家族的 COCO 预训练权重
         #   YOLO_MODEL_PATH=/abs/path.pt — 使用本地权重（如 VisDrone 上微调过的 best.pt），设置时优先于 SIZE
         _size = kwargs.get('model_size') or os.environ.get('YOLO_MODEL_SIZE', 's')
         model_size = _size if _size in ('n', 's', 'm', 'l', 'x') else 's'
         if _size != model_size:
             logger.warning(f"无效的 model_size/YOLO_MODEL_SIZE={_size!r}，回退为 's'")
+        _family = str(os.environ.get('YOLO_MODEL_FAMILY', '8')).strip()
+        if _family not in ('8', '26'):
+            logger.warning(f"无效的 YOLO_MODEL_FAMILY={_family!r}，回退为 '8'（YOLOv8）")
+            _family = '8'
         pretrained = kwargs.get('pretrained', True)  # 默认使用预训练模型
         model_path = kwargs.get('model_path')
         if model_path is None:
@@ -59,7 +64,8 @@ def setup_model(model_architecture, num_classes=None, tokenizer=None, embedding_
             model_size=model_size,
             num_classes=num_classes or 10,
             pretrained=pretrained,
-            model_path=model_path
+            model_path=model_path,
+            model_family=_family,
         )
     else:
         model = available_models[model_architecture]()

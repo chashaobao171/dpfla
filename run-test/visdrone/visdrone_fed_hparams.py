@@ -1,12 +1,13 @@
 """
 全量 VisDrone 联邦实验共用训练超参（非 smoke）。
 
-默认按 **单卡 RTX 4090 48GB** 取稳健上限（尽量吃满算力、避免频繁 OOM）：
-- 模型默认 yolov8s（可 export YOLO_MODEL_SIZE=m 进一步增大）
-- batch / local epoch / 客户端数默认更保守，便于在 4090 上稳定跑满
+默认按 **单卡 32GB GPU** 取稳健上限（尽量吃满算力、避免频繁 OOM）：
+- 2026-11-09 起默认 **YOLO26s**（边缘终端首选）；YOLOv8s 仅作备选
+- 历史复现：`YOLO_MODEL_FAMILY=8 YOLO_MODEL_SIZE=m`（v8m）或 `...=8 ...=s`（v8s）
+- batch / local epoch / 客户端数默认更保守，便于稳定跑满
 
-启动前可 export：YOLO_MODEL_SIZE、FL_GLOBAL_ROUNDS、FL_TRAIN_BATCH_SIZE、FL_LOCAL_EPOCHS、
-FL_NUM_WORKERS、FL_MALICIOUS_RATE（攻击脚本）、FL_CPU_THREADS、FL_DATALOADER_WORKERS 等。
+启动前可 export：YOLO_MODEL_FAMILY、YOLO_MODEL_SIZE、FL_GLOBAL_ROUNDS、FL_TRAIN_BATCH_SIZE、
+FL_LOCAL_EPOCHS、FL_NUM_WORKERS、FL_MALICIOUS_RATE（攻击脚本）、FL_CPU_THREADS、FL_DATALOADER_WORKERS 等。
 
 Smoke 脚本不引用本模块。
 """
@@ -15,11 +16,32 @@ from __future__ import annotations
 
 import os
 
-# 4090 默认 small；需要更强可 export YOLO_MODEL_SIZE=m
+# 2026-11-09 起：YOLO26s 为边缘终端首选；YOLOv8s 仅作备选。
+# 历史 v8m/v8s 复现需显式 export YOLO_MODEL_FAMILY=8 YOLO_MODEL_SIZE=m/s。
+DEFAULT_YOLO_MODEL_FAMILY = "26"
+
+
+def apply_default_yolo_model_family() -> str:
+    cur = (os.environ.get("YOLO_MODEL_FAMILY") or "").strip()
+    if cur in ("8", "26"):
+        return cur
+    os.environ["YOLO_MODEL_FAMILY"] = DEFAULT_YOLO_MODEL_FAMILY
+    return DEFAULT_YOLO_MODEL_FAMILY
+
+
+def yolo_weights_name(size: str | None = None) -> str:
+    """返回当前 family/size 对应的权重文件名（yolo26s.pt / yolov8s.pt）。"""
+    fam = apply_default_yolo_model_family()
+    sz = (size or apply_default_yolo_model_size()).strip().lower()
+    return f"yolo26{sz}.pt" if fam == "26" else f"yolov8{sz}.pt"
+
+
+# 默认 small；需要更强可 export YOLO_MODEL_SIZE=m
 DEFAULT_YOLO_MODEL_SIZE = "s"
 
 
 def apply_default_yolo_model_size() -> str:
+    apply_default_yolo_model_family()
     cur = (os.environ.get("YOLO_MODEL_SIZE") or "").strip().lower()
     if cur in ("n", "s", "m", "l", "x"):
         return cur
