@@ -7,9 +7,13 @@
 ## 2026-11-09
 
 - **YOLOv8m 阶段封存**：从当前 `dev`（`4f6866c`）创建并推送只读快照分支 **`archive/2026-11-09-yolov8m-complete`**，标志 YOLOv8m 上的任务基本完成；该分支不再提交/合并/删除。
-- **新主任务（用户定稿）**：`dev` 转入 **YOLOv8s 迁移**。背景是边缘终端，v8m 联邦训练不现实；VisDrone 检测实验只能用 YOLOv8s，CIFAR10 仍用 ResNet18CIFAR。
-- **验收目标沿用原定要求**：VisDrone 无攻击基线 mAP@0.5 ≥32%；MinMax/IPM 下 DPFLA ≥35% 且领先 Multi-Krum/Trimmed-Mean ≥1%；CIFAR10 ≥65% 且领先两防御 ≥2%。
-- **约束**：恶意率固定 30%、IID、不放大梯度、单变量；v8m 的 50 轮数值只作历史参照，v8s 必须重新跑自己的基线/攻击/防御矩阵。
+- **模型选型变更（用户定稿）**：`dev` 转入 **YOLO26s 迁移**（优先），YOLOv8s 仅作 YOLO26s 集成失败时的备选；背景是边缘终端，v8m 联邦训练不现实。CIFAR10 仍用 ResNet18CIFAR。
+- **YOLO26s 开源核验**：Ultralytics 2026-01-14 发布，AGPL-3.0 + Enterprise；本地 `ultralytics 8.4.50` 已含 `yolo26.yaml`；`yolo26s.pt` 经 `ghproxy.net` 下载成功（19.48MB）。
+  - 【实测】80 类 `10,009,784` 参数；24 层，Detect 在 layer 23，`reg_max=1, end2end=True`；换 10 类头后 `9,955,604` 参数。
+  - 【实测】必须用 `model.init_criterion()` 的 `E2ELoss`（不能硬编码 `v8DetectionLoss`）；需补 `model.args.box/cls/dfl`、递归移动 `one2many/one2one` 并设置 `.device`；完成这些后 1280/BS1 前向+反传通过（GPU reserved ≈0.66GB）。
+- **验收目标沿用原定要求**：VisDrone 无攻击基线 mAP@0.5 ≥32%；MinMax/IPM 下 DPFLA ≥35% 且领先 Multi-Krum/Trimmed-Mean ≥1%；CIFAR10 ≥65% 且领先两防御 ≥2%。主硬门槛是攻击 + DPFLA ≥35%，因此无攻击基线预门槛 ≥36.2%。
+- **v8s 探针中止**：2026-11-09 10:14–10:40 跑 v8s@1280 5 轮基线探针，R1=19.50%、R2=26.18% 后因任务切换 YOLO26s 主动停止；**不完整，不进入 01_Facts，不作结论**。
+- **约束**：恶意率固定 30%、IID、不放大梯度、单变量；v8m/v8s 数值只作历史参照，YOLO26s 必须重跑自己的基线/攻击/防御矩阵。
 
 ## 2026-11-02
 

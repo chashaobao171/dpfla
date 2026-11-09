@@ -475,14 +475,15 @@ P4 分布式改造（可用性验证：CIFAR PASS；VisDrone 待 18h 复跑）
 - 归档索引：`log/README.md`（18 条正式日志）；汇总：`queue/auto_results.md`、`queue_after_vd/auto_results.md`、`queue/defense_metrics.md`。
 - ⚠️ 口径提醒：CIFAR 标签线 M5+48 step（基线 73.74）与 MinMax 线 24 step（基线 71.24）不可横比；VisDrone 50 轮为 12 step/轮（基线 39.65），不可与历史 5/25 轮直接比较。
 
-## §10 YOLOv8s 迁移（2026-11-09 用户定稿，新主任务）★
+## §10 YOLO26s 迁移（2026-11-09 用户定稿，新主任务）★
 
 - **前置状态**：YOLOv8m 阶段已完成并封存到只读分支 `archive/2026-11-09-yolov8m-complete`（`4f6866c`）。
-- **动因**：课题落地场景为**边缘终端**；YOLOv8m 在边缘设备上联邦训练不现实，VisDrone 检测实验**只能使用 YOLOv8s**。CIFAR10 仍用 `ResNet18CIFAR`，不受影响。
+- **动因**：课题落地场景为**边缘终端**；YOLOv8m 在边缘设备上联邦训练不现实。用户 2026-11-09 明确优先 **YOLO26s**（比 YOLOv8s 更小、算力更低、VisDrone 公开 mAP50 更高）；YOLOv8s 仅作集成失败时的备选。CIFAR10 仍用 `ResNet18CIFAR`。
+- **开源核验（2026-11-09）**：YOLO26 于 2026-01-14 发布，AGPL-3.0 + Enterprise；本地 ultralytics 8.4.50 已支持；`yolo26s.pt` 已下载（19.48MB）。【实测】80 类 10,009,784 参数；Detect 在 layer 23、`reg_max=1, end2end=True`；换 10 类头 9,955,604 参数；1280 前向+反传通过（E2ELoss）。
 - **验收目标（沿用原定要求，不降低）**：
   1. VisDrone 无攻击联邦基线 mAP@0.5 **≥32%**。
   2. VisDrone 在 MinMax / IPM 两条攻击线下，DPFLA **≥35%**，且比 Multi-Krum / Trimmed-Mean **高 ≥1%**。
   3. CIFAR10 回归：有攻防 **≥65%**，DPFLA 比 Multi-Krum / Trimmed-Mean **高 ≥2%**。
-- **可行性预判（2026-11-09）**：主硬门槛是 **攻击 + DPFLA ≥35%**；v8m 实测 DPFLA 比无攻击基线低约 1.2 点，因此 v8s 无攻击基线需 **≥36.2%** 才进入攻击矩阵。历史 v8s@1024 R15=35.92，按此推算攻击后约 34.7，**处于临界/不足**；需用 15×3 epoch、1280 或更大训练量把基线推到 36.2 以上。CIFAR 65% 有余量，不是瓶颈。
-- **硬约束**：恶意率 30%、IID、`FL_GRADIENT_SCALE=1`（不放大）、单变量；v8m 的 50 轮数值只作历史参照，**v8s 必须重跑自己的基线/攻击/防御矩阵**。
-- **执行计划**：见 `MEMORY/10_YOLOv8s_Plan.md`（调研后定稿，分阶段 + 验收门槛）。
+- **可行性预判（2026-11-09）**：主硬门槛是 **攻击 + DPFLA ≥35%**；v8m 实测 DPFLA 比无攻击基线低约 1.2 点，因此 YOLO26s 无攻击基线需 **≥36.2%** 才进入攻击矩阵。YOLO26s 公开 VisDrone mAP50 41.0（集中式），G1/G2 属保守目标，但联邦+攻击仍需实测。
+- **硬约束**：恶意率 30%、IID、`FL_GRADIENT_SCALE=1`（不放大）、单变量；v8m/v8s 的数值只作历史参照，**YOLO26s 必须重跑自己的基线/攻击/防御矩阵**。
+- **执行计划**：见 `MEMORY/10_YOLO26s_Plan.md`（含代码改造清单、E2E 损失/换头/DPFLA 特征键风险与分阶段验收门槛）。
