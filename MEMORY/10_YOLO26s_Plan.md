@@ -166,6 +166,7 @@ LOCAL_LR=2e-4 / constant / seed 对齐 Arguments 默认
 - **前置**：Phase 1 的 G1-pre（无攻击基线 ≥36.2）已通过。
 - 8 条：`{MinMax, IPM} × {FedAvg, DPFLA, MKrum, TMean}`，其余与 P1b 完全一致。
 - **G2**：DPFLA ≥35%，且比 MKrum/TMean 都高 ≥1%（末5 为主口径）。
+- **2026-11-09 进展**：**MinMax + DPFLA（11×3 LR1e-3）R10=35.23 / R11=35.69，已达成 ≥35**；仍缺同口径 IPM + DPFLA、MKrum/TMean 对比。
 - 若 DPFLA 不达标，按顺序诊断：
   1. 确认服务端攻击已注入且 `local_models` 已同步。
   2. 打印 YOLO26s 的恶意端/诚实端 aux 分布、KMeans 标签、聚合权重，与 v8m 的 0.707/0.461 对照。
