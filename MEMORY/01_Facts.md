@@ -537,3 +537,20 @@ FedAvg vs FedBN 逐轮（同口径）：
 
 - 失败原因是 orchestrator 12h 超时，不是 OOM / DPFLA / 分布式代码错误；`0a78a7e` 已把 VisDrone 全量超时改为 **18h**（64800s），需从头重跑。
 - 分布式 CIFAR 每次写 11 条 TB 曲线（server + 10 client）；VisDrone 42/50 也保留 11 条 × 42 点。分布式不用于指标对比。
+
+## §10 YOLO26s 集成前置验证（2026-11-09，非训练指标）
+
+> 目的：确认 YOLO26s 开源可用、能在本项目 1280 管线上前向/反传；**不是 VisDrone mAP 结果**。
+
+| 项 | 实测 |
+|---|---|
+| 权重 | `yolo26s.pt` 19.48MB（GitHub/HF 直连超时，经 `ghproxy.net` 镜像下载）；本地 ultralytics 8.4.50 |
+| 结构 | 24 层；Detect 在 **layer 23**；`nc=80, reg_max=1, end2end=True` |
+| 参数量 | 80 类 **10,009,784**；换 VisDrone 10 类头后 **9,955,604** |
+| 换头 | `Detect(nc=10, reg_max=1, end2end=True, ch=(128,256,512))` 可用 |
+| 损失 | 必须用 `model.init_criterion()` 返回的 `E2ELoss`；硬编码 `v8DetectionLoss` 不适用 |
+| 训练前置 | 需补 `model.args.box/cls/dfl`；需递归移动 `E2ELoss.one2many/one2one` 的 `stride/proj/bbox_loss/assigner` 并设置 `.device` |
+| 1280 冒烟 | BS1 前向+反传通过，GPU reserved ≈0.66GB；**未跑联邦/未评估 mAP** |
+
+- 出处：本机 2026-11-09 临时验证脚本（`yolo26s.pt` + `ultralytics 8.4.50`）；未写入正式实验日志。
+- 结论：YOLO26s 具备集成可行性；但联邦基线/攻击/防御数值必须按 `10_YOLO26s_Plan.md` 重跑，**不得用本次冒烟推断精度**。
