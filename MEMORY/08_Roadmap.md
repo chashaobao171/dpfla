@@ -474,3 +474,14 @@ P4 分布式改造（可用性验证：CIFAR PASS；VisDrone 待 18h 复跑）
 - 分布式可用性验证写入 `01_Facts.md` §9：CIFAR 50/50 PASS；VisDrone 42/50 partial（超时），已改 18h。
 - 归档索引：`log/README.md`（18 条正式日志）；汇总：`queue/auto_results.md`、`queue_after_vd/auto_results.md`、`queue/defense_metrics.md`。
 - ⚠️ 口径提醒：CIFAR 标签线 M5+48 step（基线 73.74）与 MinMax 线 24 step（基线 71.24）不可横比；VisDrone 50 轮为 12 step/轮（基线 39.65），不可与历史 5/25 轮直接比较。
+
+## §10 YOLOv8s 迁移（2026-11-09 用户定稿，新主任务）★
+
+- **前置状态**：YOLOv8m 阶段已完成并封存到只读分支 `archive/2026-11-09-yolov8m-complete`（`4f6866c`）。
+- **动因**：课题落地场景为**边缘终端**；YOLOv8m 在边缘设备上联邦训练不现实，VisDrone 检测实验**只能使用 YOLOv8s**。CIFAR10 仍用 `ResNet18CIFAR`，不受影响。
+- **验收目标（沿用原定要求，不降低）**：
+  1. VisDrone 无攻击联邦基线 mAP@0.5 **≥32%**。
+  2. VisDrone 在 MinMax / IPM 两条攻击线下，DPFLA **≥35%**，且比 Multi-Krum / Trimmed-Mean **高 ≥1%**。
+  3. CIFAR10 回归：有攻防 **≥65%**，DPFLA 比 Multi-Krum / Trimmed-Mean **高 ≥2%**。
+- **硬约束**：恶意率 30%、IID、`FL_GRADIENT_SCALE=1`（不放大）、单变量；v8m 的 50 轮数值只作历史参照，**v8s 必须重跑自己的基线/攻击/防御矩阵**。
+- **执行计划**：见 `MEMORY/10_YOLOv8s_Plan.md`（调研后定稿，分阶段 + 验收门槛）。
