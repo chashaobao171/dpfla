@@ -565,3 +565,4 @@ FedAvg vs FedBN 逐轮（同口径）：
 - 【重要】以上为 **1 轮 × 1 local epoch** 的链路冒烟，**不是性能/达标签收结论**；mAP 低是训练量极小所致。
 - 【实测】YOLO26s 的 MinMax 恶意端 aux=0.666，低于 v8m 的 0.844/0.874，但仍 >0.60 强否决线；Phase 2 必须监控 aux 分布，必要时重标定 0.75 极强证据阈值。
 - 【实测】端到端链路已打通：v26s 加载 → 10 类 E2E 换头 → 本地训练 → MinMax 注入 → DPFLA 动态 layer23 特征 → 聚合 → 原生 val，无 KeyError/NaN/OOM。
+- 【实测·配方筛选】YOLO26s **50 轮 × 12 step** 基线在 R1=0.00%、R2=0.88% 后主动停止：12 step/轮对 v26s 明显欠拟合，**不作为正式口径**；改用 15 轮 × 3 local epochs（2026-11-09 12:51 启动，日志 `logs_3/visdrone/run_no_attack_baseline_20261109_1251.log`，结果待回写）。

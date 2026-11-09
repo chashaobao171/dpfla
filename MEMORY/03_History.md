@@ -17,6 +17,7 @@
 - **Phase 0 冒烟通过**：基线 1 轮×1 epoch R1 mAP=5.06%（5.1 min）；MinMax+DPFLA 1 轮×1 epoch R1=5.03%（5.8 min），攻击已注入、DPFLA layer23、恶意端权重 0.020、诚实端 1.000，无 KeyError/NaN/OOM。日志见 `logs_3/visdrone/run_no_attack_baseline_20261109_1228.log` / `run_screen_minmax_DPFLA_20261109_1234.log`；详细数据见 `01_Facts.md` §10。
 - **v8 历史路径回归**：`YOLO_MODEL_FAMILY=8` + v8s 下，换头 `reg_max=16/end2end=False`、criterion=`v8DetectionLoss`，640/BS1 前向+反传通过；v8m/v8s 复现需显式 family=8。
 - **注意**：YOLO26s 的 MinMax 恶意 aux=0.666（低于 v8m 的 0.844/0.874），Phase 2 需监控并可能重标定 0.75 阈值。
+- **50×12 step 配方淘汰**：2026-11-09 12:44 启动 v26s 50 轮×12 step 基线，R1=0.00%、R2=0.88% 后主动停止；12 step/轮对 v26s 欠拟合，改用 **15 轮×3 local epochs**（12:51 启动，日志 `run_no_attack_baseline_20261109_1251.log`）。
 - **约束**：恶意率固定 30%、IID、不放大梯度、单变量；v8m/v8s 数值只作历史参照，YOLO26s 必须重跑自己的基线/攻击/防御矩阵。
 
 ## 2026-11-02
