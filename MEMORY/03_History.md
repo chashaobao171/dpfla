@@ -15,6 +15,7 @@
 - **v8s 探针中止**：2026-11-09 10:14–10:40 跑 v8s@1280 5 轮基线探针，R1=19.50%、R2=26.18% 后因任务切换 YOLO26s 主动停止；**不完整，不进入 01_Facts，不作结论**。
 - **Phase 0 代码改造完成**：`YOLOWrapper` 支持 `YOLO_MODEL_FAMILY=8|26`、family-aware 权重/YAML/日志；换头保留 `reg_max/end2end`；criterion 改用 `model.init_criterion()`（YOLO26=E2ELoss）；补 `model.args.box/cls/dfl`；`_move_criterion_to_device` 显式递归 `one2many/one2one` 并设置 `.device`；`DPFLA` 动态探测 Detect 层（v8=22，v26=23）；`fl_core` 评估子进程与 TB 命名支持 family；分布式 CLI/50 轮队列参数化。
 - **Phase 0 冒烟通过**：基线 1 轮×1 epoch R1 mAP=5.06%（5.1 min）；MinMax+DPFLA 1 轮×1 epoch R1=5.03%（5.8 min），攻击已注入、DPFLA layer23、恶意端权重 0.020、诚实端 1.000，无 KeyError/NaN/OOM。日志见 `logs_3/visdrone/run_no_attack_baseline_20261109_1228.log` / `run_screen_minmax_DPFLA_20261109_1234.log`；详细数据见 `01_Facts.md` §10。
+- **v8 历史路径回归**：`YOLO_MODEL_FAMILY=8` + v8s 下，换头 `reg_max=16/end2end=False`、criterion=`v8DetectionLoss`，640/BS1 前向+反传通过；v8m/v8s 复现需显式 family=8。
 - **注意**：YOLO26s 的 MinMax 恶意 aux=0.666（低于 v8m 的 0.844/0.874），Phase 2 需监控并可能重标定 0.75 阈值。
 - **约束**：恶意率固定 30%、IID、不放大梯度、单变量；v8m/v8s 数值只作历史参照，YOLO26s 必须重跑自己的基线/攻击/防御矩阵。
 
