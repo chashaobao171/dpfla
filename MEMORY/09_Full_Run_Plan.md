@@ -1,6 +1,6 @@
 # 09_Full_Run_Plan.md — 50 轮全量实验与分布式冲突验证计划
 
-<!-- 最后更新：2026-10-29 -->
+<!-- 最后更新：2026-11-09（补执行结果 §7） -->
 <!-- 级别：执行计划。用户 2026-10-29 指令；实测结果完成后回写 01_Facts / 00_Current_State。 -->
 
 ## §0 用户目标（原话要点）
@@ -218,3 +218,22 @@ unset FL_LOCAL_STEPS   # VisDrone 不设步数上限
 - 本计划写入 memory 后提交 `dev`。
 - 分支 `archive/2026-10-29-pre-fullrun` 只读封存。
 - 完成阶段 A 后更新 `01_Facts` / `00_Current_State`；完成阶段 B 后补冲突结论。
+
+## §7 执行结果（2026-11-02）
+
+### 阶段 A：非分布式 18/18 完成
+
+- CIFAR 9 条 + VisDrone 9 条全部跑满 50 轮，无 OOM/NaN；结果已回写 `01_Facts.md` §8，归档索引 `log/README.md`。
+- CIFAR 标签线（M5+48 step）：DPFLA 70.25 / MKrum 67.52 / TMean 66.85 / FedAvg 55.66，基线 73.74（末5）。
+- CIFAR MinMax（24 step）：DPFLA 68.12 / FedAvg 56.58 / TMean 49.51 / MKrum 17.77，基线 71.24（末5）。
+- VisDrone MinMax（12 step）：DPFLA 38.36 / FedAvg 30.23 / TMean 28.12 / MKrum 14.09，基线 39.65。
+- VisDrone IPM（12 step）：DPFLA 38.32 / FedAvg 35.87 / TMean 32.55 / MKrum 26.17，基线 39.65。
+- 四条攻击线 DPFLA 末5 均领先 MKrum/TMean；CIFAR MinMax 与 VisDrone 两线 DPFLA 仍略低于无攻击基线（−3.12 / −1.29 / −1.13）。
+
+### 阶段 B：分布式可用性验证
+
+- **CIFAR10**：10 客户端 × 50 轮 **PASS**；13:06 运行 last=69.98（2232.5s），另一次 12:21 运行 last=70.99（1234.5s）；11 条 TB 曲线（server + 10 client）。
+- **VisDrone**：10 客户端 × 50 轮完成 **42/50** 后因 orchestrator 总超时 43200s（12h）中断；R42 server mAP=36.53%，client 30.45–35.62%；无 `result.json`/checkpoint，不能续跑。`0a78a7e` 已把超时改为 **18h**（64800s），需从头复跑。
+- 失败原因不是 OOM / DPFLA / 分布式代码错误；分布式结果只记录可用性，不写 accuracy/mAP 结论。
+
+**状态**：本计划执行完毕；剩余唯一事项为 VisDrone 分布式 50 轮在 18h 超时下从头复跑。

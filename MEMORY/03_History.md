@@ -1,8 +1,33 @@
 # 03_History.md — 时间线（改动与回退）
 
-<!-- 最后更新：2026-10-29 -->
+<!-- 最后更新：2026-11-09（补记 10-31 ~ 11-02 的 50 轮与分布式结果） -->
 <!-- 追加式：新事件加在最上方。回退/证伪的事件保留，不删除。 -->
 <!-- 结论性判断请以 01_Facts.md 为准；本文件只记"做了什么、结果如何"。 -->
+
+## 2026-11-02
+
+- **50 轮全量非分布式矩阵收官（18/18）**：CIFAR 9 条 + VisDrone 9 条全部跑满 50 轮，无 OOM/NaN；结果回写 `01_Facts.md` §8，归档索引 `log/README.md`。
+  - CIFAR 标签线（M5 全类循环 + 48 step）：DPFLA **70.25** / MKrum 67.52 / TMean 66.85 / FedAvg 55.66，基线 73.74（末5）。
+  - CIFAR MinMax（24 step）：DPFLA **68.12** / FedAvg 56.58 / TMean 49.51 / MKrum 17.77，基线 71.24（末5）。
+  - VisDrone MinMax（12 step）：DPFLA **38.36** / FedAvg 30.23 / TMean 28.12 / MKrum 14.09，基线 39.65。
+  - VisDrone IPM（12 step）：DPFLA **38.32** / FedAvg 35.87 / TMean 32.55 / MKrum 26.17，基线 39.65。
+- **分布式 VisDrone 42/50 部分完成（11-01 14:19 – 11-02 02:19）**：R42 server mAP=36.53%，client 30.45–35.62%；orchestrator 总超时 43200s（12h）中断，不是 OOM/DPFLA/代码错误；无 `result.json`/checkpoint，不能续跑。`0a78a7e` 已把全量超时改为 **18h**（64800s），需从头重跑。详见 `logs_dist_full/full50/visdrone/PARTIAL_42of50.md`。
+- **提交 `376c5eb`**：保留 VisDrone 42/50 partial 与 11 条 mAP TB 曲线、CIFAR 50/50 日志；修复串行 GPU cache 与 12-step 启动器。
+
+## 2026-11-01
+
+- **分布式 CIFAR 10 客户端 × 50 轮 PASS**：12:21 运行 last=70.99（1234.5s）；13:06 运行 last=69.98（2232.5s），提交 `f643381` 以 69.98 为正式记录；每次 11 条 TB 曲线（server + 10 client）。
+- **VisDrone 50 轮剩余 IPM 两臂完成**：IPM + TMean last=32.55（末5 32.08）、IPM + MKrum last=26.17（末5 25.55）→ VisDrone 9 条全部完成。
+- **CIFAR 标签线改用 M5 + 48 step 重跑**（`FL_FLIP_MAPPING` 多类映射，`8cea6ec`）：DPFLA 70.25 / MKrum 67.52 / TMean 66.85 / FedAvg 55.66；基线 48-step 73.74（`741bf74`）。该线替换了 10-31 的 24-step 标签线，成为最终归档（`log/README.md`）。
+- **正式归档整理**：`log/` 只留 18 条完整 50 轮日志（CIFAR 9 + VisDrone 9）；旧 5/15 轮、中断及被替换日志/TB 移至 `/root/dpfla_cleanup_20261101/`，未直接删除。
+
+## 2026-10-31
+
+- **50 轮全量自动队列启动**：09:48 体检通过（CIFAR `label+DPFLA+24 step` R1 10.08 → R5 43.09；VisDrone `MinMax+DPFLA` R1 8.09 → R5 33.01），随后串行跑 18 条。
+- **VisDrone 改为 12 step/轮**（`0c35bc3`）：50×12=600 step ≈ 历史 5 轮 × 3 epoch（615 step），单条约 1.8–2.0h；CIFAR 仍 24 step/轮。
+- **CIFAR 9 条 50 轮完成（24-step 首轮口径）**：基线 71.24；标签线 FedAvg 68.70 / DPFLA 67.57 / MKrum 64.35 / TMean 69.76；MinMax 线 FedAvg 56.58 / DPFLA 68.12 / MKrum 17.77 / TMean 49.51。标签线双指标见 `queue/defense_metrics.md`：TMean global 高但 dog 类仅 35.8，不能视为防御成功。
+- **VisDrone 开始**：基线 39.65；MinMax DPFLA 38.36 / FedAvg 30.23 / TMean 28.12 / MKrum 14.09（至 22:12 完成）。
+- **新增 `FL_FLIP_MAPPING`**（`8cea6ec`）：支持 CIFAR 多类标签翻转映射（JSON），用于 50 轮攻击强度筛选。
 
 ## 2026-10-29
 

@@ -1,6 +1,6 @@
 # 08_Roadmap.md — 高层路线图（用户 2026-10-23 定稿）
 
-<!-- 最后更新：2026-10-29 -->
+<!-- 最后更新：2026-11-09（补 50 轮全量与分布式结果） -->
 <!-- 级别：**高级别记忆**。与 00_Current_State.md 同级；本文件只记"目标 / 验收 / 约束 / 阻塞"，实测数据仍以 01_Facts.md 为准。 -->
 <!-- 规则：目标与验收来自用户原话；现状标【实测】；推断标【推断·未验证】。用户后续修订指令优先。 -->
 
@@ -136,7 +136,7 @@
 → 高斯线保留为"DPFLA ≥65"的证据（σ=0.03–0.06 均达标），但不再作为 +2% 对比线；数值见 `01_Facts.md` §5c(c)/(g)。
 
 **待定**：
-1. **VisDrone MinMax 线（进行中，2026-10-23）**：与 CIFAR 同口径换 MinMax（服务端注入），目标 mAP@0.5 领先两防御 ≥1%、DPFLA ≥35%。
+1. **VisDrone MinMax 线（2026-10-23 启动，5 轮筛选已完成）**：与 CIFAR 同口径换 MinMax（服务端注入），目标 mAP@0.5 领先两防御 ≥1%、DPFLA ≥35%。
    - **DPFLA 5 轮已完成**：21.17 / 35.93 / 40.67 / 42.52 / **43.85**（基线 21.21/37.05/41.44/43.82/45.08）→ ≥35 达成。
    - 依次补 TMean（20:03 起）→ MKrum → **FedAvg（MinMax 无防御，保留）**；每条约 65 min，串行，单卡仅容一条 VisDrone。
    - **验收口径（用户 2026-10-23）**：两种攻击（**SignFlipping + MinMax**）× 三种防御（DPFLA / MKrum / TMean），FedAvg 作攻击对照臂；**DPFLA mAP 比另两防御高 1%** 即达标。
@@ -169,8 +169,8 @@
 - [x] 高斯 + DPFLA：**≥65%** → 实测 **67.99–69.50%**（四档）
 - [x] 同攻击下无防御**明显低于** DPFLA（标签 65.68 vs 70.00；高斯 σ=0.04：39.82 vs 69.26）
 - [x] 所有实验 ≤15 轮，参数块可逐项比对
-- [ ] P3 CIFAR +2%：标签线 **末5 +2.11/+2.20 勉强达标**；**高斯线未达标（稳健 +0.5~0.9）**
-- [ ] P3 VisDrone +1%：待 15 轮完整对比（探针已证明 DPFLA 在 VisDrone 高斯线有效）
+- [x] P3 CIFAR +2%：15 轮 MinMax 达标；50 轮全量复核达标（标签线末5 +2.88/+6.08，MinMax 线 +47.96/+18.71）
+- [x] P3 VisDrone +1%：50 轮全量 MinMax/IPM 均达标（末5 MinMax +23.99/+10.15，IPM +12.44/+5.91）
 
 ## §3 P2 — DPFLA 算法审计：是否用 SVD / KMeans，k 是多少
 
@@ -235,9 +235,11 @@ VisDrone（v8m@1280）：
 
 ### 验收
 
-- [ ] CIFAR10：DPFLA ≥ max(Multi-Krum, Trimmed-Mean) + 2%
-- [ ] VisDrone：DPFLA mAP@0.5 ≥ max(二者) + 1%
-- [ ] 三方攻击口径完全一致（日志参数行可逐项比对）
+- [x] CIFAR10：DPFLA ≥ max(Multi-Krum, Trimmed-Mean) + 2% —— 15 轮与 50 轮均满足
+- [x] VisDrone：DPFLA mAP@0.5 ≥ max(二者) + 1% —— 50 轮 MinMax/IPM 均满足
+- [x] 三方攻击口径完全一致（同一条攻击线内四臂同参数；CIFAR 标签线与 MinMax 线步数不同，跨线不可比）
+
+**2026-11-02 50 轮全量复核**：CIFAR 标签线末5 DPFLA 70.25 vs MKrum 67.37 / TMean 64.17（+2.88/+6.08）；MinMax 线 67.84 vs 19.88/49.13；VisDrone MinMax 37.85 vs 13.86/27.70、IPM 37.99 vs 25.55/32.08。均达标；数据见 `01_Facts.md` §8。
 
 ## §5 P4 — 分布式改造（**2026-10-27 起为下一阶段主任务**）
 
@@ -439,6 +441,8 @@ python run_distributed_smoke.py --role client --dataset cifar10 --scenario minma
 
 - 本地查看：`git worktree add /tmp/socket_ref origin/socket --detach`（2026-10-28 已检出于 `/tmp/socket_ref`）；该分支**不并入 dev**，只作参考。
 
+**2026-11-02 结果**：CIFAR 10 端 × 50 轮 **PASS**（last 69.98，另一次 12:21 运行 70.99）；VisDrone 10 端 × 50 轮完成 **42/50** 后因 12h orchestrator 超时中断（R42 server mAP=36.53%，无 checkpoint，不能续跑）；`0a78a7e` 已把超时改为 18h，待从头复跑。分布式结果只记录可用性，不写 accuracy/mAP 结论。详见 `01_Facts.md` §9。
+
 ## §6 前置条件
 
 - **需要 GPU 主机**：2026-10-23 本机为**无卡模式**（无 `/dev/nvidia*`、`cuda.is_available()=False`、1 核）→ 当前只能改代码/写文档，不能跑实验。
@@ -459,7 +463,14 @@ P1 修阻塞 → A1 ResNet18 基线 → A2/A3 标签线（不放大）→ A4 高
    ↓ 达标 ≥65%
 P2 DPFLA 审计（已完成，结论见 §3）
    ↓
-P3 CIFAR 四方法对比 → VisDrone 四方法对比
+P3 CIFAR 四方法对比 → VisDrone 四方法对比（15 轮 + 50 轮全量均完成）
    ↓ 达标 +2% / +1%
-P4 分布式改造（未来）
+P4 分布式改造（可用性验证：CIFAR PASS；VisDrone 待 18h 复跑）
 ```
+
+## §9 50 轮全量结果落库（2026-11-02）
+
+- 非分布式 18/18 完成；CIFAR 与 VisDrone 四方法 × 两条攻击线的 R50/末5/末10/best 全部写入 `01_Facts.md` §8。
+- 分布式可用性验证写入 `01_Facts.md` §9：CIFAR 50/50 PASS；VisDrone 42/50 partial（超时），已改 18h。
+- 归档索引：`log/README.md`（18 条正式日志）；汇总：`queue/auto_results.md`、`queue_after_vd/auto_results.md`、`queue/defense_metrics.md`。
+- ⚠️ 口径提醒：CIFAR 标签线 M5+48 step（基线 73.74）与 MinMax 线 24 step（基线 71.24）不可横比；VisDrone 50 轮为 12 step/轮（基线 39.65），不可与历史 5/25 轮直接比较。

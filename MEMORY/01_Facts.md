@@ -1,6 +1,6 @@
 # 01_Facts.md — 事实层（仅实测数据）
 
-<!-- 最后更新：2026-10-23 -->
+<!-- 最后更新：2026-11-09（新增 §8 50 轮全量、§9 分布式） -->
 <!-- 规则：每条必须带 日期 + 出处（日志文件名或代码位置）。无出处的推断不得写入本文件。 -->
 
 ## §1 VisDrone 联邦基线（好配置口径）
@@ -451,3 +451,89 @@ FedAvg vs FedBN 逐轮（同口径）：
 | Mosaic + MixUp | 代码已合入 | `visdrone_dataset.py`（Mosaic 50% / MixUp 10%），效果未单变量验证 |
 | FedLA 聚合 | 已实现 | `average_weights_fedla()`，仅 FedLA 一路跑到 R8=22.49% |
 | DPFLA 防御（YOLO） | 已实现 | SVD+KMeans 路径，历史曲线与 FedAvg 接近、攻击命中率 0%（特征选取已从 fc2.weight 改为检测头 cv3.weight，**改动后未重跑对比**） |
+
+## §8 50 轮全量正式矩阵（2026-10-31 ~ 11-01，非分布式）★
+
+**统一口径**：10 客户端 / 50 轮 / 30% 恶意 / IID / `FL_GRADIENT_SCALE=1`（不放大）。CIFAR 标签线用 **M5 全类循环映射 + 48 step/轮**；CIFAR MinMax 线用 **24 step/轮**；VisDrone 两条攻击线用 **12 step/轮 + LOCAL_EPOCHS=1**（50×12=600 step ≈ 历史 5 轮 × 3 epoch）。指标：CIFAR=全测试集 accuracy；VisDrone=YOLO 原生 mAP@0.5。主口径为末 5 轮均值。
+
+### (a) CIFAR10 标签翻转 M5（48 step/轮）
+
+| 方法 | best | R50 | 末5 | 末10 |
+|---|---:|---:|---:|---:|
+| 无攻击基线 | 74.13 | 73.74 | 73.59 | 73.70 |
+| FedAvg | 61.04 | 55.66 | 56.16 | 56.62 |
+| **DPFLA** | **70.71** | **70.25** | **70.25** | **70.25** |
+| Multi-Krum | 67.52 | 67.52 | 67.37 | 67.30 |
+| Trimmed-Mean | 66.85 | 66.85 | 64.17 | 60.00 |
+
+- 末5：DPFLA 领先 MKrum **+2.88**、TMean **+6.08**；R50 领先 **+2.73 / +3.40**。
+- 出处：`logs_3/cifar10/run_no_attack_baseline_20261101_1200.log`、`run_no_defense_label_flipping_20261101_1103.log`、`run_dpfla_label_flipping_20261101_0952.log`、`run_mkrum_label_flipping_20261101_1017.log`、`run_tmean_label_flipping_20261101_1041.log`；归档 `log/cifar10/01–05_*`；汇总 `queue_after_vd/auto_results.md`。
+
+### (b) CIFAR10 MinMax（24 step/轮）
+
+| 方法 | best | R50 | 末5 | 末10 |
+|---|---:|---:|---:|---:|
+| 无攻击基线 | 71.44 | 71.24 | 70.78 | 70.40 |
+| FedAvg | 56.64 | 56.58 | 56.36 | 55.88 |
+| **DPFLA** | **68.15** | **68.12** | **67.84** | **67.39** |
+| Multi-Krum | 25.83 | 17.77 | 19.88 | 20.57 |
+| Trimmed-Mean | 49.57 | 49.51 | 49.13 | 48.84 |
+
+- 末5：DPFLA 领先 MKrum **+47.96**、TMean **+18.71**；但 **68.12 < 无攻击基线 71.24（−3.12）**，不能宣称“优于无攻击”。
+- 出处：`logs_3/cifar10/run_screen_minmax_fedavg_20261031_1131.log`、`run_screen_minmax_DPFLA_20261031_1154.log`、`run_screen_minmax_mkrum_20261031_1215.log`、`run_screen_minmax_tmean_20261031_1237.log`；归档 `log/cifar10/06–09_*`；汇总 `queue/auto_results.md`。
+
+### (c) CIFAR10 标签线双指标补充（24 step/轮，2026-10-31）
+
+> 该线为 10-31 首轮 24-step 结果，后于 11-01 用 M5+48 step 重跑并替换为 (a)；此表只用于说明“global accuracy 会掩盖攻击”。
+
+| 方法 | global R50 | global 末5 | attacked(dog) R50 | attacked 末5 |
+|---|---:|---:|---:|---:|
+| 无攻击基线 | 71.24 | 70.78 | 64.7 | 60.14 |
+| 标签 + FedAvg | 68.70 | 68.79 | 24.7 | 25.28 |
+| 标签 + DPFLA | 67.57 | 67.78 | **60.5** | **60.00** |
+| 标签 + MKrum | 64.35 | 65.31 | 55.4 | 59.08 |
+| 标签 + TMean | **69.76** | **69.66** | 35.8 | 38.02 |
+
+- TMean 的 global 高，是因为把 dog 大量判成 cat（学到投毒标签），其 dog 准确率仅 35.8；**防御是否生效必须看 attacked_class，不能只看 global**。
+- 出处：`queue/defense_metrics.md`。
+
+### (d) VisDrone MinMax（12 step/轮）
+
+| 方法 | best | R50 | 末5 | 末10 |
+|---|---:|---:|---:|---:|
+| 无攻击基线 | 39.65 | 39.65 | 39.12 | 38.55 |
+| FedAvg | 30.23 | 30.23 | 29.89 | 29.40 |
+| **DPFLA** | **38.74** | **38.36** | **37.85** | **37.58** |
+| Multi-Krum | 14.62 | 14.09 | 13.86 | 14.01 |
+| Trimmed-Mean | 28.12 | 28.12 | 27.70 | 27.31 |
+
+### (e) VisDrone IPM（12 step/轮）
+
+| 方法 | best | R50 | 末5 | 末10 |
+|---|---:|---:|---:|---:|
+| 无攻击基线 | 39.65 | 39.65 | 39.12 | 38.55 |
+| FedAvg | 35.87 | 35.87 | 35.36 | 34.70 |
+| **DPFLA** | **38.32** | **38.32** | **37.99** | **37.49** |
+| Multi-Krum | 26.17 | 26.17 | 25.55 | 24.73 |
+| Trimmed-Mean | 32.55 | 32.55 | 32.08 | 31.47 |
+
+- 末5：MinMax 线 DPFLA 领先 MKrum **+23.99**、TMean **+10.15**；IPM 线 **+12.44 / +5.91**，均满足 ≥1。
+- 出处：日志文件名与 R50 数值一一对应，见 `log/README.md` §VisDrone 表；归档 `log/visdrone/01–09_*`；汇总 `queue/auto_results.md` + `queue_after_vd/auto_results.md`。
+
+**读数**
+
+- DPFLA 在四条攻击线（CIFAR 标签 / CIFAR MinMax / VisDrone MinMax / VisDrone IPM）的末5 均高于 MKrum 与 TMean。
+- CIFAR MinMax 与 VisDrone 两条线的 DPFLA 仍略低于无攻击基线（−3.12 / −1.29 / −1.13），属“防住但未完全无损”。
+- VisDrone 50 轮基线 39.65 明显低于历史 5 轮 45.08 / 25 轮 47.64：本轮每轮仅 12 step（总 600 step），与历史训练量不同，**不可直接横比**。
+
+## §9 分布式 DPFLA 可用性验证（2026-11-01/02）
+
+> 范围：只验证分布式链路可用性，不用于 accuracy/mAP 结论（`09_Full_Run_Plan.md` §4）。
+
+| 数据集 | 配置 | 结果 | 出处 |
+|---|---|---|---|
+| CIFAR10 | 10 客户端 × 50 轮，MinMax + DPFLA，全量数据 | **PASS**，last=69.98（13:06 运行，2232.5s）；另一次 12:21 运行 last=70.99（1234.5s） | `logs_dist_full/full50/summaries/summary_20261101_130605.md` / `summary_20261101_122151.md` |
+| VisDrone | 10 客户端 × 50 轮，MinMax + DPFLA，全量数据 | **42/50 部分完成**：R42 server mAP=36.53%，client 30.45–35.62%；orchestrator 总超时 43200s（12h）中断，无 `result.json`/checkpoint，不能续跑 | `logs_dist_full/full50/visdrone/PARTIAL_42of50.md` |
+
+- 失败原因是 orchestrator 12h 超时，不是 OOM / DPFLA / 分布式代码错误；`0a78a7e` 已把 VisDrone 全量超时改为 **18h**（64800s），需从头重跑。
+- 分布式 CIFAR 每次写 11 条 TB 曲线（server + 10 client）；VisDrone 42/50 也保留 11 条 × 42 点。分布式不用于指标对比。
