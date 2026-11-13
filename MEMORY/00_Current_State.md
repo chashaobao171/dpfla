@@ -46,8 +46,8 @@
 - **约束**：恶意率仍固定 30%、IID、不放大梯度、单变量；不复用 v8m/v8s 的数值结论，必须重跑 YOLO26s 自己的基线/攻击/防御矩阵。
 - **计划**：见 `MEMORY/10_YOLO26s_Plan.md`；**Phase 0 已完成（2026-11-09）**——代码参数化 + 1280 端到端冒烟通过：基线 R1 5.06%、MinMax+DPFLA R1 5.03%（1 轮×1 epoch，仅链路验证），攻击/DPFLA/评估均无 KeyError/NaN/OOM。
 - **Phase 2 MinMax 线（2026-11-09）**：**YOLO26s 11×3 + LR1e-3 + MinMax + DPFLA：R10=35.23%、R11=35.69% → 攻击 + DPFLA ≥35% 已达成**（基线 R10=36.02，仅低 0.79；恶意端权重 0.020，无 NaN/OOM）。日志/TB 已入库。
-- **攻击规则变更（2026-11-13 用户定稿）**：CIFAR10 与 VisDrone **都必须支持两类攻击，标签翻转必须包含**；**VisDrone 舍弃 IPM**，两类攻击改为 **标签翻转 + MinMax**。20:33 用户再次更新：**停止基线，直接做部分标签翻转筛选**，每条上限 50 轮；先 5 轮筛策略，候选 10–11 轮，必要时 50 轮；确认达不到“DPFLA 比 MKrum/TMean 高 ≥1%”就停止换策略。当前跑 **pair_swap + DPFLA 5×3**。计划见 `MEMORY/11_LabelFlip_50R_Plan.md`。
-- **代码改造清单（已完成）**：`yolo_wrapper`（family/换头/E2ELoss/device）、`model.py`、`DPFLA`（动态 layer22/23）、`fl_core`（评估子进程/TB family）、分布式 CLI、50 轮队列、VisDrone 入口默认值。历史 v8m/v8s 复现需显式 `YOLO_MODEL_FAMILY=8`。
+- **攻击规则变更（2026-11-13 用户定稿）**：CIFAR10 与 VisDrone **都必须支持两类攻击，标签翻转必须包含**；**VisDrone 舍弃 IPM**，两类攻击改为 **标签翻转 + MinMax**。20:33 用户再次更新：**停止基线，直接做部分标签翻转筛选**，每条上限 50 轮；先 5 轮筛策略，候选 10–11 轮，必要时 50 轮；确认达不到“DPFLA 比 MKrum/TMean 高 ≥1%”就停止换策略。**pair_swap + DPFLA 5×3 已完成 R5=30.34（基线 31.20，−0.86）；MKrum/TMean 同口径对比运行中**。
+- **代码改造清单（已完成）**：`yolo_wrapper`（family/换头/E2ELoss/device）、`model.py`、`DPFLA`（动态 layer22/23）、`fl_core`（评估子进程/TB family）、分布式 CLI、50 轮队列、VisDrone 入口默认值、标签翻转 pattern 参数化 + MKrum/TMean 入口。历史 v8m/v8s 复现需显式 `YOLO_MODEL_FAMILY=8`。
 
 ## 历史进度（2026-10-23，15/5 轮口径）
 

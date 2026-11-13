@@ -141,3 +141,10 @@ H. CIFAR 两类攻击回归（~2h）
 - 已停止无攻击 50×24 基线与 full_cycle 50×24（用户 2026-11-13 20:33 指令）。
 - **当前：pair_swap 标签翻转 + DPFLA，5 轮 ×3 epoch，LR1e-3**；tmux `v26s_lf_pair_5x3`，日志 `logs_3/visdrone/run_dpfla_label_flipping_20261113_2034.log`。
 - 监控 R1–R5、恶意端 aux/权重；若 R5 明显低于可接受线或恶意端未被抑制，立即停止并换下一种 partial pattern（two_class / three_class / car_van / vehicle_cycle / person_pair）。
+
+## §8 Checkpoint / 断点续跑（2026-11-13 22:30 已实现）
+
+- `fl_core.run_experiment` 每轮保存轻量 checkpoint 到 `FL_CKPT_PATH`：`state_dict` + 轮次 + 指标历史 + DPFLA streak/cooldown；不再保存巨大的 `global_model/local_models`。
+- 入口脚本自动设路径：`checkpoints/label_flip_{pattern}_{rule}.pt`（DPFLA / mkrum / tmean / fedavg 各自独立）。
+- 续跑：同一条命令加 `FL_RESUME=1`，并把 `FL_GLOBAL_ROUNDS` 改成目标轮数（如 11）；从 checkpoint 的下一轮继续，DPFLA 状态也恢复。
+- ⚠️ 本次 pair_swap 的 5 轮 DPFLA/MKrum/TMean 在功能加入前已完成，**没有保存 checkpoint，不能回溯续跑**；从下一种 pattern 开始生效。pair_swap 若通过 TMean 对比，需从 0 跑 11 轮（或重跑 5 轮带 checkpoint 再续）。

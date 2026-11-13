@@ -40,7 +40,7 @@ def generate_log_file(args, experiment_tag=None, start_time=None):
 
 
 def run_exp(num_workers, frac_workers, attack_type, rule, replace_method, dataset, malicious_rate,
-            malicious_behavior_rate, global_round, local_epoch, untarget, experiment_tag=None):
+            malicious_behavior_rate, global_round, local_epoch, untarget, experiment_tag=None, resume=False):
     _set_process_timezone_to_beijing()
     args = Arguments(logger)
     args.set_num_workers(num_workers)
@@ -124,7 +124,7 @@ def run_exp(num_workers, frac_workers, attack_type, rule, replace_method, datase
 
     flEnv.run_experiment(attack_type=args.get_attack_type(), malicious_behavior_rate=args.get_malicious_behavior_rate(),
                          source_class=args.get_source_class(), target_class=args.get_target_class(),
-                         rule=args.get_rule(), resume=False, model_name=args.get_model_name(), untarget=untarget,
+                         rule=args.get_rule(), resume=resume, model_name=args.get_model_name(), untarget=untarget,
                          label_flip_mapping=label_flip_mapping)
 
     logger.remove(handler)

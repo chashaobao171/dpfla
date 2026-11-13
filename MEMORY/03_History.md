@@ -8,6 +8,10 @@
 
 - **计划变更（20:33 用户定稿）**：停止无攻击 50×24 基线与 full_cycle 50×24；**不再先跑基线**，直接做部分标签翻转筛选，每条上限 50 轮；5 轮筛策略 → 候选 10–11 轮 → 必要时 50 轮；确认达不到“DPFLA 比另两方法高 ≥1%”就立即停止换策略。
 - **pair_swap 筛选启动（20:34）**：VisDrone 标签翻转 + DPFLA，5 轮 ×3 epoch，LR1e-3，30% 恶意；tmux `v26s_lf_pair_5x3`，日志 `logs_3/visdrone/run_dpfla_label_flipping_20261113_2034.log`。
+- **pair_swap R1（20:45）**：mAP@0.5=**14.98%**（无攻击基线 R1=14.45%，**+0.53**）；映射确认为 0↔1、2↔3、…、8↔9。3 个攻击者 aux=0.599/0.667/0.828 → 权重 0.08/0.08/0.02；**1 个诚实端误杀 aux=0.652 → 权重 0.08**，其余诚实端 1.000。R1 无掉点；继续 R5，若 R5 仍 ≥基线-1 且攻击者持续被压制，则进入 MKrum/TMean 对比。
+- **pair_swap DPFLA 完成（21:29）**：R1–R5 = 14.98 / 21.65 / 25.52 / 28.46 / **30.34**，总耗时 55.8 min；无攻击基线 R5=31.20 → 仅 **−0.86**；攻击者 R2 aux=0.908→权重 0.020；R1 误杀诚实端已恢复；无 NaN/OOM。**pair_swap 下 DPFLA 保持基线**。
+- **pair_swap MKrum 完成（22:25）**：R1–R5 = 9.76 / 16.39 / 19.77 / 26.25 / **23.53**（R4→R5 回落）。DPFLA R5=30.34 → **领先 MKrum +6.81**，已满足对 MKrum 的 ≥1% 要求；TMean 5×3 于 22:26 启动。
+- **Checkpoint/续跑实现（22:30）**：`fl_core` 每轮保存 `FL_CKPT_PATH`（state_dict + 轮次 + 指标 + DPFLA streak），入口脚本自动设 `checkpoints/label_flip_{pattern}_{rule}.pt`；同命令加 `FL_RESUME=1` 可从下一轮继续。注意本次 pair_swap 5 轮已完成且未保存，不能回溯；下一种 pattern 起生效。
 - **攻击规则变更（用户定稿）**：CIFAR10 与 VisDrone 都必须支持两类攻击，**标签翻转必须包含**；**VisDrone 舍弃 IPM**，两类攻击改为 **标签翻转 + MinMax**。计划见 `11_LabelFlip_50R_Plan.md`。
 - **标签翻转参数化**：`visdrone_fed_hparams.resolve_label_flip_mapping()` 支持 `FL_FLIP_PATTERN`（full_cycle / pair_swap / two_class / three_class / vehicle_cycle / car_van / person_pair / all_to_car / offset2 / offset5 等）、`FL_FLIP_MAPPING` 自定义、`FL_FLIP_RATIO`；DPFLA/FedAvg 脚本已接入。
 - **新增 VisDrone 标签翻转基线入口**：`run_mkrum_label_flipping.py`、`run_tmean_label_flipping.py`（与 DPFLA 同攻击/同超参，仅 rule 不同），用于 DPFLA 领先 ≥1% 对比。

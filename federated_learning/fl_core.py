@@ -687,18 +687,23 @@ print(json.dumps(res))
         # start training
         start_round = 0
         if resume:
-            logger.info('Loading last saved checkpoint..')
-            checkpoint = torch.load(
-                './checkpoints/' + self.dataset_name + '_' + self.model_name + '_' + self.dd_type + '_' + rule + '_' + str(
-                    self.attackers_ratio) + '_' + str(self.local_epochs) + '.t7')
+            _ckpt_path = (os.environ.get("FL_CKPT_PATH") or "").strip()
+            if not _ckpt_path:
+                _ckpt_path = './checkpoints/' + self.dataset_name + '_' + self.model_name + '_' + self.dd_type + '_' + rule + '_' + str(
+                    self.attackers_ratio) + '_' + str(self.local_epochs) + '.t7'
+            logger.info(f'Loading checkpoint: {_ckpt_path}')
+            checkpoint = torch.load(_ckpt_path, map_location='cpu', weights_only=False)
             simulation_model.load_state_dict(checkpoint['state_dict'])
             start_round = checkpoint['epoch'] + 1
-            last10_updates = checkpoint['last10_updates']
-            test_losses = checkpoint['test_losses']
-            global_accuracies = checkpoint['global_accuracies']
-            source_class_accuracies = checkpoint['source_class_accuracies']
-
-            logger.info('>>checkpoint loaded!')
+            last10_updates = checkpoint.get('last10_updates', last10_updates)
+            test_losses = checkpoint.get('test_losses', test_losses)
+            global_accuracies = checkpoint.get('global_accuracies', global_accuracies)
+            source_class_accuracies = checkpoint.get('source_class_accuracies', source_class_accuracies)
+            _dp = checkpoint.get('dpfla_state') or {}
+            dpfla.client_bad_streak = _dp.get('bad_streak', {})
+            dpfla.client_prev_soft = _dp.get('prev_soft', {})
+            dpfla.client_cooldown = _dp.get('cooldown', {})
+            logger.info(f'>>checkpoint loaded: resume at round {start_round + 1}/{self.global_rounds}')
         logger.info("====>Global model training started...")
         for epoch in tqdm(range(start_round, self.global_rounds)):
             gc.collect()
@@ -983,16 +988,32 @@ print(json.dumps(res))
             state = {
                 'epoch': epoch,
                 'state_dict': simulation_model.state_dict(),
-                'global_model': g_model,
-                'local_models': copy.deepcopy(local_models),
                 'last10_updates': last10_updates,
                 'test_losses': test_losses,
                 'global_accuracies': global_accuracies,
-                'source_class_accuracies': source_class_accuracies
+                'source_class_accuracies': source_class_accuracies,
+                'attack_type': attack_type,
+                'rule': rule,
+                'label_flip_mapping': label_flip_mapping,
+                'global_rounds': self.global_rounds,
+                'local_epochs': self.local_epochs,
+                'num_clients': self.num_clients,
+                'model_family': os.environ.get('YOLO_MODEL_FAMILY', '8'),
+                'model_size': os.environ.get('YOLO_MODEL_SIZE', 's'),
+                'dpfla_state': {
+                    'bad_streak': dict(dpfla.client_bad_streak),
+                    'prev_soft': dict(dpfla.client_prev_soft),
+                    'cooldown': dict(dpfla.client_cooldown),
+                },
             }
-            # savepath = './checkpoints/' + self.dataset_name + '_' + self.model_name + '_' + self.dd_type + '_' + rule + '_' + str(
-            #     self.attackers_ratio) + '_' + str(self.local_epochs) + '.t7'
-            # torch.save(state, savepath)
+            # 轻量 checkpoint：只存 state_dict + 历史 + DPFLA 状态，避免 g_model/local_models 巨大对象。
+            # 由入口脚本设置 FL_CKPT_PATH；每轮覆盖，便于“5 轮筛选 → 接着跑 11/50 轮”。
+            _ckpt_path = (os.environ.get('FL_CKPT_PATH') or '').strip()
+            if _ckpt_path:
+                _ckpt_dir = os.path.dirname(os.path.abspath(_ckpt_path))
+                os.makedirs(_ckpt_dir, exist_ok=True)
+                torch.save(state, _ckpt_path)
+                logger.info(f'✓ checkpoint saved: {_ckpt_path} (round {epoch + 1})')
             del local_models
             del local_weights
             del local_grads

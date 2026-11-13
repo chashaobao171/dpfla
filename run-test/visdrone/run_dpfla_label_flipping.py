@@ -57,6 +57,9 @@ NUM_CLASSES = 10
 FLIP_MAPPING, FLIP_PATTERN = resolve_label_flip_mapping(NUM_CLASSES)
 MALICIOUS_BEHAVIOR_RATE = 1.0   # 100%：每个恶意客户端每轮必发动
 FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "1.0"))   # 被翻实例比例（1.0=全翻；<1 用于调弱攻击）
+_CKPT_TAG = FLIP_PATTERN.replace(":", "_").replace(",", "_")
+os.environ.setdefault("FL_CKPT_PATH", f"checkpoints/label_flip_{_CKPT_TAG}_DPFLA.pt")
+_RESUME = (os.environ.get("FL_RESUME") or "0").strip() == "1"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -129,6 +132,7 @@ try:
         local_epoch=LOCAL_EPOCHS,
         untarget=False,
         experiment_tag=os.path.splitext(os.path.basename(__file__))[0],
+        resume=_RESUME,
     )
 
     elapsed = time.time() - start_time
