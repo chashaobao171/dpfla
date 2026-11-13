@@ -8,6 +8,12 @@
 
 - **筛选顺序变更（22:42 用户定稿）**：后续按 **DPFLA → TMean → MKrum** 跑；**若 DPFLA 对 TMean 不达标（<TMean+1 或 DPFLA R5<30），直接跳过 MKrum，换下一个类数**；只有 TMean 过了才跑 MKrum。`FL_FLIP_RATIO` 固定 **1.0**；翻转类数按 **1→2→3→4** 依次试（one_class/two_class/three_class/four_class）；四种都不行才考虑替换 TMean。pair_swap（10 类）TMean 在 R1=13.44 后停止，保留 DPFLA R5=30.34 / MKrum R5=23.53 作参考。
 - **one_class 筛选启动（22:43）**：1 类（0→1）标签翻转，5 轮 ×3 epoch，LR1e-3，30% 恶意；tmux `v26s_lf_1class_5x3`，先 DPFLA 后 TMean；日志 `/tmp/v26s_lf_1class_dpfla.log`、`/tmp/v26s_lf_1class_tmean.log`。
+- **one_class DPFLA R1（22:54）**：mAP@0.5=**14.10%**（无攻击基线 R1=14.45%，仅 **−0.35**）；3 个攻击者 aux=0.526/0.848/0.564 → 权重 0.094/0.020/0.094；**诚实端全部 1.000，无误杀**；checkpoint 已保存 `checkpoints/label_flip_one_class_DPFLA.pt`（round 1）。继续 R5。
+- **one_class DPFLA 完成（23:37）**：R1–R5 = 14.10 / 21.55 / 25.80 / 28.23 / **30.63**；无攻击基线 R5=31.20 → **−0.57**；checkpoint 已保存 R5。DPFLA R5 过 ≥30 门槛；TMean 5×3 于 23:38 启动，需 TMean R5 ≤29.63 才能领先 ≥1；若不过则跳过 MKrum 直接 two_class。
+- **one_class TMean R1（23:49）**：mAP@0.5=**13.59%**（DPFLA R1=14.10，DPFLA 领先 +0.51）；checkpoint 已保存 `checkpoints/label_flip_one_class_tmean.pt`（round 1）。
+- **one_class 判定不通过（00:34）**：TMean R1–R5 = 13.59 / 21.75 / 25.85 / 28.82 / **30.84**；DPFLA = 14.10 / 21.55 / 25.80 / 28.23 / **30.63**。R5 DPFLA **−0.21**，未达 TMean+1 → **跳过 MKrum**，按 1→4 顺序进入 **two_class（0↔1）**。
+- **two_class 筛选启动（00:34）**：tmux `v26s_lf_2class_5x3`，先 DPFLA 后 TMean，5×3 / LR1e-3 / 30% 恶意 / ratio=1.0；日志 `/tmp/v26s_lf_2class_dpfla.log`、`/tmp/v26s_lf_2class_tmean.log`；checkpoint `checkpoints/label_flip_two_class_{DPFLA,tmean}.pt`。
+- **机制观察（one_class）**：1 类翻转对全局 mAP 伤害极弱（TMean 30.84 vs 无攻击基线 31.20，仅 −0.36；DPFLA 30.63）。DPFLA 压制 3 个攻击者权重后反而丢掉部分有效梯度，导致略低于 TMean。后续 2–4 类需观察攻击是否足以拉开方法差距；若 TMean 始终 ≈ 无攻击基线，则 1–4 类整体难满足“领先 ≥1”，需按 §3 最后手段评估。
 - **计划变更（20:33 用户定稿）**：停止无攻击 50×24 基线与 full_cycle 50×24；**不再先跑基线**，直接做部分标签翻转筛选，每条上限 50 轮；5 轮筛策略 → 候选 10–11 轮 → 必要时 50 轮；确认达不到“DPFLA 比另两方法高 ≥1%”就立即停止换策略。
 - **pair_swap 筛选启动（20:34）**：VisDrone 标签翻转 + DPFLA，5 轮 ×3 epoch，LR1e-3，30% 恶意；tmux `v26s_lf_pair_5x3`，日志 `logs_3/visdrone/run_dpfla_label_flipping_20261113_2034.log`。
 - **pair_swap R1（20:45）**：mAP@0.5=**14.98%**（无攻击基线 R1=14.45%，**+0.53**）；映射确认为 0↔1、2↔3、…、8↔9。3 个攻击者 aux=0.599/0.667/0.828 → 权重 0.08/0.08/0.02；**1 个诚实端误杀 aux=0.652 → 权重 0.08**，其余诚实端 1.000。R1 无掉点；继续 R5，若 R5 仍 ≥基线-1 且攻击者持续被压制，则进入 MKrum/TMean 对比。
