@@ -12,6 +12,8 @@
 - **pair_swap DPFLA 完成（21:29）**：R1–R5 = 14.98 / 21.65 / 25.52 / 28.46 / **30.34**，总耗时 55.8 min；无攻击基线 R5=31.20 → 仅 **−0.86**；攻击者 R2 aux=0.908→权重 0.020；R1 误杀诚实端已恢复；无 NaN/OOM。**pair_swap 下 DPFLA 保持基线**。
 - **pair_swap MKrum 完成（22:25）**：R1–R5 = 9.76 / 16.39 / 19.77 / 26.25 / **23.53**（R4→R5 回落）。DPFLA R5=30.34 → **领先 MKrum +6.81**，已满足对 MKrum 的 ≥1% 要求；TMean 5×3 于 22:26 启动。
 - **Checkpoint/续跑实现（22:30）**：`fl_core` 每轮保存 `FL_CKPT_PATH`（state_dict + 轮次 + 指标 + DPFLA streak），入口脚本自动设 `checkpoints/label_flip_{pattern}_{rule}.pt`；同命令加 `FL_RESUME=1` 可从下一轮继续。注意本次 pair_swap 5 轮已完成且未保存，不能回溯；下一种 pattern 起生效。
+- **全实验自动 checkpoint（22:35）**：`server.run_exp` 对所有实验自动生成配置哈希路径并保存，`FL_RESUME=1` 续跑；`FL_SAVE_CKPT=0` 可关闭。分布式路径暂未接入。
+- **CIFAR flip_ratio 修复（22:36）**：`PoisonedDataset` 分类分支之前忽略 `flip_ratio`，现已按样本 index 固定种子实现部分翻转；VisDrone 检测分支按 box 实例翻转不变。测试：分类 100 样本 ratio=0.5 → 47 翻；检测 300 个源类 box ratio=0.5 → 约 142 翻。
 - **攻击规则变更（用户定稿）**：CIFAR10 与 VisDrone 都必须支持两类攻击，**标签翻转必须包含**；**VisDrone 舍弃 IPM**，两类攻击改为 **标签翻转 + MinMax**。计划见 `11_LabelFlip_50R_Plan.md`。
 - **标签翻转参数化**：`visdrone_fed_hparams.resolve_label_flip_mapping()` 支持 `FL_FLIP_PATTERN`（full_cycle / pair_swap / two_class / three_class / vehicle_cycle / car_van / person_pair / all_to_car / offset2 / offset5 等）、`FL_FLIP_MAPPING` 自定义、`FL_FLIP_RATIO`；DPFLA/FedAvg 脚本已接入。
 - **新增 VisDrone 标签翻转基线入口**：`run_mkrum_label_flipping.py`、`run_tmean_label_flipping.py`（与 DPFLA 同攻击/同超参，仅 rule 不同），用于 DPFLA 领先 ≥1% 对比。

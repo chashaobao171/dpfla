@@ -84,6 +84,44 @@ def run_exp(num_workers, frac_workers, attack_type, rule, replace_method, datase
     # 根据数据集类型更新损失函数
     args.update_loss_function_for_dataset()
 
+    # 统一 checkpoint：所有走 run_exp 的实验默认每轮保存，FL_RESUME=1 时从下一轮续跑。
+    # 路径包含实验配置哈希，避免不同 attack/rule/pattern 互相覆盖；不包含 global_round，
+    # 因此可以把 5 轮筛选 checkpoint 续到 11/50 轮。
+    import hashlib
+    import json
+    import os as _os
+    _resume = bool(resume) or (_os.environ.get("FL_RESUME", "0").strip() == "1")
+    if _os.environ.get("FL_SAVE_CKPT", "1").strip() != "0" and not (_os.environ.get("FL_CKPT_PATH") or "").strip():
+        _cfg = {
+            "dataset": args.get_dataset_name(),
+            "model": args.get_model_name(),
+            "rule": args.get_rule(),
+            "attack": args.get_attack_type(),
+            "replace_method": replace_method,
+            "malicious_rate": malicious_rate,
+            "local_epoch": local_epoch,
+            "server_attack": _os.environ.get("FL_SERVER_ATTACK", ""),
+            "flip_pattern": _os.environ.get("FL_FLIP_PATTERN", ""),
+            "flip_ratio": _os.environ.get("FL_FLIP_RATIO", ""),
+            "family": _os.environ.get("YOLO_MODEL_FAMILY", "8"),
+            "size": _os.environ.get("YOLO_MODEL_SIZE", "s"),
+            "img": _os.environ.get("FL_IMG_SIZE", "640"),
+            "lr": _os.environ.get("FL_LOCAL_LR", ""),
+            "steps": _os.environ.get("FL_LOCAL_STEPS", ""),
+        }
+        _tag = hashlib.md5(
+            json.dumps(_cfg, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()[:8]
+        _os.environ["FL_CKPT_PATH"] = _os.path.join(
+            "checkpoints",
+            f"{args.get_dataset_name()}_{args.get_model_name()}_{args.get_rule()}_"
+            f"{args.get_attack_type()}_{experiment_tag or 'run'}_{_tag}.pt",
+        )
+    if _os.environ.get("FL_CKPT_PATH"):
+        logger.info(f"✓ checkpoint path: {_os.environ['FL_CKPT_PATH']} (resume={_resume})")
+    else:
+        logger.info("✓ checkpoint disabled (FL_SAVE_CKPT=0)")
+
     log_files = generate_log_file(args, experiment_tag=experiment_tag)
     # Initialize logger
     handler = logger.add(log_files, enqueue=True)
@@ -124,7 +162,7 @@ def run_exp(num_workers, frac_workers, attack_type, rule, replace_method, datase
 
     flEnv.run_experiment(attack_type=args.get_attack_type(), malicious_behavior_rate=args.get_malicious_behavior_rate(),
                          source_class=args.get_source_class(), target_class=args.get_target_class(),
-                         rule=args.get_rule(), resume=resume, model_name=args.get_model_name(), untarget=untarget,
+                         rule=args.get_rule(), resume=_resume, model_name=args.get_model_name(), untarget=untarget,
                          label_flip_mapping=label_flip_mapping)
 
     logger.remove(handler)

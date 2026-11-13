@@ -51,6 +51,11 @@ class PoisonedDataset(data.Dataset):
                 return x, y
         else:
             # 分类格式 - 标签翻转
+            # flip_ratio<1 时按样本 index 定种子，只翻一部分样本；跨 epoch 稳定、可复现。
+            if self.flip_ratio < 1.0:
+                g = torch.Generator().manual_seed(12345 + int(index))
+                if torch.rand(1, generator=g).item() >= self.flip_ratio:
+                    return x, y
             if self.mapping is not None:
                 # y 可能是 python int 或 0-dim tensor
                 y_val = int(y.item()) if torch.is_tensor(y) else int(y)

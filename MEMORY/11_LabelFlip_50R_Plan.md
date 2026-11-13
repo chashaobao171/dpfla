@@ -145,6 +145,16 @@ H. CIFAR 两类攻击回归（~2h）
 ## §8 Checkpoint / 断点续跑（2026-11-13 22:30 已实现）
 
 - `fl_core.run_experiment` 每轮保存轻量 checkpoint 到 `FL_CKPT_PATH`：`state_dict` + 轮次 + 指标历史 + DPFLA streak/cooldown；不再保存巨大的 `global_model/local_models`。
-- 入口脚本自动设路径：`checkpoints/label_flip_{pattern}_{rule}.pt`（DPFLA / mkrum / tmean / fedavg 各自独立）。
+- **所有走 `server.run_exp` 的实验自动开启**：`server.py` 会按 dataset/model/rule/attack/replace_method/pattern/ratio/超参生成配置哈希，写入 `checkpoints/..._{hash}.pt`；`FL_RESUME=1` 从下一轮续跑，`FL_SAVE_CKPT=0` 可关闭。
+- 入口脚本也可显式设路径：标签翻转脚本用 `checkpoints/label_flip_{pattern}_{rule}.pt`（DPFLA / mkrum / tmean / fedavg 各自独立）。
 - 续跑：同一条命令加 `FL_RESUME=1`，并把 `FL_GLOBAL_ROUNDS` 改成目标轮数（如 11）；从 checkpoint 的下一轮继续，DPFLA 状态也恢复。
+- 分布式 `run_distributed_smoke.py` 走独立 server/client 路径，暂未接入 checkpoint；下次分布式实验前补。
 - ⚠️ 本次 pair_swap 的 5 轮 DPFLA/MKrum/TMean 在功能加入前已完成，**没有保存 checkpoint，不能回溯续跑**；从下一种 pattern 开始生效。pair_swap 若通过 TMean 对比，需从 0 跑 11 轮（或重跑 5 轮带 checkpoint 再续）。
+
+## §9 FL_FLIP_RATIO 语义（2026-11-13）
+
+- `FL_FLIP_PATTERN` / `FL_FLIP_MAPPING` 决定**翻哪些类、翻到哪个类**（映射覆盖范围）。
+- `FL_FLIP_RATIO` 决定**在映射命中的实例中翻多少**：
+  - **VisDrone（检测）**：按**边界框实例**计算；每个匹配的 box 以该比例翻转，`1.0`=全翻，`0.5`=约一半 box。种子由样本 index 固定，跨 epoch 可复现。
+  - **CIFAR10（分类）**：按**样本**计算；`1.0`=所有命中类样本都翻，`0.5`=约一半样本翻。种子由样本 index 固定，跨 epoch 可复现（2026-11-13 修复，之前分类分支忽略该参数）。
+- 攻击强度 ≈ 映射覆盖类数 × `FL_FLIP_RATIO`；两者要分开记录，避免把“翻得少”误判为“翻得弱”。
