@@ -151,8 +151,8 @@ H. CIFAR 两类攻击回归（~2h）
 - 已停止无攻击 50×24 基线与 full_cycle 50×24（用户 2026-11-13 20:33 指令）。
 - pair_swap（10 类，5 对）DPFLA R5=30.34、MKrum R5=23.53；TMean 在 R1=13.44 后按新规则停止（10 类不在 1–4 范围，保留作参考）。
 - **one_class 已判定不通过（2026-11-14 00:34）**：DPFLA R1–R5 = 14.10 / 21.55 / 25.80 / 28.23 / 30.63；TMean = 13.59 / 21.75 / 25.85 / 28.82 / 30.84 → DPFLA R5 **−0.21**，未达 TMean+1 → **跳过 MKrum**。
-- **当前：two_class（2 类，0↔1）+ DPFLA 5×3**，完成后自动跑 TMean。tmux `v26s_lf_2class_5x3`，日志 `/tmp/v26s_lf_2class_dpfla.log` / `..._tmean.log`。
-- two_class 出来后：若 DPFLA <30 或 <TMean+1 → 跳过 MKrum，直接 three_class；若 TMean 过 → 再补 MKrum；MKrum 也过 → 该 pattern 通过。
+- **two_class 已判定不通过（2026-11-14 02:25）**：DPFLA R1–R5 = 14.23 / 22.03 / 25.76 / 28.48 / 30.58；TMean = 13.99 / 21.60 / 25.71 / 28.48 / 30.78 → R5 DPFLA **−0.20**，未达 TMean+1 → **跳过 MKrum**。
+- **当前：three_class → four_class 自动筛选队列**（`scripts/label_flip_screen_supervisor.py`，tmux `lf_screen_3_4`）。每个 pattern：DPFLA 5×3 →（R5≥30 才跑）TMean 5×3 →（满足 +1 才跑）MKrum 5×3；日志 `/tmp/lf_screen_<pattern>_<rule>_*.log`，汇总 `logs_screen/label_flip_summary.{json,md}`。
 - 之后按 `two_class` → `three_class` → `four_class` 依次筛；每种都是 DPFLA → TMean →（条件）MKrum，`FL_FLIP_RATIO=1.0`。
 
 ## §8 Checkpoint / 断点续跑（2026-11-13 22:30 已实现）
