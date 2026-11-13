@@ -13,6 +13,9 @@
 - **one_class TMean R1（23:49）**：mAP@0.5=**13.59%**（DPFLA R1=14.10，DPFLA 领先 +0.51）；checkpoint 已保存 `checkpoints/label_flip_one_class_tmean.pt`（round 1）。
 - **one_class 判定不通过（00:34）**：TMean R1–R5 = 13.59 / 21.75 / 25.85 / 28.82 / **30.84**；DPFLA = 14.10 / 21.55 / 25.80 / 28.23 / **30.63**。R5 DPFLA **−0.21**，未达 TMean+1 → **跳过 MKrum**，按 1→4 顺序进入 **two_class（0↔1）**。
 - **two_class 筛选启动（00:34）**：tmux `v26s_lf_2class_5x3`，先 DPFLA 后 TMean，5×3 / LR1e-3 / 30% 恶意 / ratio=1.0；日志 `/tmp/v26s_lf_2class_dpfla.log`、`/tmp/v26s_lf_2class_tmean.log`；checkpoint `checkpoints/label_flip_two_class_{DPFLA,tmean}.pt`。
+- **two_class 完成（02:25）**：DPFLA 14.23 / 22.03 / 25.76 / 28.48 / **30.58**；TMean 13.99 / 21.60 / 25.71 / 28.48 / **30.78** → DPFLA −0.20，未达 TMean+1 → 跳过 MKrum。
+- **配方变更（06:25 用户定稿）**：后续实验改为**小步多轮**：`FL_GLOBAL_ROUNDS=20`、`FL_LOCAL_EPOCHS=1`、`FL_LOCAL_LR=8e-4`，目标 R20 ≈ 旧 R5（≈30.6），方便展示长收敛曲线；判定点改为 R20，门槛不变。3、4 类筛查也按此配方执行。
+- **筛选队列重启（06:26）**：停掉刚起 3 分钟的 5×3 three_class；`scripts/label_flip_screen_supervisor.py` 改为 20×1 / LR8e-4 / R20 判定 / 每臂 4h 超时 / checkpoint `_r20x1`；tmux `lf_screen_3_4`，日志 `logs_screen/supervisor_r20x1.log`。
 - **机制观察（one_class）**：1 类翻转对全局 mAP 伤害极弱（TMean 30.84 vs 无攻击基线 31.20，仅 −0.36；DPFLA 30.63）。DPFLA 压制 3 个攻击者权重后反而丢掉部分有效梯度，导致略低于 TMean。后续 2–4 类需观察攻击是否足以拉开方法差距；若 TMean 始终 ≈ 无攻击基线，则 1–4 类整体难满足“领先 ≥1”，需按 §3 最后手段评估。
 - **计划变更（20:33 用户定稿）**：停止无攻击 50×24 基线与 full_cycle 50×24；**不再先跑基线**，直接做部分标签翻转筛选，每条上限 50 轮；5 轮筛策略 → 候选 10–11 轮 → 必要时 50 轮；确认达不到“DPFLA 比另两方法高 ≥1%”就立即停止换策略。
 - **pair_swap 筛选启动（20:34）**：VisDrone 标签翻转 + DPFLA，5 轮 ×3 epoch，LR1e-3，30% 恶意；tmux `v26s_lf_pair_5x3`，日志 `logs_3/visdrone/run_dpfla_label_flipping_20261113_2034.log`。

@@ -8,6 +8,8 @@
 
 > **2026-11-13 20:33 更新（优先）**：停止所有进程，**不再先跑无攻击基线**；直接做标签翻转，**多试几种部分标签反转**，每条上限 50 轮。先用 **5 轮 ×3 epoch** 筛策略，候选再上 **10–11 轮**，必要时才跑 50 轮；**若确认 DPFLA 达不到“mAP 高 ≥1%”目标，立即停止当前策略、换下一种再跑**。不再用 full_cycle 50×24 旧参数。
 >
+> **2026-11-14 06:25 更新（优先）**：用户要求后续实验改用**小步多轮**配方，便于展示长收敛曲线：**20 轮 × 1 epoch，LR 8e-4**（训练量 ≈ 旧 5×3 的 615 step），目标是 **R20 ≈ 旧 R5 效果（≈30.6）**；判定点从 R5 改为 **R20**，门槛不变（DPFLA ≥30 且 ≥TMean+1）。3、4 类筛查与后续展示矩阵均用此配方；旧 5×3 结果仅作历史对照，checkpoint 加 `_r20x1` 后缀区分。
+>
 > **2026-11-13 22:42 更新（优先）**：筛选顺序改为 **DPFLA → TMean → MKrum**。**若 DPFLA 对 TMean 不达标（DPFLA < TMean+1 或 DPFLA R5<30），直接跳过 MKrum，换下一个类数**；只有 TMean 过了才跑 MKrum，MKrum 也过才算该 pattern 通过。`FL_FLIP_RATIO` **固定 1.0 不再调**；翻转类数按 **1 → 2 → 3 → 4** 依次试（one_class / two_class / three_class / four_class）。四种都不行后，才考虑替换 TMean（换弱基线）。
 
 1. **先跑无攻击 50 轮完整基线**，看 YOLO26s 最高能到多少（已启动：50 轮 ×24 step，LR 1e-3）。
@@ -72,19 +74,19 @@
 
 - **顺序**：每个 pattern 按 **DPFLA → TMean → MKrum**。
   - 先跑 DPFLA、TMean；
-  - 若 **DPFLA R5 < 30.0** 或 **DPFLA R5 < TMean R5 + 1.0** → **跳过 MKrum**，直接换下一个类数；
+  - 若 **DPFLA R20 < 30.0** 或 **DPFLA R20 < TMean R20 + 1.0** → **跳过 MKrum**，直接换下一个类数；
   - 若 TMean 已过 → 再跑 MKrum；MKrum 也满足 DPFLA ≥ MKrum+1 才算该 pattern 通过。
-- **固定**：`FL_FLIP_RATIO=1.0`（不再调）；`FL_GLOBAL_ROUNDS=5`、`FL_LOCAL_EPOCHS=3`、LR1e-3、30% 恶意。
+- **固定**：`FL_FLIP_RATIO=1.0`（不再调）；**2026-11-14 起 `FL_GLOBAL_ROUNDS=20`、`FL_LOCAL_EPOCHS=1`、LR 8e-4**（旧 5×3 / LR1e-3 仅用于已完成的 one_class/two_class 对照）、30% 恶意。
 - **翻转类数 1→4**：
   - 1 类：`one_class`（0→1）
   - 2 类：`two_class`（0↔1）
   - 3 类：`three_class`（0→1→2→0）
   - 4 类：`four_class`（0→1→2→3→0）
-- **G-C（短轮次门槛）**：
-  - DPFLA R5 **≥30.0**；
-  - DPFLA R5 **≥ TMean R5 + 1.0**（TMean 是强基线；不过就直接换类数）；
-  - TMean 过线后再补 **DPFLA ≥ MKrum R5 + 1.0**。
-- 通过 → 用 checkpoint 把 DPFLA/TMean/MKrum 续到 **11 轮**（必要时 50 轮），验证绝对 mAP ≥35 与领先 ≥1。
+- **G-C（短轮次门槛，2026-11-14 起判定点改为 R20）**：
+  - DPFLA R20 **≥30.0**；
+  - DPFLA R20 **≥ TMean R20 + 1.0**（TMean 是强基线；不过就直接换类数）；
+  - TMean 过线后再补 **DPFLA ≥ MKrum R20 + 1.0**。
+- 通过 → 用 checkpoint 把 DPFLA/TMean/MKrum 续到 **50 轮**（1 epoch/轮），验证绝对 mAP ≥35 与领先 ≥1。
 - 不通过 → 立即停，换成下一个类数；**四种都不行后**才考虑替换 TMean。
 
 ### Phase D — 50 轮最终矩阵（标签翻转）
@@ -152,7 +154,8 @@ H. CIFAR 两类攻击回归（~2h）
 - pair_swap（10 类，5 对）DPFLA R5=30.34、MKrum R5=23.53；TMean 在 R1=13.44 后按新规则停止（10 类不在 1–4 范围，保留作参考）。
 - **one_class 已判定不通过（2026-11-14 00:34）**：DPFLA R1–R5 = 14.10 / 21.55 / 25.80 / 28.23 / 30.63；TMean = 13.59 / 21.75 / 25.85 / 28.82 / 30.84 → DPFLA R5 **−0.21**，未达 TMean+1 → **跳过 MKrum**。
 - **two_class 已判定不通过（2026-11-14 02:25）**：DPFLA R1–R5 = 14.23 / 22.03 / 25.76 / 28.48 / 30.58；TMean = 13.99 / 21.60 / 25.71 / 28.48 / 30.78 → R5 DPFLA **−0.20**，未达 TMean+1 → **跳过 MKrum**。
-- **当前：three_class → four_class 自动筛选队列**（`scripts/label_flip_screen_supervisor.py`，tmux `lf_screen_3_4`）。每个 pattern：DPFLA 5×3 →（R5≥30 才跑）TMean 5×3 →（满足 +1 才跑）MKrum 5×3；日志 `/tmp/lf_screen_<pattern>_<rule>_*.log`，汇总 `logs_screen/label_flip_summary.{json,md}`。
+- **当前：three_class → four_class 自动筛选队列（20×1 / LR8e-4，R20 判定）**（`scripts/label_flip_screen_supervisor.py`，tmux `lf_screen_3_4`，2026-11-14 06:26 启动）。每个 pattern：DPFLA 20×1 →（R20≥30 才跑）TMean 20×1 →（满足 +1 才跑）MKrum 20×1；日志 `logs_screen/<pattern>_<rule>_*.log`，汇总 `logs_screen/label_flip_summary.{json,md}`；checkpoint 带 `_r20x1` 后缀。
+- 旧 5×3 结果（one_class / two_class）保留为历史对照；three_class 旧 5×3 只跑了约 3 分钟即被新配方替换，无有效结果。
 - 之后按 `two_class` → `three_class` → `four_class` 依次筛；每种都是 DPFLA → TMean →（条件）MKrum，`FL_FLIP_RATIO=1.0`。
 
 ## §8 Checkpoint / 断点续跑（2026-11-13 22:30 已实现）

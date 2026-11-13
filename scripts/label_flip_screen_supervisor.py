@@ -1,9 +1,9 @@
 """标签翻转 1–4 类筛选 supervisor（DPFLA → TMean →（条件）MKrum）。
 
 按 MEMORY/11_LabelFlip_50R_Plan.md §3 Phase C 的规则自动推进：
-  1. 跑 DPFLA 5×3；R5 < 30 → 该 pattern 不通过，换下一个类数（不跑 TMean/MKrum）。
-  2. 跑 TMean 5×3；DPFLA R5 < TMean R5 + 1 → 跳过 MKrum，换下一个类数。
-  3. TMean 过线才跑 MKrum；DPFLA R5 ≥ MKrum R5 + 1 → 该 pattern 通过，队列停止。
+  1. 跑 DPFLA 20×1（LR 8e-4，训练量≈旧 5×3）；R20 < 30 → 不通过，换下一个类数。
+  2. 跑 TMean 20×1；DPFLA R20 < TMean R20 + 1 → 跳过 MKrum，换下一个类数。
+  3. TMean 过线才跑 MKrum；DPFLA R20 ≥ MKrum R20 + 1 → 该 pattern 通过，队列停止。
 
 用法（tmux 内，前台串行，避免显存冲突）：
   python scripts/label_flip_screen_supervisor.py --patterns three_class four_class
@@ -29,7 +29,9 @@ RUNNERS = {
 ROUND_RE = re.compile(r"Round (\d+)/(\d+) - .*mAP@0\.5: ([0-9.]+)%")
 THRESH_ABS = 30.0
 THRESH_LEAD = 1.0
-RUN_TIMEOUT = 2 * 60 * 60
+ROUNDS = 20          # 判定轮次：20 轮 ×1 epoch ≈ 旧 5 轮 ×3 epoch 的训练量
+RECIPE_TAG = "r20x1"
+RUN_TIMEOUT = 4 * 60 * 60
 
 BASE_ENV = {
     "YOLO_MODEL_FAMILY": "26",
@@ -39,9 +41,9 @@ BASE_ENV = {
     "FL_AMP": "1",
     "FL_TRAIN_BATCH_SIZE": "16",
     "FL_TEST_BATCH_SIZE": "64",
-    "FL_GLOBAL_ROUNDS": "5",
-    "FL_LOCAL_EPOCHS": "3",
-    "FL_LOCAL_LR": "0.001",
+    "FL_GLOBAL_ROUNDS": str(ROUNDS),
+    "FL_LOCAL_EPOCHS": "1",
+    "FL_LOCAL_LR": "0.0008",
     "FL_FLIP_RATIO": "1.0",
     "FL_NUM_WORKERS": "10",
     "FL_CPU_THREADS": "16",
@@ -72,6 +74,8 @@ def run_one(pattern, rule):
     env = os.environ.copy()
     env.update(BASE_ENV)
     env["FL_FLIP_PATTERN"] = pattern
+    # 与旧 5×3 结果分开存，避免误续跑
+    env["FL_CKPT_PATH"] = f"checkpoints/label_flip_{pattern}_{rule.lower()}_{RECIPE_TAG}.pt"
     OUT_DIR.mkdir(exist_ok=True)
     tag = f"{pattern}_{rule}_{datetime.now():%Y%m%d_%H%M%S}"
     log_path = OUT_DIR / f"{tag}.log"
@@ -92,9 +96,9 @@ def run_one(pattern, rule):
             log(f"{pattern}/{rule} 超时（{RUN_TIMEOUT}s），已终止")
     elapsed = (time.time() - t0) / 60
     rounds = parse_rounds(log_path)
-    r5 = rounds.get(5)
-    log(f"完成 {pattern}/{rule}：{elapsed:.1f} min，rounds={rounds}，R5={r5}")
-    return {"rule": rule, "R5": r5, "rounds": rounds, "minutes": round(elapsed, 1),
+    rfinal = rounds.get(ROUNDS)
+    log(f"完成 {pattern}/{rule}：{elapsed:.1f} min，rounds={rounds}，R{ROUNDS}={rfinal}")
+    return {"rule": rule, "R": rfinal, "rounds": rounds, "minutes": round(elapsed, 1),
             "log": str(log_path), "returncode": proc.returncode}
 
 
@@ -112,21 +116,21 @@ def main():
         summary["results"][pattern] = rec
 
         rec["DPFLA"] = run_one(pattern, "DPFLA")
-        dpfla = rec["DPFLA"]["R5"]
+        dpfla = rec["DPFLA"]["R"]
         if dpfla is None:
             rec["verdict"] = "ERROR_DPFLA"
-            log(f"{pattern}: DPFLA 无 R5（异常），队列停止")
+            log(f"{pattern}: DPFLA 无 R{ROUNDS}（异常），队列停止")
             break
         if dpfla < THRESH_ABS:
             rec["verdict"] = f"FAIL_DPFLA_LOW({dpfla})"
-            log(f"{pattern}: DPFLA R5={dpfla} < {THRESH_ABS} → 不通过，换下一个类数")
+            log(f"{pattern}: DPFLA R{ROUNDS}={dpfla} < {THRESH_ABS} → 不通过，换下一个类数")
             continue
 
         rec["TMean"] = run_one(pattern, "TMean")
-        tmean = rec["TMean"]["R5"]
+        tmean = rec["TMean"]["R"]
         if tmean is None:
             rec["verdict"] = "ERROR_TMEAN"
-            log(f"{pattern}: TMean 无 R5（异常），队列停止")
+            log(f"{pattern}: TMean 无 R{ROUNDS}（异常），队列停止")
             break
         gap_t = dpfla - tmean
         rec["gap_vs_tmean"] = round(gap_t, 2)
@@ -136,10 +140,10 @@ def main():
             continue
 
         rec["MKrum"] = run_one(pattern, "MKrum")
-        mkrum = rec["MKrum"]["R5"]
+        mkrum = rec["MKrum"]["R"]
         if mkrum is None:
             rec["verdict"] = "ERROR_MKRUM"
-            log(f"{pattern}: MKrum 无 R5（异常），队列停止")
+            log(f"{pattern}: MKrum 无 R{ROUNDS}（异常），队列停止")
             break
         gap_k = dpfla - mkrum
         rec["gap_vs_mkrum"] = round(gap_k, 2)
@@ -161,7 +165,7 @@ def main():
         lines.append(f"- **{p}**: {rec.get('verdict')}")
         for rule in ("DPFLA", "TMean", "MKrum"):
             if rule in rec:
-                lines.append(f"  - {rule} R5={rec[rule]['R5']}（{rec[rule]['minutes']} min）")
+                lines.append(f"  - {rule} R{ROUNDS}={rec[rule]['R']}（{rec[rule]['minutes']} min）")
     lines.append("")
     lines.append(f"结论：{'通过 ' + passed if passed else '无 pattern 通过'}")
     (OUT_DIR / "label_flip_summary.md").write_text("\n".join(lines) + "\n")
