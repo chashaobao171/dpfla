@@ -7,6 +7,8 @@
 ## §0 用户新规则（2026-11-13 定稿）
 
 > **2026-11-13 20:33 更新（优先）**：停止所有进程，**不再先跑无攻击基线**；直接做标签翻转，**多试几种部分标签反转**，每条上限 50 轮。先用 **5 轮 ×3 epoch** 筛策略，候选再上 **10–11 轮**，必要时才跑 50 轮；**若确认 DPFLA 达不到“mAP 高 ≥1%”目标，立即停止当前策略、换下一种再跑**。不再用 full_cycle 50×24 旧参数。
+>
+> **2026-11-13 22:42 更新（优先）**：筛选顺序改为 **DPFLA → TMean**，**跳过 MKrum**（TMean 对标签翻转更强；TMean 都过不了就不必跑 MKrum）。`FL_FLIP_RATIO` **固定 1.0 不再调**；翻转类数按 **1 → 2 → 3 → 4** 依次试（one_class / two_class / three_class / four_class）。四种都不行后，才考虑替换 TMean（换弱基线）。
 
 1. **先跑无攻击 50 轮完整基线**，看 YOLO26s 最高能到多少（已启动：50 轮 ×24 step，LR 1e-3）。
 2. **CIFAR10 和 VisDrone 都必须支持两类攻击，且标签翻转必须包含**。
@@ -68,14 +70,19 @@
 
 ### Phase C — 翻转方式/强度筛选（短轮次）
 
-- 目的：找到“DPFLA 能识别、两个基线防不住、且 mAP 够高”的翻转策略。
-- 先做 **5 轮 ×3 epoch**（约 55 min/条）或 **10 轮 ×3 epoch**（约 1.8h/条）筛选，优先 5 轮：
-  - 策略：`full_cycle`（对照）、`pair_swap`、`two_class`、`three_class`、`vehicle_cycle`、`car_van`、`person_pair`；
-  - 强度：`FL_FLIP_RATIO` ∈ {1.0, 0.75, 0.5}（先全翻，再降）。
-- 每条先跑 **DPFLA**；记录 R5/R10、恶意端 aux/权重、与无攻击同轮基线差。
-- 选 2 个候选：DPFLA mAP 最高且恶意端可分离；再补 MKrum/TMean 5 轮对比。
-- **G-C**：候选策略下 DPFLA 比 MKrum/TMean 高 ≥1%（短轮次先看趋势）。
-- 通过后用该策略跑 **50 轮 ×24 step × {DPFLA, MKrum, TMean}**（约 6h）。
+- **顺序**：每个 pattern 只跑 **DPFLA → TMean**；MKrum 暂不跑（TMean 是更强基线）。
+- **固定**：`FL_FLIP_RATIO=1.0`（不再调）；`FL_GLOBAL_ROUNDS=5`、`FL_LOCAL_EPOCHS=3`、LR1e-3、30% 恶意。
+- **翻转类数 1→4**：
+  - 1 类：`one_class`（0→1）
+  - 2 类：`two_class`（0↔1）
+  - 3 类：`three_class`（0→1→2→0）
+  - 4 类：`four_class`（0→1→2→3→0）
+- 每个 pattern：DPFLA 5 轮 → TMean 5 轮，比较 R5。
+- **G-C（短轮次门槛）**：
+  - DPFLA R5 **≥30.0**（无攻击基线 R5=31.20，允许约 −1.2）；
+  - DPFLA R5 **≥ TMean R5 + 1.0**。
+- 通过 → 用 checkpoint 把 DPFLA/TMean 续到 **11 轮**（必要时 50 轮），验证绝对 mAP ≥35 与领先 ≥1。
+- 不通过 → 立即停，换成下一个类数；**四种都不行后**才考虑替换 TMean。
 
 ### Phase D — 50 轮最终矩阵（标签翻转）
 
@@ -139,8 +146,9 @@ H. CIFAR 两类攻击回归（~2h）
 ## §7 当前执行
 
 - 已停止无攻击 50×24 基线与 full_cycle 50×24（用户 2026-11-13 20:33 指令）。
-- **当前：pair_swap 标签翻转 + DPFLA，5 轮 ×3 epoch，LR1e-3**；tmux `v26s_lf_pair_5x3`，日志 `logs_3/visdrone/run_dpfla_label_flipping_20261113_2034.log`。
-- 监控 R1–R5、恶意端 aux/权重；若 R5 明显低于可接受线或恶意端未被抑制，立即停止并换下一种 partial pattern（two_class / three_class / car_van / vehicle_cycle / person_pair）。
+- pair_swap（10 类，5 对）DPFLA R5=30.34、MKrum R5=23.53；TMean 在 R1=13.44 后按新规则停止（10 类不在 1–4 范围，保留作参考）。
+- **当前：one_class（1 类，0→1）+ DPFLA 5×3**；完成后自动跑 TMean 5×3。tmux `v26s_lf_1class_5x3`，日志 `/tmp/v26s_lf_1class_dpfla.log` / `..._tmean.log`。
+- 之后按 `two_class` → `three_class` → `four_class` 依次筛；每种都是 DPFLA → TMean，`FL_FLIP_RATIO=1.0`。
 
 ## §8 Checkpoint / 断点续跑（2026-11-13 22:30 已实现）
 

@@ -6,6 +6,8 @@
 
 ## 2026-11-13
 
+- **筛选顺序变更（22:42 用户定稿）**：后续按 **DPFLA → TMean** 跑，**跳过 MKrum**；`FL_FLIP_RATIO` 固定 **1.0**；翻转类数按 **1→2→3→4** 依次试（one_class/two_class/three_class/four_class）；四种都不行才考虑替换 TMean。pair_swap（10 类）TMean 在 R1=13.44 后停止，保留 DPFLA R5=30.34 / MKrum R5=23.53 作参考。
+- **one_class 筛选启动（22:43）**：1 类（0→1）标签翻转，5 轮 ×3 epoch，LR1e-3，30% 恶意；tmux `v26s_lf_1class_5x3`，先 DPFLA 后 TMean；日志 `/tmp/v26s_lf_1class_dpfla.log`、`/tmp/v26s_lf_1class_tmean.log`。
 - **计划变更（20:33 用户定稿）**：停止无攻击 50×24 基线与 full_cycle 50×24；**不再先跑基线**，直接做部分标签翻转筛选，每条上限 50 轮；5 轮筛策略 → 候选 10–11 轮 → 必要时 50 轮；确认达不到“DPFLA 比另两方法高 ≥1%”就立即停止换策略。
 - **pair_swap 筛选启动（20:34）**：VisDrone 标签翻转 + DPFLA，5 轮 ×3 epoch，LR1e-3，30% 恶意；tmux `v26s_lf_pair_5x3`，日志 `logs_3/visdrone/run_dpfla_label_flipping_20261113_2034.log`。
 - **pair_swap R1（20:45）**：mAP@0.5=**14.98%**（无攻击基线 R1=14.45%，**+0.53**）；映射确认为 0↔1、2↔3、…、8↔9。3 个攻击者 aux=0.599/0.667/0.828 → 权重 0.08/0.08/0.02；**1 个诚实端误杀 aux=0.652 → 权重 0.08**，其余诚实端 1.000。R1 无掉点；继续 R5，若 R5 仍 ≥基线-1 且攻击者持续被压制，则进入 MKrum/TMean 对比。
