@@ -45,6 +45,7 @@ from visdrone_fed_hparams import (
     DATALOADER_WORKERS,
     apply_default_yolo_model_size,
     yolo_weights_name,
+    resolve_label_flip_mapping,
 )
 
 _yolo_sz = apply_default_yolo_model_size()
@@ -52,8 +53,8 @@ _yolo_sz = apply_default_yolo_model_size()
 # 可调：与 run_no_attack_baseline / run_no_defense 共用 visdrone_fed_hparams；若 OOM 可 export FL_TRAIN_BATCH_SIZE / YOLO_MODEL_SIZE
 
 NUM_CLASSES = 10
-# 全类循环反转（all-to-all）：i -> (i+1)%10，100% 覆盖，每类既源又目标
-FLIP_MAPPING = {i: (i + 1) % NUM_CLASSES for i in range(NUM_CLASSES)}
+# 默认全类循环反转（i -> (i+1)%10）；可用 FL_FLIP_PATTERN 或 FL_FLIP_MAPPING 覆盖
+FLIP_MAPPING, FLIP_PATTERN = resolve_label_flip_mapping(NUM_CLASSES)
 MALICIOUS_BEHAVIOR_RATE = 1.0   # 100%：每个恶意客户端每轮必发动
 FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "1.0"))   # 被翻实例比例（1.0=全翻；<1 用于调弱攻击）
 
@@ -99,7 +100,7 @@ print(f"- 设备: {device}")
 print(f"- train_bs={TRAIN_BATCH_SIZE}, test_bs={TEST_BATCH_SIZE}, cpu_threads={CPU_THREADS}")
 print(f"- 学习率: LOCAL_LR={LOCAL_LR}, LR_MIN={LR_MIN}, schedule={LR_SCHEDULE}")
 print(f"- 恶意行为率(单轮是否发动): {MALICIOUS_BEHAVIOR_RATE:.2f}")
-print(f"- 多标签反转: {FLIP_MAPPING}（翻转比例 {FLIP_RATIO:.2f}）")
+print(f"- 多标签反转: {FLIP_MAPPING}（pattern={FLIP_PATTERN}, flip_ratio={FLIP_RATIO:.2f}）")
 print("\n对照目标（同攻击、同超参，仅聚合规则不同）:")
 print("- 期望 FedAvg 仍略受攻击影响；DPFLA mAP 高于 FedAvg（如 +2% 点差为常见汇报方式）")
 print("- 绝对 mAP 能否到 30% 取决于任务与数据，本脚本不保证")

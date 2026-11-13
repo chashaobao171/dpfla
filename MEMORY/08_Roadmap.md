@@ -487,3 +487,11 @@ P4 分布式改造（可用性验证：CIFAR PASS；VisDrone 待 18h 复跑）
 - **可行性预判（2026-11-09）**：主硬门槛是 **攻击 + DPFLA ≥35%**；v8m 实测 DPFLA 比无攻击基线低约 1.2 点，因此 YOLO26s 无攻击基线需 **≥36.2%** 才进入攻击矩阵。YOLO26s 公开 VisDrone mAP50 41.0（集中式），G1/G2 属保守目标，但联邦+攻击仍需实测。
 - **硬约束**：恶意率 30%、IID、`FL_GRADIENT_SCALE=1`（不放大）、单变量；v8m/v8s 的数值只作历史参照，**YOLO26s 必须重跑自己的基线/攻击/防御矩阵**。
 - **执行计划**：见 `MEMORY/10_YOLO26s_Plan.md`（含代码改造清单、E2E 损失/换头/DPFLA 特征键风险与分阶段验收门槛）。
+
+## §11 攻击规则变更（2026-11-13 用户定稿）★
+
+- CIFAR10 与 VisDrone **都必须支持两类攻击，标签翻转必须包含**。
+- **VisDrone 舍弃 IPM**；两类攻击改为 **标签翻转 + MinMax**。
+- 优先跑 **无攻击 50 轮完整基线**（50×24 step，LR1e-3），再跑 **50 轮 full_cycle 标签翻转 + DPFLA**；目标 DPFLA **≥35% 且比 MKrum/TMean 高 ≥1%**。
+- 若 full_cycle 不达标：筛 `FL_FLIP_PATTERN`（pair_swap / two_class / three_class / vehicle_cycle / car_van / person_pair / all_to_car / offset2 / offset5）和 `FL_FLIP_RATIO`（1.0/0.75/0.5），再跑 50 轮。
+- 最后手段才是“换弱基线”，必须记录原因；详细计划见 `MEMORY/11_LabelFlip_50R_Plan.md`。

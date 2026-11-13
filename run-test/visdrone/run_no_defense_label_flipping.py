@@ -41,13 +41,14 @@ from visdrone_fed_hparams import (
     DATALOADER_WORKERS,
     apply_default_yolo_model_size,
     yolo_weights_name,
+    resolve_label_flip_mapping,
 )
 
 _yolo_sz = apply_default_yolo_model_size()
 
 NUM_CLASSES = 10
-# 全类循环反转（all-to-all）：i -> (i+1)%10，100% 覆盖，每类既源又目标
-FLIP_MAPPING = {i: (i + 1) % NUM_CLASSES for i in range(NUM_CLASSES)}
+# 默认全类循环反转（i -> (i+1)%10）；可用 FL_FLIP_PATTERN 或 FL_FLIP_MAPPING 覆盖
+FLIP_MAPPING, FLIP_PATTERN = resolve_label_flip_mapping(NUM_CLASSES)
 MALICIOUS_BEHAVIOR_RATE = 1.0   # 100%：每个恶意客户端每轮必发动
 FLIP_RATIO = float(os.environ.get("FL_FLIP_RATIO", "1.0"))   # 被翻实例比例（1.0=全翻；<1 用于调弱攻击）
 
@@ -83,7 +84,7 @@ from server import run_exp
 print("=" * 70)
 print("VisDrone：标签翻转攻击 + 无防御（FedAvg）")
 print("=" * 70)
-print(f"- 多标签反转: {FLIP_MAPPING}（翻转比例 {FLIP_RATIO:.2f}）")
+print(f"- 多标签反转: {FLIP_MAPPING}（pattern={FLIP_PATTERN}, flip_ratio={FLIP_RATIO:.2f}）")
 print("\n配置:")
 print(f"- {NUM_WORKERS} 客户端，恶意率 {MALICIOUS_RATE * 100:.0f}%")
 print("- 攻击类型: 标签翻转攻击 (label_flipping)")

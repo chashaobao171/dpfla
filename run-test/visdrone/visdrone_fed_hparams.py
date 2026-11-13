@@ -14,6 +14,7 @@ Smoke 脚本不引用本模块。
 
 from __future__ import annotations
 
+import json
 import os
 
 # 2026-11-09 起：YOLO26s 为边缘终端首选；YOLOv8s 仅作备选。
@@ -47,6 +48,71 @@ def apply_default_yolo_model_size() -> str:
         return cur
     os.environ["YOLO_MODEL_SIZE"] = DEFAULT_YOLO_MODEL_SIZE
     return DEFAULT_YOLO_MODEL_SIZE
+
+
+# VisDrone 10 类：0 pedestrian, 1 people, 2 bicycle, 3 car, 4 van,
+# 5 truck, 6 tricycle, 7 awning-tricycle, 8 bus, 9 motor
+LABEL_FLIP_PRESETS = {
+    # 全类循环：i -> (i+1)%10（原默认，10 类全覆盖）
+    "full_cycle": {i: (i + 1) % 10 for i in range(10)},
+    "full_cycle_reverse": {i: (i - 1) % 10 for i in range(10)},
+    # 5 对互换：0<->1, 2<->3, ...
+    "pair_swap": {0: 1, 1: 0, 2: 3, 3: 2, 4: 5, 5: 4, 6: 7, 7: 6, 8: 9, 9: 8},
+    # 只翻 1 类 / 2 类 / 3 类，用于“反转个数”筛选
+    "single_pair": {0: 1},
+    "two_class": {0: 1, 1: 0},
+    "three_class": {0: 1, 1: 2, 2: 0},
+    # 语义相近类互换，攻击更隐蔽
+    "person_pair": {0: 1, 1: 0},
+    "car_van": {3: 4, 4: 3},
+    # 只翻车辆类（3..9），行人保持正确
+    "vehicle_cycle": {3: 4, 4: 5, 5: 6, 6: 7, 7: 8, 8: 9, 9: 3},
+    # 多对一：所有非 car 类 -> car（强破坏）
+    "all_to_car": {0: 3, 1: 3, 2: 3, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3},
+    # 偏移 2 / 5 类，覆盖不同目标分布
+    "offset2": {i: (i + 2) % 10 for i in range(10)},
+    "offset5": {i: (i + 5) % 10 for i in range(10)},
+}
+
+
+def resolve_label_flip_mapping(num_classes: int = 10) -> tuple[dict[int, int], str]:
+    """解析标签翻转映射。
+
+    优先级：
+      1) FL_FLIP_MAPPING：自定义映射，支持 JSON（{"0":1,"1":2}）或 "0:1,1:2"
+      2) FL_FLIP_PATTERN：预设名（见 LABEL_FLIP_PRESETS），默认 full_cycle
+    返回 (mapping, name)，name 用于日志。
+    """
+    raw = (os.environ.get("FL_FLIP_MAPPING") or "").strip()
+    if raw:
+        try:
+            if raw.startswith("{"):
+                obj = json.loads(raw)
+                mapping = {int(k): int(v) for k, v in obj.items()}
+            else:
+                mapping = {}
+                for part in raw.split(","):
+                    k, v = part.split(":")
+                    mapping[int(k)] = int(v)
+        except Exception as exc:
+            raise ValueError(f"无法解析 FL_FLIP_MAPPING={raw!r}: {exc}") from exc
+        name = f"custom:{raw}"
+    else:
+        pattern = (os.environ.get("FL_FLIP_PATTERN") or "full_cycle").strip().lower()
+        if pattern not in LABEL_FLIP_PRESETS:
+            raise ValueError(
+                f"未知 FL_FLIP_PATTERN={pattern!r}；可选: {sorted(LABEL_FLIP_PRESETS)}"
+            )
+        mapping = dict(LABEL_FLIP_PRESETS[pattern])
+        name = pattern
+
+    bad = {k: v for k, v in mapping.items()
+           if not (0 <= int(k) < num_classes and 0 <= int(v) < num_classes)}
+    if bad:
+        raise ValueError(f"标签翻转映射越界（num_classes={num_classes}）: {bad}")
+    if not mapping:
+        raise ValueError("标签翻转映射为空")
+    return mapping, name
 
 
 # 4090 默认：学习率不过激，先保证稳定收敛；需要更猛再通过 FL_LOCAL_LR 调大

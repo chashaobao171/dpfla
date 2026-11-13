@@ -1,8 +1,16 @@
 # 03_History.md — 时间线（改动与回退）
 
-<!-- 最后更新：2026-11-09（补记 10-31 ~ 11-02 的 50 轮与分布式结果） -->
+<!-- 最后更新：2026-11-13（新增标签翻转 50 轮计划与两类攻击规则） -->
 <!-- 追加式：新事件加在最上方。回退/证伪的事件保留，不删除。 -->
 <!-- 结论性判断请以 01_Facts.md 为准；本文件只记"做了什么、结果如何"。 -->
+
+## 2026-11-13
+
+- **计划变更（20:33 用户定稿）**：停止无攻击 50×24 基线与 full_cycle 50×24；**不再先跑基线**，直接做部分标签翻转筛选，每条上限 50 轮；5 轮筛策略 → 候选 10–11 轮 → 必要时 50 轮；确认达不到“DPFLA 比另两方法高 ≥1%”就立即停止换策略。
+- **pair_swap 筛选启动（20:34）**：VisDrone 标签翻转 + DPFLA，5 轮 ×3 epoch，LR1e-3，30% 恶意；tmux `v26s_lf_pair_5x3`，日志 `logs_3/visdrone/run_dpfla_label_flipping_20261113_2034.log`。
+- **攻击规则变更（用户定稿）**：CIFAR10 与 VisDrone 都必须支持两类攻击，**标签翻转必须包含**；**VisDrone 舍弃 IPM**，两类攻击改为 **标签翻转 + MinMax**。计划见 `11_LabelFlip_50R_Plan.md`。
+- **标签翻转参数化**：`visdrone_fed_hparams.resolve_label_flip_mapping()` 支持 `FL_FLIP_PATTERN`（full_cycle / pair_swap / two_class / three_class / vehicle_cycle / car_van / person_pair / all_to_car / offset2 / offset5 等）、`FL_FLIP_MAPPING` 自定义、`FL_FLIP_RATIO`；DPFLA/FedAvg 脚本已接入。
+- **新增 VisDrone 标签翻转基线入口**：`run_mkrum_label_flipping.py`、`run_tmean_label_flipping.py`（与 DPFLA 同攻击/同超参，仅 rule 不同），用于 DPFLA 领先 ≥1% 对比。
 
 ## 2026-11-09
 
