@@ -6,7 +6,7 @@
 2. 当前只跑 FoolsGold；每个 pattern 跑完立即与基准比较：
    one_class 通过（DPFLA − defense ≥ 1.0）→ 跳过 full_cycle 并选中该防御；
    one_class 失败 → 跑 full_cycle 40 轮，与 one_class R42=35.03 比较；
-3. 后续防御同样按 one_class → full_cycle 顺序测试（先 one_class 42 轮，失败再 full_cycle 40 轮）；
+3. **FoolsGold full_cycle 跑完即停止，不自动跑 NormClip**（2026-11-14 用户定稿）；
 4. 第一个在任一 pattern 通过的防御被选中，队列停止。
 
 用法（tmux 内）：
@@ -34,7 +34,7 @@ LEAD = 1.0
 PATTERNS = ["one_class", "full_cycle"]
 FULL_CYCLE_ROUNDS = 40
 DPFLA_PROXY_MAP = 35.03  # DPFLA one_class R42
-DEFENSES = ["foolsgold", "normclip"]
+DEFENSES = ["foolsgold"]
 RUNNERS = {
     "DPFLA": "run-test/visdrone/run_dpfla_label_flipping.py",
     "foolsgold": "run-test/visdrone/run_foolsgold_label_flipping.py",
@@ -202,7 +202,7 @@ def ensure_defense(pattern, rule, rounds):
 
 def main():
     log("=" * 70)
-    log("防御筛选队列启动：r20×1（20 轮起、1 epoch/轮、LR8e-4）→ DPFLA → FoolsGold → NormClip")
+    log("防御筛选队列启动：r20×1（20 轮起、1 epoch/轮、LR8e-4）→ DPFLA → FoolsGold（跑完即停）")
     log("=" * 70)
 
     state = {"targets": {}, "results": [], "selected": None}
