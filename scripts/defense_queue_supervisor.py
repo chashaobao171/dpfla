@@ -34,7 +34,7 @@ LEAD = 1.0
 PATTERNS = ["one_class", "full_cycle"]
 FULL_CYCLE_ROUNDS = 40
 DPFLA_PROXY_MAP = 35.03  # DPFLA one_class R42
-DEFENSES = ["foolsgold"]
+DEFENSES = ["foolsgold", "normclip"]
 RUNNERS = {
     "DPFLA": "run-test/visdrone/run_dpfla_label_flipping.py",
     "foolsgold": "run-test/visdrone/run_foolsgold_label_flipping.py",
@@ -202,7 +202,7 @@ def ensure_defense(pattern, rule, rounds):
 
 def main():
     log("=" * 70)
-    log("防御筛选队列启动：r20×1（20 轮起、1 epoch/轮、LR8e-4）→ DPFLA → FoolsGold")
+    log("防御筛选队列启动：r20×1（20 轮起、1 epoch/轮、LR8e-4）→ DPFLA → FoolsGold → NormClip")
     log("=" * 70)
 
     state = {"targets": {}, "results": [], "selected": None}
