@@ -137,8 +137,9 @@ def run_arm(pattern, rule, rounds, stop_map, tag):
     env["FL_FLIP_PATTERN"] = pattern
     env["FL_GLOBAL_ROUNDS"] = str(int(rounds))
     env["FL_CKPT_PATH"] = str(ckpt_path(pattern, rule))
+    # 只有 checkpoint 已存在才续跑；新实验必须从头开始，否则入口 torch.load 会报 FileNotFoundError
+    env["FL_RESUME"] = "1" if Path(env["FL_CKPT_PATH"]).exists() else "0"
     env["FL_STOP_MAP"] = str(int(stop_map)) if stop_map else "0"
-    env["FL_RESUME"] = "1"
 
     log_path = LOG_DIR / f"{tag}_{datetime.now():%Y%m%d_%H%M%S}.log"
     log(f"🚀 {tag}: {rule} / {pattern} / {rounds} 轮 / stop={stop_map} → {log_path.name}")
