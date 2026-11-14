@@ -154,9 +154,9 @@ H. CIFAR 两类攻击回归（~2h）
 - pair_swap（10 类，5 对）DPFLA R5=30.34、MKrum R5=23.53；TMean 在 R1=13.44 后按新规则停止（10 类不在 1–4 范围，保留作参考）。
 - **one_class 已判定不通过（2026-11-14 00:34）**：DPFLA R1–R5 = 14.10 / 21.55 / 25.80 / 28.23 / 30.63；TMean = 13.59 / 21.75 / 25.85 / 28.82 / 30.84 → DPFLA R5 **−0.21**，未达 TMean+1 → **跳过 MKrum**。
 - **two_class 已判定不通过（2026-11-14 02:25）**：DPFLA R1–R5 = 14.23 / 22.03 / 25.76 / 28.48 / 30.58；TMean = 13.99 / 21.60 / 25.71 / 28.48 / 30.78 → R5 DPFLA **−0.20**，未达 TMean+1 → **跳过 MKrum**。
-- **当前：three_class → four_class 自动筛选队列（20×1 / LR8e-4，R20 判定）**（`scripts/label_flip_screen_supervisor.py`，tmux `lf_screen_3_4`，2026-11-14 06:26 启动）。每个 pattern：DPFLA 20×1 →（R20≥30 才跑）TMean 20×1 →（满足 +1 才跑）MKrum 20×1；日志 `logs_screen/<pattern>_<rule>_*.log`，汇总 `logs_screen/label_flip_summary.{json,md}`；checkpoint 带 `_r20x1` 后缀。
-- 旧 5×3 结果（one_class / two_class）保留为历史对照；three_class 旧 5×3 只跑了约 3 分钟即被新配方替换，无有效结果。
-- 之后按 `two_class` → `three_class` → `four_class` 依次筛；每种都是 DPFLA → TMean →（条件）MKrum，`FL_FLIP_RATIO=1.0`。
+- **标签翻转筛选已终止（2026-11-14 10:48，用户指令）**：1→4 类全部试完，DPFLA R20 = 30.63 / 30.58 / 30.68 / 30.58；TMean = 30.84 / 30.78 / 30.74（four_class 仅 R1–R2 后中止）。**无 pattern 通过，差距 −0.2 ~ −0.06**。
+- **根因（结构性问题）**：TMean 的 `trim_ratio` 默认=恶意率 0.30，n=10 时每端裁 3，正好裁掉 3 个攻击者 → 等价于 4 个诚实端平均，在 IID + 弱标签翻转下近似最优。DPFLA 只能持平略低，换类数/调参无解。
+- **下一步：替换 TMean 基线**（用户 2026-11-14 定稿）。候选与顺序见 §10；替换后同口径 20×1 重测 DPFLA 领先 ≥1，再补 MKrum；通过后 DPFLA 续 50 轮冲 ≥35。
 
 ## §8 Checkpoint / 断点续跑（2026-11-13 22:30 已实现）
 
@@ -174,3 +174,20 @@ H. CIFAR 两类攻击回归（~2h）
   - **VisDrone（检测）**：按**边界框实例**计算；每个匹配的 box 以该比例翻转，`1.0`=全翻，`0.5`=约一半 box。种子由样本 index 固定，跨 epoch 可复现。
   - **CIFAR10（分类）**：按**样本**计算；`1.0`=所有命中类样本都翻，`0.5`=约一半样本翻。种子由样本 index 固定，跨 epoch 可复现（2026-11-13 修复，之前分类分支忽略该参数）。
 - 攻击强度 ≈ 映射覆盖类数 × `FL_FLIP_RATIO`；两者要分开记录，避免把“翻得少”误判为“翻得弱”。
+
+## §10 TMean 替换方案（2026-11-14 10:48 用户定稿）
+
+**背景**：1–4 类翻转全部无法让 DPFLA 领先 TMean ≥1，根因是 TMean 裁剪比例=恶意率，恰好裁掉全部 3 个攻击者。按用户“最后才换弱基线”的授权，替换 TMean。
+
+| 候选 | 实现状态 | 预期 | 备注 |
+|---|---|---|---|
+| **FedAvg（无防御）** | ✅ 已有 `run-test/visdrone/run_no_defense_label_flipping.py` | DPFLA 优势最大、最稳；差距可能 ≥1 | **首选**；报告需注明“无防御基线” |
+| simple median | ✅ `fl_core` 支持 `rule='median'`；❌ 无 VisDrone 标签翻转入口 | 介于 TMean 与 FedAvg 之间，差距不确定 | 次选；需补入口脚本 |
+
+**执行顺序**：
+1. 先用 four_class（DPFLA R20=30.58 已就绪）+ FedAvg 20×1 跑一条，测 DPFLA−FedAvg 是否 ≥1；
+2. 若 ≥1 → 补 MKrum 20×1，凑齐三臂（DPFLA / FedAvg / MKrum），全部满足 ≥+1 即通过；
+3. 通过后 DPFLA 用 `_r20x1` checkpoint 续到 50 轮，验证 ≥35；FedAvg/MKrum 同口径续跑；
+4. 若 FedAvg 差距 <1 → 换更强翻转（pair_swap 10 类 / full_cycle）再测，或改用 simple median。
+
+**记录要求**：最终报告必须显式标注“基线由 Trimmed-Mean 替换为 FedAvg/Median，原因：TMean 裁剪比例与恶意率相同，在本设置下等价于仅用诚实端平均”，不得静默替换。

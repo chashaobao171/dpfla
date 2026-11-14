@@ -47,7 +47,9 @@
 - **计划**：见 `MEMORY/10_YOLO26s_Plan.md`；**Phase 0 已完成（2026-11-09）**——代码参数化 + 1280 端到端冒烟通过：基线 R1 5.06%、MinMax+DPFLA R1 5.03%（1 轮×1 epoch，仅链路验证），攻击/DPFLA/评估均无 KeyError/NaN/OOM。
 - **Phase 2 MinMax 线（2026-11-09）**：**YOLO26s 11×3 + LR1e-3 + MinMax + DPFLA：R10=35.23%、R11=35.69% → 攻击 + DPFLA ≥35% 已达成**（基线 R10=36.02，仅低 0.79；恶意端权重 0.020，无 NaN/OOM）。日志/TB 已入库。
 - **攻击规则变更（2026-11-13 用户定稿）**：CIFAR10 与 VisDrone **都必须支持两类攻击，标签翻转必须包含**；**VisDrone 舍弃 IPM**，两类攻击改为 **标签翻转 + MinMax**。20:33 用户再次更新：**停止基线，直接做部分标签翻转筛选**，每条上限 50 轮；先 5 轮筛策略，候选 10–11 轮，必要时 50 轮；确认达不到“DPFLA 比 MKrum/TMean 高 ≥1%”就停止换策略。22:42 再次更新：筛选顺序 **DPFLA → TMean → MKrum**；若 DPFLA 对 TMean 不达标（<TMean+1 或 <30）**跳过 MKrum 直接换下一个类数**；`FL_FLIP_RATIO` 固定 1.0，翻转类数 **1→2→3→4**；四种都不行才考虑替换 TMean。**one_class / two_class 均判定不通过（DPFLA 30.63 / 30.58 vs TMean 30.84 / 30.78，未领先 ≥1）→ 均跳过 MKrum。**
-- **2026-11-14 06:25 配方变更（用户要求，便于展示）**：后续改用**小步多轮**：**20 轮 × 1 epoch、LR 8e-4**（训练量≈旧 5×3），目标 **R20 ≈ 旧 R5（≈30.6）**；判定点改为 R20，门槛不变。3、4 类筛查已按此配方重跑（`scripts/label_flip_screen_supervisor.py`，tmux `lf_screen_3_4`，06:26 启动），checkpoint 带 `_r20x1` 后缀。通过者续到 50 轮展示 ≥35 曲线。
+- **2026-11-14 06:25 配方变更（用户要求，便于展示）**：后续改用**小步多轮**：**20 轮 × 1 epoch、LR 8e-4**（训练量≈旧 5×3），目标 **R20 ≈ 旧 R5（≈30.6）**；判定点改为 R20，门槛不变。checkpoint 带 `_r20x1` 后缀；通过者续到 50 轮展示 ≥35 曲线。
+- **2026-11-14 10:48 标签翻转筛选终止（用户指令）**：1→4 类全部试完，DPFLA R20 = 30.63 / 30.58 / 30.68 / 30.58；TMean = 30.84 / 30.78 / 30.74（four_class 仅 R1–R2 即中止）。**全部差距 −0.2 ~ −0.06，无 pattern 通过**。根因：TMean 的 `trim_ratio` 默认=恶意率 0.30，10 端每端裁 3，正好裁掉 3 个攻击者，结构上近似最优；调参/换类数无解。
+- **下一步（用户定稿）**：**替换 TMean 基线**。候选：**FedAvg（无防御，已有 `run_no_defense_label_flipping.py`，推荐优先）**、simple median（`rule=median` 已支持，需补 VisDrone 标签翻转入口）。替换后同口径 20×1 测 DPFLA 领先是否 ≥1，再补 MKrum 凑齐三臂；通过后 DPFLA 续 50 轮冲 ≥35。
 - **代码改造清单（已完成）**：`yolo_wrapper`（family/换头/E2ELoss/device）、`model.py`、`DPFLA`（动态 layer22/23）、`fl_core`（评估子进程/TB family/每轮 checkpoint）、`server`（全实验自动 checkpoint）、分布式 CLI、50 轮队列、VisDrone 入口默认值、标签翻转 pattern 参数化 + MKrum/TMean 入口、CIFAR flip_ratio 修复。历史 v8m/v8s 复现需显式 `YOLO_MODEL_FAMILY=8`。
 
 ## 历史进度（2026-10-23，15/5 轮口径）
