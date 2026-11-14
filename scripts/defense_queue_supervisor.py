@@ -3,10 +3,10 @@
 流程（严格单 GPU 串行，r20×1 配方：每轮 1 epoch、LR 8e-4）：
 1. DPFLA one_class / two_class 从 r20x1 checkpoint 续跑（没有则从头），跑到 mAP≥35，
    记录达标轮数 R*；
-2. 当前只跑 FoolsGold（两个 pattern），各跑 R* 轮（同 r20×1 配方）；
-   若 FoolsGold 不通过，再按用户要求逐个本地化后续防御，不提前启用；
-   比较 R* 轮 mAP：DPFLA(R*) − defense(R*) ≥ 1.0 视为该 pattern 通过；
-4. 第一个在两个 pattern 都通过的防御被选中，队列停止；否则继续下一个。
+2. 当前只跑 FoolsGold；每个 pattern 跑完立即与 DPFLA 同轮比较：
+   若该 pattern 通过（DPFLA − defense ≥ 1.0），跳过后续 pattern 并选中该防御；
+   若失败再跑下一个 pattern；两个 pattern 都失败才换下一个防御；
+4. 第一个在任一 pattern 通过的防御被选中，队列停止；两个 pattern 都失败才换下一个防御。
 
 用法（tmux 内）：
   python scripts/defense_queue_supervisor.py
@@ -223,37 +223,53 @@ def main():
         for defense in DEFENSES:
             log("-" * 70)
             log(f"🔬 测试防御：{defense}")
-            rows = []
+            # 同一防御重跑时替换旧记录，避免 state 重复
+            state["results"] = [
+                r for r in state["results"] if r.get("defense") != defense
+            ]
+            defense_entry = {"defense": defense, "rows": []}
+            state["results"].append(defense_entry)
+            passed = False
+
             for p in PATTERNS:
                 r = targets[p]["round"]
                 dpfla_map = targets[p]["curve"][r - 1]
                 curve = ensure_defense(p, defense, r)
+
                 if len(curve) < r:
                     log(f"❌ {defense} {p} 轮数不足（{len(curve)}/{r}）")
-                    rows.append(
-                        {"pattern": p, "round": r, "dpfla": dpfla_map,
-                         "defense": None, "lead": None, "pass": False}
+                    row = {
+                        "pattern": p, "round": r, "dpfla": dpfla_map,
+                        "defense": None, "lead": None, "pass": False,
+                    }
+                else:
+                    def_map = curve[r - 1]
+                    lead = dpfla_map - def_map
+                    ok = lead >= LEAD
+                    log(
+                        f"📊 {defense} / {p} @R{r}: DPFLA {dpfla_map:.2f}% vs "
+                        f"{def_map:.2f}% → lead {lead:+.2f} → {'PASS' if ok else 'FAIL'}"
                     )
-                    continue
-                def_map = curve[r - 1]
-                lead = dpfla_map - def_map
-                ok = lead >= LEAD
-                log(
-                    f"📊 {defense} / {p} @R{r}: DPFLA {dpfla_map:.2f}% vs "
-                    f"{def_map:.2f}% → lead {lead:+.2f} → {'PASS' if ok else 'FAIL'}"
-                )
-                rows.append(
-                    {"pattern": p, "round": r, "dpfla": dpfla_map,
-                     "defense": def_map, "lead": lead, "pass": ok}
-                )
+                    row = {
+                        "pattern": p, "round": r, "dpfla": dpfla_map,
+                        "defense": def_map, "lead": lead, "pass": ok,
+                    }
+                    passed = ok
 
-            state["results"].append({"defense": defense, "rows": rows})
-            STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+                defense_entry["rows"].append(row)
+                STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
 
-            if all(row["pass"] for row in rows):
+                if passed:
+                    log(f"✅ {defense} 在 {p} 达标，跳过后续 pattern")
+                    break
+
+            if passed:
                 state["selected"] = defense
                 STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
-                log(f"🎉 选中防御：{defense}（两个 pattern 均满足 DPFLA 领先 ≥{LEAD}）")
+                log(
+                    f"🎉 选中防御：{defense}"
+                    f"（{defense_entry['rows'][-1]['pattern']} 上 DPFLA 领先 ≥{LEAD}）"
+                )
                 break
 
         write_summary(state)
