@@ -1,13 +1,13 @@
 # 正式验收日志索引（2026-11-01）
 
-本目录收录最终验收矩阵日志：CIFAR10 9 条、VisDrone 9 条。2026-11-14 起开始用 YOLO26s 重跑并逐个替换；当前 VisDrone MinMax DPFLA 已换成 26s 11×3 口径，详见下方说明。
+本目录收录最终验收矩阵日志：CIFAR10 9 条、VisDrone 9 条。2026-11-14 起开始用 YOLO26s 重跑并逐个替换；DPFLA 行等 **26s r20×1 完整日志**跑完后再替换，详见下方说明。
 
 - 恶意客户端比例均为 30%，不放大梯度。
 - 主口径为末 5 轮均值，同时记录 R50。
 - CIFAR MinMax 线为 24 step/轮；无攻击基线为 48 step/轮；标签翻转线为 **M5 全类循环映射 + 48 step/轮**。
 - VisDrone 为 12 step/轮，指标为 mAP@0.5（%）。
 - 旧 5 轮、15 轮、中断、被替换及无关日志/TB 已移至 `/root/dpfla_cleanup_20261101/`，未直接删除。
-- **2026-11-14 起**：用 YOLO26s 重跑并逐个替换本目录日志；**本轮只替换 DPFLA**。CIFAR 非 YOLO，不参与 26s 替换；IPM 已弃用，待后续处理；其余方法（baseline/FedAvg/MKrum/TMean）何时替换待定。
+- **2026-11-14 起**：用 YOLO26s 重跑并逐个替换本目录日志；**本轮只替换 DPFLA**，且必须使用 **26s + r20×1（20 轮起、1 epoch/轮、LR8e-4）的完整日志**，未跑完不替换；11×3 日志不作为替换依据。CIFAR 非 YOLO，不参与 26s 替换；IPM 已弃用，待后续处理；其余方法（baseline/FedAvg/MKrum/TMean）何时替换待定。
 
 ## CIFAR10（准确率 %）
 
@@ -31,7 +31,7 @@
 |---|---|---:|---:|---|
 | 无攻击 | FedAvg | 39.65 | 39.12 | `visdrone/01_baseline__run_no_attack_baseline_20261031_1258.log` |
 | MinMax | FedAvg | 30.23 | 29.89 | `visdrone/02_attack_nodefense_minmax__run_screen_minmax_fedavg_20261031_1729.log` |
-| MinMax | DPFLA（YOLO26s） | 35.69 (R11) | — | `visdrone/03_attack_dpfla_minmax__run_screen_minmax_DPFLA_20261109_1620.log` |
+| MinMax | DPFLA | **38.36** | **37.85** | `visdrone/03_attack_dpfla_minmax__run_screen_minmax_DPFLA_20261031_1504.log` |
 | MinMax | Multi-Krum | 14.09 | 13.86 | `visdrone/04_attack_mkrum_minmax__run_screen_minmax_mkrum_20261031_2212.log` |
 | MinMax | Trimmed-Mean | 28.12 | 27.70 | `visdrone/05_attack_tmean_minmax__run_screen_minmax_tmean_20261031_1951.log` |
 | IPM | FedAvg | 35.87 | 35.36 | `visdrone/06_attack_nodefense_ipm__run_screen_ipm_fedavg_20261101_0240.log` |
@@ -41,7 +41,7 @@
 
 MinMax 线末 5 轮：DPFLA 领先 Multi-Krum **+23.99**、Trimmed-Mean **+10.15**。IPM 线分别领先 **+12.44 / +5.91**。两条攻击均满足 DPFLA 相对两种防御领先不少于 1 个百分点的目标。
 
-> 2026-11-14：MinMax DPFLA 行已替换为 YOLO26s 11×3 日志（R11=35.69，末 10 轮平均 31.83）；旧 v8m 50 轮日志保存在存档分支 `archive/2026-11-14-pre-26s-log-refresh`。IPM 行（07）仍为旧 v8m 日志，IPM 已弃用，待后续替换/移除。
+> 2026-11-14：DPFLA 日志替换规则——只使用 **YOLO26s + r20×1（20 轮起、1 epoch/轮、LR8e-4）的完整日志**；当前 r20×1 标签翻转 DPFLA 仍在跑，跑完后再替换；11×3 日志（R11=35.69）仅作历史参考，不作为替换依据。IPM 行（07）仍为旧 v8m 日志，IPM 已弃用，待后续处理。
 
 ## TensorBoard
 

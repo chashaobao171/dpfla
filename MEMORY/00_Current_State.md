@@ -50,7 +50,7 @@
 - **2026-11-14 06:25 配方变更（用户要求，便于展示）**：后续改用**小步多轮**：**20 轮 × 1 epoch、LR 8e-4**（训练量≈旧 5×3），目标 **R20 ≈ 旧 R5（≈30.6）**；判定点改为 R20，门槛不变。checkpoint 带 `_r20x1` 后缀；通过者续到 50 轮展示 ≥35 曲线。
 - **2026-11-14 10:48 标签翻转筛选终止（用户指令）**：1→4 类全部试完，DPFLA R20 = 30.63 / 30.58 / 30.68 / 30.58；TMean = 30.84 / 30.78 / 30.74（four_class 仅 R1–R2 即中止）。**全部差距 −0.2 ~ −0.06，无 pattern 通过**。根因：TMean 的 `trim_ratio` 默认=恶意率 0.30，10 端每端裁 3，正好裁掉 3 个攻击者，结构上近似最优；调参/换类数无解。
 - **下一步（用户定稿）**：**替换 TMean 基线**。候选：**FedAvg（无防御，已有 `run_no_defense_label_flipping.py`，推荐优先）**、simple median（`rule=median` 已支持，需补 VisDrone 标签翻转入口）。替换后同口径 20×1 测 DPFLA 领先是否 ≥1，再补 MKrum 凑齐三臂；通过后 DPFLA 续 50 轮冲 ≥35。
-- **待办：`log/` 的 26s 刷新（2026-11-14 用户定稿）**：用 YOLO26s 按原实验逻辑重跑，逐个替换 `log/` 中的日志；**本轮只替换 DPFLA**（VisDrone MinMax 已换成 26s 11×3，R11=35.69；IPM 已弃用，待后续处理；CIFAR 非 YOLO，不参与 26s 替换）。其余方法（baseline / FedAvg / MKrum / TMean）何时替换待定；新的 r20×1 标签翻转 DPFLA 日志跑完后补入。
+- **待办：`log/` 的 26s 刷新（2026-11-14 用户定稿）**：用 YOLO26s 按原实验逻辑重跑，逐个替换 `log/` 中的日志；**本轮只替换 DPFLA**，且必须使用 **26s + r20×1（20 轮起、1 epoch/轮、LR8e-4）的完整日志**，未跑完不替换；11×3 日志不作为替换依据。CIFAR 非 YOLO，不参与 26s 替换；IPM 已弃用，待后续处理。当前 r20×1 标签翻转 DPFLA 跑完后补入对应日志；MinMax 需后续同口径跑完再替换。其余方法（baseline / FedAvg / MKrum / TMean）何时替换待定。
 - **代码改造清单（已完成）**：`yolo_wrapper`（family/换头/E2ELoss/device）、`model.py`、`DPFLA`（动态 layer22/23）、`fl_core`（评估子进程/TB family/每轮 checkpoint）、`server`（全实验自动 checkpoint）、分布式 CLI、50 轮队列、VisDrone 入口默认值、标签翻转 pattern 参数化 + MKrum/TMean 入口、CIFAR flip_ratio 修复。历史 v8m/v8s 复现需显式 `YOLO_MODEL_FAMILY=8`。
 
 ## 历史进度（2026-10-23，15/5 轮口径）
