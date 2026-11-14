@@ -1,12 +1,13 @@
-"""自动防御筛选队列（VisDrone 标签翻转，one_class / two_class）。
+"""自动防御筛选队列（VisDrone 标签翻转，one_class / full_cycle）。
 
 流程（严格单 GPU 串行，r20×1 配方：每轮 1 epoch、LR 8e-4）：
-1. DPFLA one_class / two_class 从 r20x1 checkpoint 续跑（没有则从头），跑到 mAP≥35，
-   记录达标轮数 R*；
-2. 当前只跑 FoolsGold；每个 pattern 跑完立即与 DPFLA 同轮比较：
-   若该 pattern 通过（DPFLA − defense ≥ 1.0），跳过后续 pattern 并选中该防御；
-   若失败再跑下一个 pattern；两个 pattern 都失败才换下一个防御；
-4. 第一个在任一 pattern 通过的防御被选中，队列停止；两个 pattern 都失败才换下一个防御。
+1. DPFLA 只跑 one_class，跑到 mAP≥35，记录达标轮数 R*；
+   full_cycle 不跑 DPFLA，直接用 one_class R42=35.03 作代理基准（40 轮）；
+2. 当前只跑 FoolsGold；每个 pattern 跑完立即与基准比较：
+   one_class 通过（DPFLA − defense ≥ 1.0）→ 跳过 full_cycle 并选中该防御；
+   one_class 失败 → 跑 full_cycle 40 轮，与 one_class R42=35.03 比较；
+3. 后续防御同样按 one_class → full_cycle 顺序测试（先 one_class 42 轮，失败再 full_cycle 40 轮）；
+4. 第一个在任一 pattern 通过的防御被选中，队列停止。
 
 用法（tmux 内）：
   python scripts/defense_queue_supervisor.py
@@ -30,7 +31,9 @@ LOG_DIR.mkdir(exist_ok=True)
 
 TARGET_MAP = 35.0
 LEAD = 1.0
-PATTERNS = ["one_class", "two_class"]
+PATTERNS = ["one_class", "full_cycle"]
+FULL_CYCLE_ROUNDS = 40
+DPFLA_PROXY_MAP = 35.03  # DPFLA one_class R42
 DEFENSES = ["foolsgold"]
 RUNNERS = {
     "DPFLA": "run-test/visdrone/run_dpfla_label_flipping.py",
@@ -206,13 +209,33 @@ def main():
     if STATE_PATH.exists():
         try:
             state = json.loads(STATE_PATH.read_text())
+            state.pop("one_class_exhausted", None)  # 旧 plan 的跳过标记，已取消
             log(f"恢复队列状态：{STATE_PATH}")
         except Exception:
             pass
 
     try:
         targets = {}
+        state["targets"] = {}  # 清理旧 plan 的 two_class 等 target
         for p in PATTERNS:
+            if p == "full_cycle":
+                # 用户定稿：full_cycle 不跑 DPFLA，用 one_class R42=35.03 作代理基准
+                targets[p] = {
+                    "round": FULL_CYCLE_ROUNDS,
+                    "map": DPFLA_PROXY_MAP,
+                    "proxy": "DPFLA one_class R42=35.03",
+                }
+                state["targets"][p] = {
+                    "round": FULL_CYCLE_ROUNDS,
+                    "map": DPFLA_PROXY_MAP,
+                    "proxy": "DPFLA one_class R42=35.03",
+                }
+                log(
+                    f"ℹ️ full_cycle 不跑 DPFLA；用 one_class R42={DPFLA_PROXY_MAP:.2f}% "
+                    f"作代理基准，防御跑 {FULL_CYCLE_ROUNDS} 轮"
+                )
+                STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+                continue
             targets[p] = ensure_dpfla(p)
             state["targets"][p] = {
                 "round": targets[p]["round"],
@@ -233,7 +256,8 @@ def main():
 
             for p in PATTERNS:
                 r = targets[p]["round"]
-                dpfla_map = targets[p]["curve"][r - 1]
+                dpfla_map = targets[p]["map"]
+                proxy = bool(targets[p].get("proxy"))
                 curve = ensure_defense(p, defense, r)
 
                 if len(curve) < r:
@@ -241,18 +265,21 @@ def main():
                     row = {
                         "pattern": p, "round": r, "dpfla": dpfla_map,
                         "defense": None, "lead": None, "pass": False,
+                        "proxy": proxy,
                     }
                 else:
                     def_map = curve[r - 1]
                     lead = dpfla_map - def_map
                     ok = lead >= LEAD
                     log(
-                        f"📊 {defense} / {p} @R{r}: DPFLA {dpfla_map:.2f}% vs "
+                        f"📊 {defense} / {p} @R{r}: "
+                        f"{'DPFLA代理' if proxy else 'DPFLA'} {dpfla_map:.2f}% vs "
                         f"{def_map:.2f}% → lead {lead:+.2f} → {'PASS' if ok else 'FAIL'}"
                     )
                     row = {
                         "pattern": p, "round": r, "dpfla": dpfla_map,
                         "defense": def_map, "lead": lead, "pass": ok,
+                        "proxy": proxy,
                     }
                     passed = ok
 
@@ -285,6 +312,7 @@ def write_summary(state):
         "",
         f"更新时间：{datetime.now():%Y-%m-%d %H:%M:%S}",
         f"目标：DPFLA 至少 {TARGET_MAP:.1f}% mAP，且比每个防御高 ≥{LEAD:.1f}%",
+        "注：full_cycle 为 40 轮，DPFLA 未跑；用 DPFLA one_class R42=35.03 作代理基准。",
         "",
         "## DPFLA 达标轮次",
         "",
@@ -292,7 +320,8 @@ def write_summary(state):
         "|---|---:|---:|",
     ]
     for p, t in state.get("targets", {}).items():
-        lines.append(f"| {p} | {t['round']} | {t['map']:.2f} |")
+        label = f"{p}（代理）" if t.get("proxy") else p
+        lines.append(f"| {label} | {t['round']} | {t['map']:.2f} |")
 
     lines += [
         "",
@@ -305,8 +334,9 @@ def write_summary(state):
         for row in entry["rows"]:
             d = "—" if row["defense"] is None else f"{row['defense']:.2f}"
             lead = "—" if row["lead"] is None else f"{row['lead']:+.2f}"
+            pat = f"{row['pattern']}（代理）" if row.get("proxy") else row["pattern"]
             lines.append(
-                f"| {entry['defense']} | {row['pattern']} | {row['round']} | "
+                f"| {entry['defense']} | {pat} | {row['round']} | "
                 f"{row['dpfla']:.2f} | {d} | {lead} | "
                 f"{'PASS' if row['pass'] else 'FAIL'} |"
             )
