@@ -17,7 +17,7 @@ from tqdm import tqdm
 from federated_learning.client import Client, detection_collate_fn
 from federated_learning.datasets import CustomDataset
 from federated_learning.fl_algorithm import FoolsGold, average_weights, simple_median, trimmed_mean, multi_krum, \
-    FedSVD, DPFLA
+    norm_clipping, flame, FLDetectorLite, FedSVD, DPFLA
 from federated_learning.models import setup_model
 from federated_learning.utils import distribute_dataset, contains_class
 from federated_learning.utils.metrics import calculate_map_simple, yolo_output_to_predictions
@@ -646,6 +646,7 @@ print(json.dumps(res))
                 logger.warning("   可能原因：1) 模型初始化/加载异常  2) 标签映射异常  3) 数据读取异常")
         
         fg = FoolsGold(self.num_clients)
+        fldetector = FLDetectorLite(self.num_clients)
         fed_svd = FedSVD()
         dpfla = DPFLA()
         # copy weights
@@ -699,12 +700,23 @@ print(json.dumps(res))
             test_losses = checkpoint.get('test_losses', test_losses)
             global_accuracies = checkpoint.get('global_accuracies', global_accuracies)
             source_class_accuracies = checkpoint.get('source_class_accuracies', source_class_accuracies)
+            _fg_mem = checkpoint.get('foolsgold_memory')
+            if _fg_mem is not None:
+                fg.memory = _fg_mem
+            _fd = checkpoint.get('fldetector_state')
+            if _fd:
+                fldetector.load_state_dict(_fd)
             _dp = checkpoint.get('dpfla_state') or {}
             dpfla.client_bad_streak = _dp.get('bad_streak', {})
             dpfla.client_prev_soft = _dp.get('prev_soft', {})
             dpfla.client_cooldown = _dp.get('cooldown', {})
             logger.info(f'>>checkpoint loaded: resume at round {start_round + 1}/{self.global_rounds}')
         logger.info("====>Global model training started...")
+        # FL_STOP_MAP：达到目标 mAP@0.5 后提前停止（用于“跑到 35 就停”的自动队列）
+        _stop_map_raw = (os.environ.get('FL_STOP_MAP') or '').strip()
+        stop_map = float(_stop_map_raw) if _stop_map_raw else None
+        if stop_map is not None and stop_map <= 0:
+            stop_map = None
         for epoch in tqdm(range(start_round, self.global_rounds)):
             gc.collect()
             torch.cuda.empty_cache()
@@ -792,7 +804,12 @@ print(json.dumps(res))
 
             elif rule == 'foolsgold':
                 cur_time = time.time()
-                scores = fg.score_gradients(local_grads, selected_clients)
+                # 用模型更新量（w_i - 本轮全局权重）计算余弦相似度：
+                # 1) FoolsGold 原文输入就是更新量；2) 避免 YOLO AMP 累积梯度含 NaN；
+                # 3) 服务端注入的攻击会体现在 local_weights 里，防御可见。
+                scores = fg.score_weights(
+                    local_weights, simulation_model.state_dict(), selected_clients
+                )
 
                 logger.debug("Defense result:")
                 for i, pt in enumerate(clients_types):
@@ -800,6 +817,32 @@ print(json.dumps(res))
 
                 global_weights = average_weights(local_weights, scores)
                 cpu_runtimes.append(time.time() - cur_time + t)
+
+            elif rule == 'normclip':
+                cur_time = time.time()
+                _kappa = float(os.environ.get('FL_NORMCLIP_KAPPA', '1.0') or 1.0)
+                _thr_raw = (os.environ.get('FL_NORMCLIP_THRESHOLD') or '').strip()
+                _thr = float(_thr_raw) if _thr_raw else None
+                global_weights = norm_clipping(
+                    local_weights, simulation_model.state_dict(),
+                    kappa=_kappa, threshold=_thr,
+                )
+                cpu_runtimes.append(time.time() - cur_time)
+
+            elif rule == 'flame':
+                cur_time = time.time()
+                _gamma = float(os.environ.get('FL_FLAME_GAMMA', '1.2e-5') or 1.2e-5)
+                global_weights = flame(
+                    local_weights, simulation_model.state_dict(), gamma=_gamma
+                )
+                cpu_runtimes.append(time.time() - cur_time)
+
+            elif rule == 'fldetector':
+                cur_time = time.time()
+                global_weights = fldetector.aggregate(
+                    local_weights, simulation_model.state_dict()
+                )
+                cpu_runtimes.append(time.time() - cur_time)
 
             elif rule == 'fedavg':
                 cur_time = time.time()
@@ -1000,6 +1043,9 @@ print(json.dumps(res))
                 'num_clients': self.num_clients,
                 'model_family': os.environ.get('YOLO_MODEL_FAMILY', '8'),
                 'model_size': os.environ.get('YOLO_MODEL_SIZE', 's'),
+                # FoolsGold 的客户端历史梯度 memory（断点续跑用；其它 rule 为 None）
+                'foolsgold_memory': fg.memory if rule == 'foolsgold' else None,
+                'fldetector_state': fldetector.state_dict() if rule == 'fldetector' else None,
                 'dpfla_state': {
                     'bad_streak': dict(dpfla.client_bad_streak),
                     'prev_soft': dict(dpfla.client_prev_soft),
@@ -1041,6 +1087,13 @@ print(json.dumps(res))
             else:
                 # 目标检测任务：添加占位值
                 source_class_accuracies.append(0.0)
+
+            if stop_map is not None and current_accuracy >= stop_map:
+                logger.info(
+                    f'🎯 达到目标 mAP@0.5={stop_map:.2f}%（当前 {current_accuracy:.2f}%），'
+                    f'提前停止于第 {epoch + 1} 轮'
+                )
+                break
 
             if epoch == self.global_rounds - 1:
                 logger.info('Last 10 updates results')

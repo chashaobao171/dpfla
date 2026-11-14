@@ -3,5 +3,8 @@ from .fools_gold import FoolsGold
 from .trimmed_mean import trimmed_mean
 from .median import simple_median
 from .multi_krum import multi_krum
+from .norm_clipping import norm_clipping
+from .flame import flame
+from .fldetector import FLDetectorLite
 from .fed_svd import FedSVD
 from .DPFLA import DPFLA
