@@ -22,6 +22,7 @@
 - **对比线取舍（21:35 用户定稿）**：**舍弃 NormClip two_class 这条对比线**；标签翻转最终只比较 **full_cycle** 的差值。最终选择只看 **MinMax 50** 与 **full_cycle 50** 两条；two_class 结果仅保留过程记录。
 - **今日停止（21:35 用户要求）**：停止 supervisor 与训练。有效断点：`minmax_DPFLA_r20x1.pt`（R43，563MB）/ `minmax_normclip_r20x1.pt`（R43，442MB）/ `label_flip_full_cycle_normclip_r20x1.pt`（R41，442MB）。均上传 dev（Git LFS）。下次启动同一 supervisor 会自动续跑 Phase 5a。
 - **GitHub 容量（2026-11-25 核实）**：GitHub Free 的 Git LFS 为 **2GB/文件上限**、**10GiB 存储 + 10GiB 带宽/月**；本次 3 个断点约 1.45GB，未超限。常规 Git 建议仓库 <1GB、硬上限 5GB；本仓库 `.git` 约 411MB，LFS 单独计量。
+- **推送 dev（21:45）**：提交 `f5b2706`，LFS 3 个对象 1.4GB 上传成功（12 MB/s）。只上传有效断点（minmax_DPFLA R43 / minmax_normclip R43 / full_cycle_normclip R41）；**未上传** two_class_normclip（已舍弃）与 FoolsGold four_class（993MB，已放弃）。0739 手动中止的 log/TB 仍为未跟踪文件，不进入仓库。
 
 ## 2026-11-24
 
