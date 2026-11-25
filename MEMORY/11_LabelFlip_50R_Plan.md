@@ -1,6 +1,6 @@
 # 11_LabelFlip_50R_Plan.md — 标签翻转 50 轮达标计划
 
-<!-- 最后更新：2026-11-13 -->
+<!-- 最后更新：2026-11-24（补 FoolsGold 结果） -->
 <!-- 级别：执行计划。用户 2026-11-13 明确修改攻击规则；本计划优先于 10_YOLO26s_Plan 的 IPM 分支。 -->
 <!-- 前置：YOLO26s 已接入；10×3 LR1e-3 基线 R10=36.02；MinMax+DPFLA 11×3 R11=35.69 已达标。 -->
 
@@ -157,6 +157,11 @@ H. CIFAR 两类攻击回归（~2h）
 - **标签翻转筛选已终止（2026-11-14 10:48，用户指令）**：1→4 类全部试完，DPFLA R20 = 30.63 / 30.58 / 30.68 / 30.58；TMean = 30.84 / 30.78 / 30.74（four_class 仅 R1–R2 后中止）。**无 pattern 通过，差距 −0.2 ~ −0.06**。
 - **根因（结构性问题）**：TMean 的 `trim_ratio` 默认=恶意率 0.30，n=10 时每端裁 3，正好裁掉 3 个攻击者 → 等价于 4 个诚实端平均，在 IID + 弱标签翻转下近似最优。DPFLA 只能持平略低，换类数/调参无解。
 - **下一步：替换 TMean 基线**（用户 2026-11-14 定稿）。候选与顺序见 §10；替换后同口径 20×1 重测 DPFLA 领先 ≥1，再补 MKrum；通过后 DPFLA 续 50 轮冲 ≥35。
+- **2026-11-24 更新（FoolsGold 结果）**：FoolsGold one_class R42=**35.32** vs DPFLA 35.03 → **FAIL**（−0.29）；full_cycle R40=**0.84%**，R1 起权重退化（每轮仅 1 个恶意端 1.0、其余全 0.0），**代理口径 PASS 无效**。队列已停在 FoolsGold；是否继续 NormClip / FLDetector / FLAME 待用户确认，详见 `01_Facts.md` §11 与 `08_Roadmap.md` §12。
+- **2026-11-24 FoolsGold four_class 40 轮完成**：R40=**33.95** / 末5=**34.14** / 末10=33.83 / best=34.72（R39）；对 DPFLA one_class 代理 35.03：**R40 领先 +1.08、末5 领先 +0.89** → **单轮 PASS / 末5 FAIL（差 0.11）**，门槛边缘。R40 权重 Good 0.92–1.0、Bad 0.58/0.58/1.0，无 full_cycle 式退化。详见 `01_Facts.md` §11.5。
+- **2026-11-25 用户决定：放弃 FoolsGold，下一个测 NormClip**（随后 FLDetector → FLAME）；不再补 FoolsGold 其它 pattern。
+- **对照结构澄清（2026-11-25）**：最终只需 **两个防御对照**；**MKrum 已固定为第 1 个**（待补 YOLO26s r20x1 当前口径数据），**第 2 个**原为 TMean、现待替换（候选 NormClip → FLDetector → FLAME）。
+- **2026-11-25 追加**：NormClip two_class 若不达标（峰值 >34.04），**先跑 NormClip + full_cycle 41 轮**；仍不达标才转 FLDetector（先 two_class 41 轮，再 MinMax 43 轮）。
 
 ## §8 Checkpoint / 断点续跑（2026-11-13 22:30 已实现）
 

@@ -1,11 +1,11 @@
 # 05_Environment.md — 环境 / 路径 / 数据 / 冻结红线
 
-<!-- 最后更新：2026-11-09（补 50 轮收尾后的 TB 状态） -->
+<!-- 最后更新：2026-11-24（补 yolo26s.pt 入库与当前主机） -->
 <!-- 本文件是路径、数据、命令的唯一事实源；其它记忆文件只引用，不重复定义。 -->
 
 ## §1 两台主机（以 autodl 控制台为准，2026-10-13 核实）
 
-| 项 | 老主机 | **新主机（当前）** |
+| 项 | 老主机 | **新主机** |
 |----|--------|------------------|
 | GPU | vGPU **32GB**（实测 RTX 4080 SUPER，driver 595.71.05，cap 8.9）| vGPU **48GB**（实测 RTX 4090，47.4GB 可用）|
 | CPU | 12 vCPU（Xeon 8375C @2.9G）| **20 vCPU**（Xeon 8470Q）|
@@ -18,6 +18,7 @@
 >
 > ⚠️ **无卡 vs 有卡差异**：无卡模式为 无 GPU / 1 核；切换后需重新确认。
 > **2026-10-29 用户明确：后续实验统一按 32GB GPU 规划**；本文的 48GB 记录仅保留为历史环境，不再作为默认假设。
+> **2026-11-24 当前主机实测**：老主机（RTX 4080 SUPER 32GB / 12 vCPU / 宿主机 503GB 内存），GPU 空闲；torch 2.5.1+cu124、ultralytics 8.4.50。
 >
 > ⚠️ **沙箱拦截**：默认沙箱会拦截 `/dev/nvidia*`，导致 `nvidia-smi` 误报 "No devices were found"、`cuda.is_available()=False`。
 > **跑训练/GPU 命令必须用非沙箱模式**，否则 GPU 不可见。
@@ -31,6 +32,17 @@ python -c "from ultralytics import YOLO; print('YOLO OK')"
 nvidia-smi
 ```
 
+## §1b 单轮耗时拆分（2026-11-25，4080S 32GB / YOLO26s@1280 / 10 客户端 / 1 epoch 每轮）
+
+- R1 总耗时 **5 min 18 s**（07:44:18 → 07:49:36），拆分：
+  - 本地训练（10 客户端 ×41 step，含模型加载）：约 **4 min 24 s**
+  - MinMax 服务端攻击（全参数二分）：约 **12.6 s**
+  - **DPFLA SVD+KMeans 评分：约 5.8 s**
+  - YOLO 原生 val：约 **34.5 s**
+  - checkpoint 保存：约 0.1 s
+- 结论：**DPFLA 聚合开销只占单轮的约 2%**，不是训练慢的主因；主因是本地训练与每轮 val。
+- 40 轮 ×1 相比 11 轮 ×3，本地训练总量接近，但 **val / 攻击 / DPFLA 的固定开销要付 40 次而不是 11 次**，所以总墙钟更长。
+
 ## §2 路径映射（实测）
 
 | 资源 | 路径 |
@@ -39,7 +51,8 @@ nvidia-smi
 | VisDrone 原始数据根 | `/root/autodl-tmp/data/visdrone` |
 | 训练图 / 标签 | `.../visdrone/VisDrone2019-DET-train/VisDrone2019-DET-train/{images,labels,annotations}` |
 | 验证图 / 标签 | `.../visdrone/VisDrone2019-DET-val/VisDrone2019-DET-val/{images,labels,annotations}` |
-| YOLO 模型权重 | 项目根 `yolov8{s,n,m,l}.pt` |
+| YOLO 模型权重 | 项目根 `yolov8{s,n,m,l}.pt`；**`yolo26s.pt`（20.4MB，2026-11-24 起随 git 跟踪，提交 `7fb0cc1`，突破 `.gitignore` 的 `*.pt`）** |
+| DPFLA r20x1 断点 | **`checkpoints/label_flip_one_class_DPFLA_r20x1.pt`**（R42=35.03，116MB）/ **`label_flip_two_class_DPFLA_r20x1.pt`**（R41=35.04，77MB）；2026-11-25 由 Git LFS（提交 `f47dd3f`）拉取，含 `dpfla_state`，可 `FL_RESUME=1` 续跑 |
 | MNIST | `/root/autodl-tmp/data/MNIST` |
 | CIFAR10 | `/root/autodl-tmp/data/cifar-10-batches-py` |
 | 文档 / 对比图 | 项目根 `docs/`（`visdrone_fl_research_report.md`、`cifar_compare.png`、`mnist_compare.png`） |

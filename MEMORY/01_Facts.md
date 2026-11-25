@@ -1,6 +1,6 @@
 # 01_Facts.md — 事实层（仅实测数据）
 
-<!-- 最后更新：2026-11-09（新增 §8 50 轮全量、§9 分布式） -->
+<!-- 最后更新：2026-11-24（补 §11 FoolsGold 对比与 full_cycle 崩溃） -->
 <!-- 规则：每条必须带 日期 + 出处（日志文件名或代码位置）。无出处的推断不得写入本文件。 -->
 
 ## §1 VisDrone 联邦基线（好配置口径）
@@ -585,3 +585,152 @@ FedAvg vs FedBN 逐轮（同口径）：
 - 【实测·four_class + DPFLA 20×1（2026-11-14 10:37）】R1–R20 = 5.40 / 11.83 / 14.34 / 16.90 / 18.40 / 20.64 / 21.48 / 22.31 / 23.16 / 24.55 / 24.93 / 25.85 / 26.45 / 27.27 / 28.03 / 28.54 / 29.34 / 29.63 / 29.95 / **30.58**（83.8 min）。与 three_class 30.68 几乎一致；四类翻转仍未造成差异化伤害。
 - 【four_class TMean 中止（2026-11-14 10:48，用户指令）】TMean 仅完成 R1=4.82 / R2=11.03 即停止；**不再尝试更多 pattern**。
 - 【筛选总结论（1–4 类）】DPFLA R20 ≈ **30.6**，TMean R20 ≈ **30.7**，差距 −0.2 ~ −0.06，全部不满足“DPFLA ≥ TMean+1”。**根因是结构性的**：`trimmed_mean` 的 `trim_ratio` 默认取恶意率 0.30，10 客户端每端裁 3 个，正好把 3 个攻击者全部裁掉，等价于只用 4 个诚实端平均；在 IID + 30% 恶意 + 弱标签翻转下 TMean 近似最优，DPFLA 无法领先。调参/换翻转类数解决不了。
+
+## §11 TMean 替换：FoolsGold 对比与 full_cycle 崩溃（2026-11-14 ~ 11-16）★
+
+> 背景：1–4 类标签翻转筛选全部无法让 DPFLA 领先 TMean ≥1（§10），用户 2026-11-14 决定替换 TMean，先测 FoolsGold。
+> 口径：YOLO26s / 10 客户端 / IID / 30% 恶意 / `FL_GRADIENT_SCALE=1` / 1280 / BS16 / AMP / **1 epoch 每轮、LR 8e-4（r20×1）** / `FL_FLIP_RATIO=1.0`。
+
+### 11.1 代理基准：DPFLA one_class
+
+| 臂 | 轮数 | 最后轮 | 出处 |
+|---|---:|---:|---|
+| DPFLA + one_class | 42（50 轮计划中停在 R42） | **R42 = 35.03%** | `logs_3/visdrone/run_dpfla_label_flipping_20261114_1228.log` |
+
+- DPFLA 只跑 one_class，作为后续防御臂的代理基准（用户 2026-11-14 定稿）；full_cycle 不跑 DPFLA。
+- 另有 two_class DPFLA 续跑到 R41=35.04% 后为 FoolsGold 让路停止（`run_dpfla_label_flipping_20261114_1547.log`），不进入结论。
+- **现有 40 轮以上的 DPFLA r20x1 只有 1 类和 2 类**：
+  - one_class：R38–R42 = 33.68 / 34.62 / **R40=34.49** / 34.62 / **R42=35.03**；
+  - two_class：R38–R41 = 34.35 / 34.43 / **R40=34.89** / **R41=35.04**；
+  - **four_class DPFLA 只跑到 20 轮**（R20=30.58），没有 40 轮数据。
+  - ⚠️ 两条 DPFLA 都是 **50 轮计划 + `FL_STOP_MAP=35` 提前停止**：one_class 在 R42 首次 ≥35 停止，two_class 在 R41 首次 ≥35 停止；**不是固定 40 轮**。FoolsGold four_class 是固定 40 轮、`FL_STOP_MAP=0`；因此“R40=33.95 vs R42=35.03”不是同轮比较。
+- ⚠️ 口径敏感性：FoolsGold four_class R40=33.95 对 **DPFLA one_class R42=35.03** 领先 **+1.08**，但对 **同轮 R40** 只领先 one_class **+0.54** / two_class **+0.94**。结论高度依赖“取哪一轮、用哪个 pattern 作代理”，不能只报 +1.08。
+
+### 11.2 FoolsGold one_class（42 轮）→ FAIL
+
+| 臂 | 轮数 | 最后轮 | 与 DPFLA 35.03 差 | 判定 |
+|---|---:|---:|---:|---|
+| FoolsGold + one_class | 42 | **R42 = 35.32%** | **−0.29** | **FAIL**（未满足 DPFLA ≥ FoolsGold + 1） |
+
+- 日志：`run_foolsgold_label_flipping_20261114_1827.log`（R1–25）、`..._2021.log`（R26 续跑记录）、`..._2022.log`（R26–42）。
+- 该臂训练正常（曲线与 DPFLA 接近），**不是崩溃**；结论是 FoolsGold 在 one_class 下比 DPFLA 略高，DPFLA 无法领先。
+
+### 11.3 FoolsGold full_cycle（40 轮）→ 0.84%，代理口径“PASS”无效
+
+| 轮 | 1 | 2 | 3 | 4 | 5 | … | 40 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| mAP@0.5 % | 0.00 | 0.14 | 0.48 | 0.76 | 0.53 | … | **0.84** |
+
+- 末 10 轮均值 **0.97%**；test loss 400–440（正常约 160–180）。
+- **R1 起即崩**，不是训练到后期才崩；R40=0.84 只是最后记录点。
+- 权重证据（R1 起每轮相同）：`Bad update scored 1.0` 仅 1 个恶意端，其余 **2 个恶意端 + 7 个诚实端全部 0.0** → 聚合退化为“单恶意客户端”。
+- 原因：IID 下诚实端余弦相似度也高，full_cycle 又让 3 个恶意更新高度相似，FoolsGold 的 max-similarity 归一化饱和，权重集中到 1 个客户端；模型每轮被该客户端的循环错标更新覆盖。
+- **该臂按用户代理口径（vs DPFLA one_class 35.03）显示 PASS（+34.19），但 0.84% 是 FoolsGold 失效 + 攻击打崩模型的结果，不能作为有效防御证据**；不得据此写“FoolsGold 优于 DPFLA”。
+- 日志：`run_foolsgold_label_flipping_20261114_2137.log`（R1–12）、`..._2234.log`（22:35 从 R13 续跑）、`..._2236.log`（R13–40）。
+
+### 11.4 结论与待办
+
+- 标签翻转线目前 **没有任何防御臂被 DPFLA 稳定领先 ≥1%**：TMean 结构性强、FoolsGold one_class 略高、full_cycle 失效。
+- 用户 2026-11-14 规划的后续候选顺序：**NormClip → FLDetector → FLAME**（每个先 one_class 后 full_cycle），尚未启动。
+- 队列在 full_cycle 代理 PASS 后按规则选中 FoolsGold 并退出（2026-11-15 00:37）；2026-11-16 诊断确认该 PASS 无效，**下一步需用户确认是否继续下一防御**。
+
+### 11.5 FoolsGold + four_class（40 轮 ×1 epoch，2026-11-24）★
+
+| 项 | 值 |
+|---|---|
+| 配置 | 10 客户端 / IID / 30% 恶意 / YOLO26s@1280 / BS16 / AMP / 1 epoch 每轮 / LR 8e-4 / `FL_FLIP_RATIO=1.0` / `FL_GRADIENT_SCALE=1` |
+| 翻转映射 | four_class `{0:1, 1:2, 2:3, 3:0}` |
+| 曲线 | 5.08 / 9.93 / 12.99 / 14.39 / 17.16 / 18.63 / 19.84 / 20.80 / 22.08 / 23.21 / 23.55 / 24.41 / 25.10 / 25.90 / 26.52 / 26.92 / 27.79 / 28.65 / 28.48 / 29.65 / 29.92 / 30.19 / 31.00 / 31.26 / 31.37 / 31.85 / 32.13 / 32.28 / 32.83 / 32.67 / 33.34 / 33.04 / 33.63 / 33.92 / 33.68 / 34.15 / 34.11 / 33.76 / 34.72 / **33.95** |
+| R40 | **33.95%** |
+| 末5 | **34.14%**（R36–R40 = 34.15 / 34.11 / 33.76 / 34.72 / 33.95）|
+| 末10 | 33.83% |
+| best | **34.72%**（R39）|
+| 总耗时 | 201.2 min（07:57–11:18）|
+| 日志 | `logs_3/visdrone/run_foolsgold_label_flipping_20261124_0757.log`；控制台 `logs_screen/foolsgold_four_class_r20x1_console.log` |
+| TB | `tb/VisDrone_YOLO_foolsgold_attack-label_flipping_mr-0.3_yolo26s_img1280_20261124_0758` |
+| checkpoint | `checkpoints/label_flip_four_class_foolsgold_r20x1.pt`（R40，993MB，可续跑）|
+
+- 【对比·按用户 2026-11-14 代理口径（DPFLA one_class R42=35.03）】
+  - **R40 口径**：35.03 − 33.95 = **+1.08 → 达到 ≥1**；
+  - **末5 主口径**：35.03 − 34.14 = **+0.89 → 未达 ≥1（差 0.11）**。
+  - → **结论：队列单轮 R40 口径 PASS；项目末5 主口径 FAIL**，不得只报 +1.08。
+- 【权重】R40 FoolsGold：Good 0.92 / 1.0×5 / 0.92；Bad **0.58 / 0.58 / 1.0** → 仍有 1 个恶意端拿满权重，但**未出现 full_cycle 式“仅 1 个恶意端 1.0、其余全 0”的退化**；mAP 全程稳定上升，无 NaN/OOM。
+- 【口径提醒】DPFLA 未跑 four_class 40 轮；35.03 是 one_class R42，**跨 pattern 代理比较，不是同 pattern 同轮头对头**。若要严格结论，需补 DPFLA four_class 同 40 轮。
+
+## §12 YOLO26s MinMax r20x1（2026-11-25）★
+
+> 口径：10 客户端 / IID / 30% 恶意 / YOLO26s@1280 / BS16 / AMP / **1 epoch 每轮、LR 8e-4** / `FL_GRADIENT_SCALE=1`；`FL_STOP_MAP=35`（首次 ≥35 停）。
+
+### 12.1 DPFLA + MinMax
+
+| 项 | 值 |
+|---|---|
+| 曲线（R1–R43） | 5.46 / 11.28 / 14.30 / 16.25 / 18.22 / 20.14 / 21.47 / 22.33 / 23.59 / 23.67 / 25.06 / 24.77 / 26.59 / 27.42 / 27.71 / 28.72 / 28.71 / 29.96 / 29.58 / 30.56 / 30.23 / 31.58 / 31.05 / 31.39 / 31.83 / 31.84 / 32.56 / 32.73 / 32.59 / 33.51 / 33.58 / 33.30 / 33.92 / 33.88 / 34.02 / 34.10 / 34.19 / 33.83 / 34.68 / 34.59 / 34.32 / 34.74 / **35.04** |
+| 首次 ≥35 | **R43 = 35.04%** |
+| peak | **35.04%** |
+| 末5 | 34.67% |
+| 末10 | 34.34% |
+| 耗时 | 07:44–11:10（先跑满 40 轮未达，续到 50 后 R43 达标） |
+| checkpoint | `checkpoints/minmax_DPFLA_r20x1.pt`（R43，537MB） |
+| 日志 | `logs_screen/dpfla_minmax_20261125_074414.log`（R1–40）、`..._105527.log`（R41–43）；loguru：`logs_3/visdrone/run_screen_minmax_DPFLA_20261125_0744.log` / `..._1055.log` |
+| TB | `tb/VisDrone_YOLO_DPFLA_attack-minmax_mr-0.3_yolo26s_img1280_20261125_0744` / `..._1056` |
+
+- 【口径】40 轮时 R40=34.59 未达 35；续跑到 R43 首次 35.04（仅 +0.04），**属边缘达标**；末5 34.67 仍未到 35。
+- 【性能】R1 拆分：本地训练 ~4m24s、MinMax 攻击 ~12.6s、DPFLA 评分 ~5.8s、YOLO val ~34.5s；DPFLA 开销约单轮 2%（详见 `05_Environment.md` §1b）。
+- ⚠️ 07:39 的手动启动（`..._0739` TB/log）只跑了约 3 分钟即停止，**不是结果**，后续清理。
+
+### 12.2 NormClip + MinMax（2026-11-25 14:31 完成）→ DPFLA 领先 +7.09
+
+| 项 | 值 |
+|---|---|
+| 轮数 | 43（与 DPFLA 同轮数，无提前停止） |
+| peak | **27.95%** |
+| DPFLA peak | 35.04% |
+| lead | **+7.09 → PASS** |
+| checkpoint | `checkpoints/minmax_normclip_r20x1.pt`（R43，39MB） |
+| 日志 | `logs_screen/normclip_minmax_20261125_111023.log` |
+
+- 【现象】NormClip 在 MinMax 线上远低于 DPFLA，也低于此前“范数裁剪专治 MinMax”的逻辑预期。
+- 【解释】默认 `κ=1.0` → 阈值=全体更新范数中位数，**一半以上诚实端更新也被裁掉**，实际是拖慢收敛；恶意更新虽被裁到中位数，但仍以 1/10 权重参与平均。该档位下 NormClip 更像“弱化版 FedAvg”，不是有效防御。
+- 判定按用户规则：NormClip MinMax 未达“DPFLA 领先不足 1”的失败条件（实际领先 +7.09），因此 **继续进入 NormClip two_class 标签翻转**，而不是转 FLDetector。
+
+### 12.3 NormClip + two_class（2026-11-25 17:50 完成）→ FAIL（-0.07）
+
+| 项 | 值 |
+|---|---|
+| 轮数 | 41 |
+| peak | **35.11%**（R40）|
+| R41 | 34.97% |
+| 末5 | 34.17 / 34.86 / 34.72 / 35.11 / 34.97（均值 **34.77**）|
+| DPFLA two_class peak | 35.04% |
+| DPFLA two_class 末5 | 34.39 / 34.35 / 34.43 / 34.89 / 35.04（均值 **34.62**）|
+| lead（峰值） | **-0.07 → FAIL** |
+| checkpoint | `checkpoints/label_flip_two_class_normclip_r20x1.pt` |
+| 日志 | `logs_screen/normclip_label_20261125_155322.log` |
+
+- NormClip two_class 与 DPFLA 几乎持平，峰值高 0.07、末5 高 0.15 → 不满足“DPFLA 领先 ≥1”。
+- 按用户 2026-11-25 追加规则，**继续跑 NormClip full_cycle 41 轮**，而不是直接转 FLD。
+- ⚠️ **2026-11-25 用户决定：舍弃 NormClip two_class 这条对比线**；标签翻转最终只比较 **full_cycle** 的差值。本小节仅保留过程记录，不进入最终选择。
+
+### 12.4 NormClip + full_cycle（2026-11-25 21:16 完成）→ PASS（+4.32）
+
+| 项 | 值 |
+|---|---|
+| 轮数 | 41（无提前停止） |
+| peak | **30.72%**（R39）|
+| R41 | 29.73% |
+| 末5 | 30.27 / 27.77 / 30.72 / 28.80 / 29.73（均值 29.46）|
+| DPFLA two_class 代理 peak | 35.04% |
+| lead | **+4.32 → PASS** |
+| checkpoint | `checkpoints/label_flip_full_cycle_normclip_r20x1.pt` |
+| 日志 | `logs_screen/normclip_full_20261125_202205.log` |
+
+- full_cycle 比 two_class 更强，NormClip 峰值从 35.11 降到 30.72；**两套口径结果相反：two_class FAIL（-0.07），full_cycle PASS（+4.32）**。
+- 按用户 2026-11-25 追加计划，继续 Phase 5：MinMax 两臂补 50 → 若达标，full_cycle 两臂也补 50。
+
+### 12.5 Phase 5：50 轮复核（进行中）
+
+- **5a（21:16 启动，21:35 停止）**：DPFLA MinMax 从 R43 续到 50，停在 **R43**（未完成 R44）；checkpoint `minmax_DPFLA_r20x1.pt`（R43，563MB）。
+- 计划顺序：5b NormClip MinMax R43→50 → 5c NormClip full_cycle R41→50 → 5d DPFLA full_cycle 0→50。
+- 最终判定：MinMax 50 轮峰值领先 ≥1 → 再比 full_cycle 50 轮峰值；两条都领先 ≥1 才选 NormClip。
+- **2026-11-25 21:35 用户要求今日先停**：上述断点（minmax_DPFLA R43 / minmax_normclip R43 / full_cycle_normclip R41）已上传 dev；下次启动 supervisor 自动续跑。

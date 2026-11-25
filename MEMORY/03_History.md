@@ -1,8 +1,43 @@
 # 03_History.md — 时间线（改动与回退）
 
-<!-- 最后更新：2026-11-13（新增标签翻转 50 轮计划与两类攻击规则） -->
+<!-- 最后更新：2026-11-24（启动 FoolsGold four_class 40×1） -->
 <!-- 追加式：新事件加在最上方。回退/证伪的事件保留，不删除。 -->
 <!-- 结论性判断请以 01_Facts.md 为准；本文件只记"做了什么、结果如何"。 -->
+
+## 2026-11-25
+
+- **拉取 LFS 断点（07:32）**：`f47dd3f` 提供两个 DPFLA r20x1 checkpoint——one_class（R42=35.03）/ two_class（R41=35.04）；已 `git lfs pull` 并复制到 `checkpoints/`。核验：`epoch=41/40`、`global_rounds=50`、`local_epochs=1`、`model_family=26`、`model_size=s`、`dpfla_state` 完整（10 端），可 `FL_RESUME=1` 续跑。**没有 four_class 断点**。
+- **启动 defense_plan supervisor（07:44）**：tmux `defense_plan` 串行执行——DPFLA MinMax（40×1，LR8e-4，stop=35，40 轮未达则续 50）→ NormClip MinMax（跑满 DPFLA 轮数，不达标直接转 FLD）→ NormClip two_class（41 轮）→ FLD 兜底（先 two_class 41 轮，再 MinMax）。每个实验独立 `FL_CKPT_PATH`，`FL_RESUME=1` 自动续跑；state `logs_screen/defense_plan_state.json`，summary `logs_screen/defense_plan_summary.md`。首个实验已启动，GPU 100%。
+- **DPFLA MinMax 完成（11:10）**：40 轮 R40=34.59 未达 35，supervisor 自动续到 50；**R43=35.04% 首次达标并停止**（peak 35.04，末5 34.67，末10 34.34）。checkpoint `checkpoints/minmax_DPFLA_r20x1.pt`（R43，537MB）；总耗时约 3h26m。**属边缘达标（仅 +0.04）**。
+- **NormClip MinMax 启动（11:10）**：目标 43 轮、无提前停止；R1=2.00% / R2=10.39%，单轮约 4m40s；checkpoint `checkpoints/minmax_normclip_r20x1.pt`。判定：DPFLA peak 35.04 − NormClip peak；若 <1（即 NormClip peak ≥34.04）直接转 FLDetector。
+- **NormClip MinMax 完成（14:31）**：43 轮跑满，**peak=27.95%**；DPFLA peak 35.04 → **lead +7.09，PASS**。NormClip 默认 κ=1.0 把大量诚实更新也裁到中位数，实际拖慢收敛，MinMax 线远低于预期。checkpoint `checkpoints/minmax_normclip_r20x1.pt`。
+- **NormClip two_class 启动（14:31）**：41 轮、无提前停止；checkpoint `checkpoints/label_flip_two_class_normclip_r20x1.pt`。15:50 进度 R16/41=27.68%；若峰值 ≤34.04 则选 NormClip，否则转 FLDetector（先 two_class 41 轮，再 MinMax 43 轮）。
+- **NormClip two_class 完成（17:50）**：41 轮 **peak=35.11%（R40）**，R41=34.97，末5 均值 34.77；DPFLA two_class peak 35.04、末5 34.62 → **lead -0.07，FAIL**。按用户追加规则，先跑 **NormClip full_cycle 41 轮**，不直接转 FLD。
+- **NormClip full_cycle 启动（17:50）**：41 轮、无提前停止；checkpoint `checkpoints/label_flip_full_cycle_normclip_r20x1.pt`。18:05 进度 R3/41=11.45%；峰值需 ≤34.04 才通过，否则转 FLDetector（two_class 41 + MinMax 43）。
+- **计划追加（20:10 用户定稿）**：NormClip full_cycle 跑完后，把 **MinMax 下 DPFLA 与 NormClip 都补到 50 轮**，比较 50 轮峰值；若 DPFLA 领先 ≥1 → **补 DPFLA full_cycle 50 轮**，再与 NormClip full_cycle 峰值比较；两条都符合则最终选 NormClip。FLDetector 兜底暂缓。supervisor 已加入 Phase 5（5a/5b MinMax 50、5c DPFLA full_cycle 50），并计划从 NormClip full_cycle 断点重启。
+- **supervisor 重启（20:14）**：按新 Phase 5 重启；NormClip full_cycle 从断点续跑（日志显示 resume at round 30/41），未丢进度。Phase 5 的 50 轮峰值将分别从 `minmax_DPFLA_r20x1.pt`（R43）与 `minmax_normclip_r20x1.pt`（R43）续跑；DPFLA full_cycle 50 使用新 checkpoint `label_flip_full_cycle_DPFLA_r20x1.pt`。
+- **同轮补充（20:20 用户确认）**：NormClip full_cycle 也补到 **50 轮**（从 R41 checkpoint 续跑），与 DPFLA full_cycle 50 做同轮峰值比较；supervisor 已加入 Phase 5c（NormClip full_cycle 50）→ 5d（DPFLA full_cycle 50）。
+- **NormClip full_cycle 41 轮完成（21:16）**：**peak=30.72%（R39）**，R41=29.73，末5 均值 29.46；对 DPFLA two_class 代理 35.04 → **lead +4.32，PASS**。与 two_class 的 -0.07 相反，说明结论强烈依赖翻转强度。
+- **Phase 5a 启动（21:16）**：DPFLA MinMax 从 R43 续到 50（checkpoint `minmax_DPFLA_r20x1.pt`）；按计划后续 5b NormClip MinMax 50 → 5c NormClip full_cycle 50 → 5d DPFLA full_cycle 50。
+- **对比线取舍（21:35 用户定稿）**：**舍弃 NormClip two_class 这条对比线**；标签翻转最终只比较 **full_cycle** 的差值。最终选择只看 **MinMax 50** 与 **full_cycle 50** 两条；two_class 结果仅保留过程记录。
+- **今日停止（21:35 用户要求）**：停止 supervisor 与训练。有效断点：`minmax_DPFLA_r20x1.pt`（R43，563MB）/ `minmax_normclip_r20x1.pt`（R43，442MB）/ `label_flip_full_cycle_normclip_r20x1.pt`（R41，442MB）。均上传 dev（Git LFS）。下次启动同一 supervisor 会自动续跑 Phase 5a。
+- **GitHub 容量（2026-11-25 核实）**：GitHub Free 的 Git LFS 为 **2GB/文件上限**、**10GiB 存储 + 10GiB 带宽/月**；本次 3 个断点约 1.45GB，未超限。常规 Git 建议仓库 <1GB、硬上限 5GB；本仓库 `.git` 约 411MB，LFS 单独计量。
+
+## 2026-11-24
+
+- **启动 FoolsGold + four_class 40×1（07:57）**：10 客户端 / IID / 30% 恶意 / YOLO26s@1280 / BS16 / AMP / 1 epoch 每轮 / LR 8e-4 / `FL_FLIP_RATIO=1.0` / `FL_GRADIENT_SCALE=1`；tmux `fg4_40x1`。checkpoint `checkpoints/label_flip_four_class_foolsgold_r20x1.pt` 每轮保存（R1 已确认 600MB，含 `state_dict` / `foolsgold_memory` / 轮次 / 历史），`FL_RESUME=1` 可从下一轮续跑。
+- **R1（08:03）**：mAP@0.5=**5.08%**，loss 265.49；FoolsGold 权重为 Bad 0.0 / 0.0 / 0.195、Good 0.195 / 0.738 / 0.694 / 0.0 / **1.0** / 0.0 / 0.254，**未出现 full_cycle 式“仅 1 个恶意端 1.0、其余全 0”的退化**。
+- **目的**：four_class（0→1→2→3→0）弱攻击下检验 FoolsGold 聚合是否仍有效；对照上次 full_cycle 的 0.84% 崩溃。
+- **完成（11:18）**：40 轮跑满，**R40=33.95% / 末5=34.14% / 末10=33.83% / best=34.72%（R39）**，总耗时 201.2 min；无 NaN/OOM。按代理 DPFLA one_class R42=35.03：**R40 领先 +1.08（≥1），末5 领先 +0.89（<1）**，属门槛边缘。R40 FoolsGold 权重 Good 0.92–1.0、Bad **0.58 / 0.58 / 1.0**，未出现 full_cycle 式全 0 退化。日志/TB/checkpoint 已落盘。
+
+## 2026-11-14（晚间）~ 11-16（FoolsGold 收尾）
+
+- **DPFLA one_class 停在 R42（11-14 15:24）**：R42=35.03%，checkpoint `label_flip_one_class_DPFLA_r20x1.pt`；作为后续防御对比的代理基准。日志 `run_dpfla_label_flipping_20261114_1228.log`。
+- **FoolsGold one_class 42 轮完成（11-14 18:27–21:37）**：R42=**35.32%**，比 DPFLA 35.03 高 0.29 → **FAIL**（未满足 DPFLA ≥ FoolsGold+1）。日志 `run_foolsgold_label_flipping_20261114_1827.log` / `_2021.log` / `_2022.log`。
+- **FoolsGold full_cycle 启动即崩（11-14 21:37）**：40 轮 ×1 epoch / LR8e-4；R1=0.00%、R2=0.14% … R40=**0.84%**，末10=0.97%，test loss 400+。22:29 意外关机，22:35 从 checkpoint R13 续跑，11-15 00:36 完成。
+- **队列最终判定（11-15 00:37）**：one_class FAIL；full_cycle 按用户代理口径（vs DPFLA one_class 35.03）显示 PASS（+34.19）→ 队列选中 FoolsGold 并退出。
+- **诊断（11-16）**：full_cycle 的 0.84% 不是攻击太强，而是 **FoolsGold 权重退化**——每轮仅 1 个恶意端权重 1.0，其余 2 恶意 + 7 诚实全 0.0；IID 下诚实端余弦相似度高、full_cycle 又使 3 个恶意更新高度相似，max-similarity 归一化饱和，聚合退化为单恶意客户端。**该 full_cycle PASS 不能作为有效防御结果**。
+- **状态**：队列已停；NormClip / FLDetector / FLAME 均未启动，等用户确认。
 
 ## 2026-11-13
 

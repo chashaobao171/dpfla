@@ -1,6 +1,6 @@
 # 08_Roadmap.md — 高层路线图（用户 2026-10-23 定稿）
 
-<!-- 最后更新：2026-11-09（补 50 轮全量与分布式结果） -->
+<!-- 最后更新：2026-11-24（补 FoolsGold 结果与崩溃诊断） -->
 <!-- 级别：**高级别记忆**。与 00_Current_State.md 同级；本文件只记"目标 / 验收 / 约束 / 阻塞"，实测数据仍以 01_Facts.md 为准。 -->
 <!-- 规则：目标与验收来自用户原话；现状标【实测】；推断标【推断·未验证】。用户后续修订指令优先。 -->
 
@@ -454,7 +454,7 @@ python run_distributed_smoke.py --role client --dataset cifar10 --scenario minma
 2. **高斯 σ 在 CIFAR 上完全未测**：需重走 σ 阶梯（0.01 / 0.02 / 0.05 / 0.1 量级），不能套 VisDrone 的 0.02。
 3. **Multi-Krum / Trimmed-Mean 在 YOLO 上未验证**：BN 与显存两个坑。
 4. **对比公平性**：Multi-Krum 的 m 比例、TrimmedMean 的 beta 必须三方一致并在报告注明。
-5. **15 轮上限对 VisDrone 对比的影响**：基线 R15=47.13% 可用；③ 与 MKrum/TMean 都必须 ≤15 轮、同轮对比。
+5. **【历史口径】15 轮上限对 VisDrone 对比的影响**：基线 R15=47.13% 可用；③ 与 MKrum/TMean 都必须 ≤15 轮、同轮对比。**该上限已于 YOLO26s 阶段废止，当前按 20/42/50 轮计划（见 §12）。**
 
 ## §8 执行顺序总览
 
@@ -495,3 +495,22 @@ P4 分布式改造（可用性验证：CIFAR PASS；VisDrone 待 18h 复跑）
 - 优先跑 **无攻击 50 轮完整基线**（50×24 step，LR1e-3），再跑 **50 轮 full_cycle 标签翻转 + DPFLA**；目标 DPFLA **≥35% 且比 MKrum/TMean 高 ≥1%**。
 - 若 full_cycle 不达标：筛 `FL_FLIP_PATTERN`（pair_swap / two_class / three_class / vehicle_cycle / car_van / person_pair / all_to_car / offset2 / offset5）和 `FL_FLIP_RATIO`（1.0/0.75/0.5），再跑 50 轮。
 - 最后手段才是“换弱基线”，必须记录原因；详细计划见 `MEMORY/11_LabelFlip_50R_Plan.md`。
+
+## §12 TMean 替换结果：FoolsGold（2026-11-14 ~ 11-16）★
+
+- **原因**：1–4 类标签翻转筛选全部无法让 DPFLA 领先 TMean ≥1；TMean `trim_ratio` 默认=恶意率 0.30，10 端正好裁掉 3 个攻击者，IID 下结构性强（`01_Facts.md` §10）。
+- **用户定稿（2026-11-14）**：替换 TMean，先测 FoolsGold；每个防御按 one_class（42 轮）→ full_cycle（40 轮）；DPFLA 只跑 one_class R42=35.03 作代理基准。
+- **【实测】FoolsGold one_class**：R42=**35.32%** vs DPFLA 35.03 → 领先 **−0.29**，**FAIL**。
+- **【实测】FoolsGold full_cycle**：R40=**0.84%**（R1=0.00 起崩，末10 0.97，test loss 400+）；权重每轮仅 1 个恶意端 1.0、其余全 0.0 → **FoolsGold 在 IID + full_cycle 下权重退化**，不是有效防御；按代理口径的 PASS 无效。
+- **当前阻塞**：标签翻转线仍无“DPFLA 领先 ≥1%”的合格防御对照。
+- **2026-11-25 用户决定：放弃 FoolsGold**，下一个待测防御 = **NormClip**（入口 `run-test/visdrone/run_normclip_label_flipping.py`，已本地化）；之后依次 FLDetector → FLAME。
+- **对照结构澄清（2026-11-25）**：方案要求 **两个防御对照**。**MKrum = 第 1 个（已固定）**，需补 YOLO26s r20x1 的 four_class / MinMax 数据；**第 2 个**原为 TMean，因标签翻转上结构性太强而待替换，候选 NormClip → FLDetector → FLAME。
+- **2026-11-25 执行计划（用户定稿）**：MinMax 改为 **40 轮 ×1 epoch / LR8e-4**（总训练量≈旧 11×3，`FL_STOP_MAP=35`）：
+  1. DPFLA + MinMax 到首次 ≥35 停（checkpoint 续跑）；
+  2. NormClip + MinMax 同轮数跑满，比较峰值，DPFLA 需领先 ≥1；
+  3. 通过则 NormClip + two_class 41 轮，再比峰值；通过则选 NormClip；two_class 不达标（>34.04）→ **NormClip + full_cycle 41 轮**；
+  4. **2026-11-25 追加**：full_cycle 跑完后，把 **MinMax 下 DPFLA 与 NormClip 都补到 50 轮**，比较 50 轮峰值；若 DPFLA 领先 ≥1 → **NormClip full_cycle 与 DPFLA full_cycle 都补到 50 轮**，做同轮峰值比较；两条都符合则最终选 NormClip；
+  - **2026-11-25 21:35 用户定稿：舍弃 NormClip two_class 对比线**，标签翻转最终只比较 **full_cycle**；最终选择只看 MinMax 50 + full_cycle 50。
+  5. FLDetector 兜底暂缓，等 50 轮复核结果再由用户决定。
+- **禁止**把 full_cycle 的 0.84% 当作“FoolsGold 有效”或“DPFLA 优于 FoolsGold”的证据。
+- **【实测】FoolsGold + four_class 40×1（2026-11-24）**：R40=**33.95%**、末5=**34.14%**、末10=33.83%、best=34.72%（R39）；对 DPFLA one_class 代理 35.03：**R40 领先 +1.08（PASS）、末5 领先 +0.89（FAIL，差 0.11）**。R40 权重仍有 1 个恶意端 1.0，但无 full_cycle 式全 0 退化；无 NaN/OOM。严格结论需补 DPFLA four_class 同 40 轮。

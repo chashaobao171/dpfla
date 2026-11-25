@@ -1,0 +1,11 @@
+[2026-11-25 20:22:05] 发现过期 lock，删除后继续
+[2026-11-25 20:22:05] DPFLA MinMax 基准：R43，peak=35.04%
+[2026-11-25 20:22:05] === Phase 3b: NormClip + full_cycle（41 轮，无提前停止）===
+[2026-11-25 20:22:05] 启动 normclip_full: rounds=41, stop=0, ckpt=label_flip_full_cycle_normclip_r20x1.pt, resume=1, log=normclip_full_20261125_202205.log
+[2026-11-25 21:16:12] 结束 normclip_full: exit=0
+[2026-11-25 21:16:12] normclip_full 已有 41/41 轮，跳过
+[2026-11-25 21:16:12] normclip_full: DPFLA peak=35.04% vs 防御 peak=30.72% @R41 -> lead=+4.32 -> PASS
+[2026-11-25 21:16:12] NormClip full_cycle 已满足 DPFLA 领先 >=1；继续 50 轮复核
+[2026-11-25 21:16:12] === Phase 5: MinMax 50 轮复核 ===
+[2026-11-25 21:16:12] === Phase 5a: DPFLA + MinMax 续到 50 轮 ===
+[2026-11-25 21:16:13] 启动 dpfla_minmax_50: rounds=50, stop=0, ckpt=minmax_DPFLA_r20x1.pt, resume=1, log=dpfla_minmax_50_20261125_211613.log

@@ -259,4 +259,4 @@ Phase 5 分布式 YOLO26s 可用性 → G5
 Phase 6 归档 + 回写 01_Facts / 00 / 03 / 08 / 09
 ```
 
-**当前状态**：YOLO26s 已确认开源且本地可加载/换头/反传；**Phase 0 代码改造与端到端冒烟已完成（2026-11-09）**；下一步 Phase 1（5 轮 → 15 轮×3 local epochs 基线，预门槛 ≥36.2%）。
+**当前状态（2026-11-24）**：Phase 0/1/2 已完成——基线 R10=**36.02%**、MinMax+DPFLA R11=**35.69%**。标签翻转线按 `11_LabelFlip_50R_Plan.md` 推进：1–4 类筛选全败（TMean 结构性太强），FoolsGold one_class R42=35.32 反超 DPFLA 35.03（FAIL），full_cycle R40=0.84% 属 FoolsGold 权重退化（无效）。Phase 3（50 轮复核）、Phase 4（CIFAR 回归）、Phase 5（分布式 26s）均未启动。

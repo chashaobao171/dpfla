@@ -1,14 +1,14 @@
 # 00_Current_State.md — 当前状态
 
-<!-- 最后更新：2026-11-14 -->
+<!-- 最后更新：2026-11-24（同步 dev 7fb0cc1；补 FoolsGold 收尾） -->
 <!-- ⚠️ 本文件会过期。与 01_Facts.md 冲突时，以 01_Facts.md 的实测数据为准 -->
 
 ## 一句话
 
-**DPFLA**：联邦学习投毒防御项目，落地场景 **VisDrone + YOLOv8** 目标检测。
+**DPFLA**：联邦学习投毒防御项目，落地场景 **VisDrone + YOLO26s** 目标检测（历史阶段为 YOLOv8m/v8s）。
 
 - 原目标（无攻击联邦基线 mAP@0.5 ≥ 32%）→ ✅ **已超额**：**v8m @1280 跑满 25 轮 → 峰值 47.64%（R13）、平台 ≈47%**（见 `01_Facts.md` §1c）。
-- **当前阶段（2026-11-02）：50 轮全量非分布式矩阵 18/18 完成；分布式 DPFLA 可用性验证 CIFAR 50/50 PASS、VisDrone 42/50（超时中断，已把超时提到 18h）。**
+- **当前阶段（2026-11-24）：YOLO26s 主线。** 基线 R10=36.02 / MinMax+DPFLA R11=35.69 已达标；**标签翻转线的防御对照仍未解决**——1–4 类筛选全败（TMean 结构性太强），FoolsGold one_class R42=35.32 反超 DPFLA 35.03，full_cycle R40=0.84% 属 FoolsGold 权重退化（无效）。**自动队列已停，待确认下一防御。**
 
 ## 高层路线（2026-10-23 用户定稿 → 详见 `08_Roadmap.md`）
 
@@ -53,6 +53,17 @@
 - **2026-11-14 22:34 自动队列扩展（已撤回）**：NormClip 曾接入 `DEFENSES`，但用户 22:36 定稿：**FoolsGold full_cycle 跑完即停，不自动跑 NormClip**；NormClip 留到后续。队列只保留 FoolsGold。FoolsGold full_cycle 因意外关机停在 R12，已从 checkpoint 续跑 R13。
 - **2026-11-15 00:37 队列最终结果**：FoolsGold one_class R42=**35.32** vs DPFLA 35.03 → **FAIL**（lead −0.29）；FoolsGold full_cycle R40=**0.84** vs DPFLA one_class 代理 35.03 → **PASS**（lead +34.19）；队列选中 FoolsGold 并退出。**注意：full_cycle 0.84% 是攻击本身几乎打崩模型，不是 FoolsGold 有效的证据；该 PASS 仅按用户指定的代理口径成立，不能与 one_class 的 FAIL 混为一谈。**
 - **2026-11-16 诊断：FoolsGold full_cycle 0.84% 的直接原因**：**FoolsGold 权重退化**——每轮一个恶意客户端权重 **1.0**，其余（含全部诚实端）**0.0**；R40 日志示例：Bad 1.0 / Bad 0.0 / Bad 0.0 / Good 全 0。IID 下诚实端余弦相似度也高，full_cycle 又让 3 个恶意更新高度相似，max-similarity 归一化饱和，聚合退化为“单恶意客户端”；模型每轮被该客户端的循环错标更新覆盖，mAP 因此塌到 0.84%（test loss 400+）。**这是 FoolsGold 在 IID + full_cycle 下的失效，不是攻击太强或日志错误；该 full_cycle PASS 不能作为有效防御结果。** 同攻击 one_class 的结论仍是 FoolsGold 35.32 > DPFLA 35.03，不满足领先 ≥1。
+- **2026-11-24 FoolsGold + four_class 40×1 完成**：R40=**33.95%**、末5=**34.14%**、末10=33.83%、best=34.72%（R39），总耗时 201.2 min，无 NaN/OOM。按 DPFLA one_class 代理 35.03：**R40 领先 +1.08（≥1），末5 领先 +0.89（<1）** → **单轮口径 PASS、末5 主口径 FAIL（差 0.11）**，属门槛边缘。checkpoint `checkpoints/label_flip_four_class_foolsgold_r20x1.pt` 已保存。
+- **2026-11-25 用户决定：放弃 FoolsGold**，下一个待测防御 = **NormClip**（脚本已本地化）；随后依次 **FLDetector → FLAME**。FoolsGold 的四类结果保留为“门槛边缘”证据，不再补 full_cycle 等臂。
+- **对照结构澄清（2026-11-25）**：方案要求 **两个防御对照** 与 DPFLA 比较。**MKrum 已固定为第 1 个**（无需再找，但需补 YOLO26s r20x1 的 four_class / MinMax 当前口径数据）；**第 2 个**原为 TMean，因标签翻转上结构性太强（`trim_ratio`=恶意率，正好裁掉 3 个攻击者）而待替换，候选顺序 **NormClip → FLDetector → FLAME**。
+- **2026-11-25 断点到位**：从 `origin/dev` 的 `f47dd3f` 拉取并放入 `checkpoints/`——**one_class R42=35.03**（116MB）/ **two_class R41=35.04**（77MB），均 `model_family=26, size=s`、50 轮计划、含 DPFLA 状态，可续跑；**没有 four_class 断点**。
+- **2026-11-25 实验计划（用户定稿）**：MinMax 改用 **40 轮 ×1 epoch / LR8e-4**（总训练量≈旧 11×3 的 30 epoch，`FL_STOP_MAP=35` 到 35 停）。
+  1. **DPFLA + MinMax**：跑到首次 ≥35 停，checkpoint 可续；
+  2. **NormClip + MinMax**：同口径，跑到 DPFLA 停止的同一轮数，比较峰值，DPFLA 需领先 ≥1；
+  3. 若通过 → **NormClip + two_class 标签翻转**（41 轮，对齐 DPFLA two_class R41=35.04），再比峰值；领先 ≥1 则选 NormClip；若 two_class 峰值 >34.04（不达标）→ **NormClip + full_cycle 41 轮**，再比峰值；
+  4. **2026-11-25 追加（优先）**：NormClip full_cycle 跑完后，**把 MinMax 下 DPFLA 与 NormClip 都补到 50 轮**，比较 50 轮峰值；若 DPFLA 领先 ≥1 → **NormClip full_cycle 与 DPFLA full_cycle 都补到 50 轮**，做同轮峰值比较；两条都符合则最终选 **NormClip**；
+  5. FLDetector 兜底暂缓（仅在上述 50 轮复核不通过时再由用户决定）。
+  - **执行状态（2026-11-25 21:35 停止）**：用户要求今天先停，supervisor/训练已停止。**DPFLA MinMax：R43=35.04%（peak 35.04）**；**NormClip MinMax：43 轮 peak 27.95，领先 +7.09 PASS**；**NormClip full_cycle：41 轮 peak 30.72，lead +4.32 PASS**；**NormClip two_class 已舍弃**。Phase 5a 停在 R43（未完成 R44）。有效断点：`minmax_DPFLA_r20x1.pt`（R43）/ `minmax_normclip_r20x1.pt`（R43）/ `label_flip_full_cycle_normclip_r20x1.pt`（R41）。下次启动 supervisor 会自动从断点续跑：5a DPFLA MinMax 50 → 5b NormClip MinMax 50 → 5c NormClip full_cycle 50 → 5d DPFLA full_cycle 50。
 - **待办：`log/` 的 26s 刷新（2026-11-14 用户定稿）**：用 YOLO26s 按原实验逻辑重跑，逐个替换 `log/` 中的日志；**本轮只替换 DPFLA**，且必须使用 **26s + r20×1（20 轮起、1 epoch/轮、LR8e-4）的完整日志**，未跑完不替换；11×3 日志不作为替换依据。CIFAR 非 YOLO，不参与 26s 替换；IPM 已弃用，待后续处理。当前 r20×1 标签翻转 DPFLA 跑完后补入对应日志；MinMax 需后续同口径跑完再替换。其余方法（baseline / FedAvg / MKrum / TMean）何时替换待定。
 - **代码改造清单（已完成）**：`yolo_wrapper`（family/换头/E2ELoss/device）、`model.py`、`DPFLA`（动态 layer22/23）、`fl_core`（评估子进程/TB family/每轮 checkpoint）、`server`（全实验自动 checkpoint）、分布式 CLI、50 轮队列、VisDrone 入口默认值、标签翻转 pattern 参数化 + MKrum/TMean 入口、CIFAR flip_ratio 修复。历史 v8m/v8s 复现需显式 `YOLO_MODEL_FAMILY=8`。
 
@@ -127,6 +138,7 @@ COMMON="YOLO_MODEL_SIZE=m FL_IMG_SIZE=1280 FL_TRAIN_BATCH_SIZE=16 FL_AMP=1 FL_TE
 
 ## 已知未决 / 风险（2026-11-02）
 
+- ⚠️ **标签翻转线防御对照未定（2026-11-16）**：TMean 结构性不可胜（裁剪比例=恶意率）、FoolsGold one_class 反超 DPFLA 0.29、full_cycle 权重退化无效；需决定是否继续 NormClip → FLDetector → FLAME。
 - ⚠️ **VisDrone 分布式 50 轮待复跑**：42/50 因 12h orchestrator 超时中断，R42 server mAP=36.53%，无 `result.json` / checkpoint，不能续跑；最新提交 `0a78a7e` 已把超时提到 18h，需从头重跑。
 - ⚠️ **VisDrone 50 轮口径不可与历史直接横比**：12 step/轮（50×12=600 step ≈ 历史 5 轮），基线 39.65 低于历史 5 轮 45.08 / 25 轮 47.64；若要写进论文，需补“同训练量”对照臂或明确注明口径。
 - ⚠️ **CIFAR 两条攻击线基线不同**：标签线为 M5 + 48 step/轮（基线 73.74），MinMax 线为 24 step/轮（基线 71.24），跨线比较必须先对齐口径。
@@ -142,4 +154,4 @@ COMMON="YOLO_MODEL_SIZE=m FL_IMG_SIZE=1280 FL_TRAIN_BATCH_SIZE=16 FL_AMP=1 FL_TE
 4. 硬约束见 `05_Environment.md` §冻结红线（DPFLA=SVD+KMeans；指标=YOLO 原生 val mAP@0.5；聚合 float32）。
 5. **开关审计**：做防御测试时若同时开了 **DP 与高斯攻击**开关，必须先核实两者**不是同一段代码路径**（2026-10-20 用户要求）。
 6. **恶意客户端比例固定 30%**（项目任务要求，2026-10-21 用户明确）：**不要再建议/询问调高恶意占比**（如 30%→50%），攻击强度只能从映射 / 放大 / 加噪 / 攻击范式等方向调。
-7. **训练总轮数上限 = 15 轮**（2026-10-23 用户明确，原 25）；已归档的 25 轮基线仅作历史参照。
+7. **轮数按当前阶段计划执行**：2026-10-23 的“15 轮上限”已不适用于 YOLO26s 阶段；标签翻转筛选为 20×1（r20×1），候选续跑 42/50 轮，50 轮全量为历史口径。

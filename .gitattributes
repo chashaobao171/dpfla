@@ -1,1 +1,4 @@
 checkpoints/label_flip_*_DPFLA_r20x1.pt filter=lfs diff=lfs merge=lfs -text
+checkpoints/label_flip_*_normclip_r20x1.pt filter=lfs diff=lfs merge=lfs -text
+checkpoints/label_flip_*_fldetector_r20x1.pt filter=lfs diff=lfs merge=lfs -text
+checkpoints/minmax_*_r20x1.pt filter=lfs diff=lfs merge=lfs -text
